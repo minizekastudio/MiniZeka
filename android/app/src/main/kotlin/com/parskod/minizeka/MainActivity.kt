@@ -1,4 +1,4 @@
-package com.example.mini_zeka
+package com.parskod.minizeka
 
 import io.flutter.embedding.android.FlutterActivity
 
