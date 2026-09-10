@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'achievement_manager.dart';
+import 'game_kit.dart';
 import 'sound_manager.dart';
 
 // =============================================================
@@ -53,7 +55,7 @@ class LetterTile {
 // =============================================================
 
 class _LetterGameState extends State<LetterGame>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, GameSessionMixin {
   final Random _random = Random();
 
   // -------------------------------------------------------------
@@ -214,6 +216,29 @@ class _LetterGameState extends State<LetterGame>
   bool _gameFinished = false;
 
   // -------------------------------------------------------------
+  // GÜNLÜK SÜRE OTURUMU
+  // -------------------------------------------------------------
+
+  @override
+  String get gameName => 'Harfleri Yerleştir';
+
+  @override
+  int get defaultAllowedMinutes => 15;
+
+  @override
+  GamePalette get palette => GamePalette.letter;
+
+  @override
+  String get timeUpMessage =>
+      'Harf oyunu için belirlenen günlük süreyi kullandın. 🌙';
+
+  @override
+  int get currentScore => _score;
+
+  @override
+  bool get canShowTimeUpDialog => !_gameFinished;
+
+  // -------------------------------------------------------------
   // ANİMASYONLAR
   // -------------------------------------------------------------
 
@@ -263,6 +288,8 @@ class _LetterGameState extends State<LetterGame>
       parent: _wrongController,
       curve: Curves.easeInOut,
     );
+
+    startGameSession();
 
     _startGame();
   }
@@ -694,6 +721,10 @@ class _LetterGameState extends State<LetterGame>
     _gameFinished = true;
     _timer?.cancel();
 
+    await AchievementManager.unlock('first_step');
+    await AchievementManager.unlock('letter_master');
+    await AchievementManager.markGamePlayed('letter');
+
     await SoundManager.playGameOver();
 
     if (!mounted) return;
@@ -727,7 +758,7 @@ class _LetterGameState extends State<LetterGame>
       barrierDismissible: false,
       barrierLabel: 'Oyun Sonucu',
       barrierColor:
-      Colors.black.withOpacity(0.55),
+      Colors.black.withValues(alpha: 0.55),
       transitionDuration:
       const Duration(milliseconds: 400),
       pageBuilder:
@@ -751,14 +782,14 @@ class _LetterGameState extends State<LetterGame>
                 const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color:
-                  const Color(0xFFFFFBFF),
+                  const Color(0xFFE0FFE3),
                   borderRadius:
                   BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
                       color:
-                      Colors.black.withOpacity(
-                        0.16,
+                      Colors.black.withValues(
+                        alpha: 0.16,
                       ),
                       blurRadius: 30,
                       offset:
@@ -786,7 +817,7 @@ class _LetterGameState extends State<LetterGame>
                         fontWeight:
                         FontWeight.w900,
                         color:
-                        Color(0xFF5D3D7A),
+                        Color(0xFF259242),
                       ),
                     ),
                     const SizedBox(
@@ -797,7 +828,7 @@ class _LetterGameState extends State<LetterGame>
                       style: TextStyle(
                         fontSize: 12.5,
                         color:
-                        Color(0xFF817584),
+                        Color(0xFF23D63E),
                       ),
                     ),
                     const SizedBox(
@@ -844,7 +875,7 @@ class _LetterGameState extends State<LetterGame>
                         gradient:
                         const LinearGradient(
                           colors: [
-                            Color(0xFFF3E9FF),
+                            Color(0xFFE0FFE3),
                             Color(0xFFE9F8FF),
                           ],
                         ),
@@ -865,7 +896,7 @@ class _LetterGameState extends State<LetterGame>
                           fontWeight:
                           FontWeight.w700,
                           color:
-                          Color(0xFF654B76),
+                          Color(0xFF279A45),
                         ),
                       ),
                     ),
@@ -1079,7 +1110,7 @@ class _LetterGameState extends State<LetterGame>
           end: Alignment.bottomRight,
           colors: [
             Colors.white,
-            Color(0xFFF8F1FC),
+            Color(0xFFE6FAE8),
           ],
         ),
         borderRadius:
@@ -1091,9 +1122,9 @@ class _LetterGameState extends State<LetterGame>
         boxShadow: [
           BoxShadow(
             color:
-            const Color(0xFF7653A8)
-                .withOpacity(
-              dragging ? 0.18 : 0.08,
+            const Color(0xFF23D83E)
+                .withValues(
+              alpha: dragging ? 0.18 : 0.08,
             ),
             blurRadius:
             dragging ? 18 : 9,
@@ -1110,7 +1141,7 @@ class _LetterGameState extends State<LetterGame>
             fontWeight:
             FontWeight.w900,
             color:
-            Color(0xFF5D3D7A),
+            Color(0xFF259242),
           ),
         ),
       ),
@@ -1176,8 +1207,8 @@ class _LetterGameState extends State<LetterGame>
                 0xFFE9D8FF,
               )
                   : Colors.white
-                  .withOpacity(
-                0.68,
+                  .withValues(
+                alpha: 0.68,
               )
                   : const Color(
                 0xFFE9D8FF,
@@ -1203,8 +1234,8 @@ class _LetterGameState extends State<LetterGame>
                   color:
                   const Color(
                     0xFF7653A8,
-                  ).withOpacity(
-                    isHovering
+                  ).withValues(
+                    alpha: isHovering
                         ? 0.15
                         : 0.04,
                   ),
@@ -1263,7 +1294,7 @@ class _LetterGameState extends State<LetterGame>
         ),
         decoration: BoxDecoration(
           color:
-          const Color(0xFFF6F0FA),
+          const Color(0xFFE7F8E9),
           borderRadius:
           BorderRadius.circular(16),
         ),
@@ -1287,7 +1318,7 @@ class _LetterGameState extends State<LetterGame>
                 fontWeight:
                 FontWeight.w900,
                 color:
-                Color(0xFF5D3D7A),
+                Color(0xFF259242),
               ),
             ),
             const SizedBox(
@@ -1299,7 +1330,7 @@ class _LetterGameState extends State<LetterGame>
               const TextStyle(
                 fontSize: 9,
                 color:
-                Color(0xFF8A7B8E),
+                Color(0xFF2CDD47),
               ),
             ),
           ],
@@ -1324,8 +1355,8 @@ class _LetterGameState extends State<LetterGame>
       ),
       decoration: BoxDecoration(
         color:
-        Colors.white.withOpacity(
-          0.82,
+        Colors.white.withValues(
+          alpha: 0.82,
         ),
         borderRadius:
         BorderRadius.circular(15),
@@ -1350,7 +1381,7 @@ class _LetterGameState extends State<LetterGame>
               fontWeight:
               FontWeight.w900,
               color:
-              Color(0xFF7653A8),
+              Color(0xFF23D83E),
             ),
           ),
         ],
@@ -1415,8 +1446,8 @@ class _LetterGameState extends State<LetterGame>
                   color:
                   const Color(
                     0xFFE4D5FF,
-                  ).withOpacity(
-                    0.62,
+                  ).withValues(
+                    alpha: 0.62,
                   ),
                   shape:
                   BoxShape.circle,
@@ -1435,8 +1466,8 @@ class _LetterGameState extends State<LetterGame>
                   color:
                   const Color(
                     0xFFDDF1FF,
-                  ).withOpacity(
-                    0.70,
+                  ).withValues(
+                    alpha: 0.70,
                   ),
                   shape:
                   BoxShape.circle,
@@ -1455,8 +1486,8 @@ class _LetterGameState extends State<LetterGame>
                   color:
                   const Color(
                     0xFFEADFFF,
-                  ).withOpacity(
-                    0.60,
+                  ).withValues(
+                    alpha: 0.60,
                   ),
                   shape:
                   BoxShape.circle,
@@ -1503,8 +1534,8 @@ class _LetterGameState extends State<LetterGame>
                             BoxDecoration(
                               color: Colors
                                   .white
-                                  .withOpacity(
-                                0.90,
+                                  .withValues(
+                                alpha: 0.90,
                               ),
                               shape:
                               BoxShape.circle,
@@ -1655,8 +1686,8 @@ class _LetterGameState extends State<LetterGame>
                             BoxDecoration(
                               color: Colors
                                   .white
-                                  .withOpacity(
-                                0.82,
+                                  .withValues(
+                                alpha: 0.82,
                               ),
                               borderRadius:
                               BorderRadius
@@ -1803,8 +1834,8 @@ class _LetterGameState extends State<LetterGame>
                                   color:
                                   const Color(
                                     0xFF8E69B4,
-                                  ).withOpacity(
-                                    0.10,
+                                  ).withValues(
+                                    alpha: 0.10,
                                   ),
                                   blurRadius:
                                   16,
@@ -1826,8 +1857,8 @@ class _LetterGameState extends State<LetterGame>
                                   BoxDecoration(
                                     color: Colors
                                         .white
-                                        .withOpacity(
-                                      0.76,
+                                        .withValues(
+                                      alpha: 0.76,
                                     ),
                                     shape:
                                     BoxShape
@@ -1914,8 +1945,8 @@ class _LetterGameState extends State<LetterGame>
                             BoxDecoration(
                               color: Colors
                                   .white
-                                  .withOpacity(
-                                0.70,
+                                  .withValues(
+                                alpha: 0.70,
                               ),
                               borderRadius:
                               BorderRadius
@@ -2028,8 +2059,8 @@ class _LetterGameState extends State<LetterGame>
                             BoxDecoration(
                               color: Colors
                                   .white
-                                  .withOpacity(
-                                0.68,
+                                  .withValues(
+                                alpha: 0.68,
                               ),
                               borderRadius:
                               BorderRadius
@@ -2081,8 +2112,8 @@ class _LetterGameState extends State<LetterGame>
                             BoxDecoration(
                               color: Colors
                                   .white
-                                  .withOpacity(
-                                0.55,
+                                  .withValues(
+                                alpha: 0.55,
                               ),
                               borderRadius:
                               BorderRadius
@@ -2148,7 +2179,7 @@ class _LetterGameState extends State<LetterGame>
                 child: IgnorePointer(
                   child: Container(
                     color: Colors.white
-                        .withOpacity(0.22),
+                        .withValues(alpha: 0.22),
                     child: Center(
                       child:
                       ScaleTransition(
@@ -2169,8 +2200,8 @@ class _LetterGameState extends State<LetterGame>
                                 color:
                                 const Color(
                                   0xFF8CCF9A,
-                                ).withOpacity(
-                                  0.30,
+                                ).withValues(
+                                  alpha: 0.30,
                                 ),
                                 blurRadius:
                                 30,
@@ -2249,8 +2280,8 @@ class _LetterGameState extends State<LetterGame>
                         color:
                         const Color(
                           0xFFFFDADA,
-                        ).withOpacity(
-                          0.16,
+                        ).withValues(
+                          alpha: 0.16,
                         ),
                         child:
                         Center(
@@ -2287,8 +2318,8 @@ class _LetterGameState extends State<LetterGame>
                                     color:
                                     const Color(
                                       0xFFE38C8C,
-                                    ).withOpacity(
-                                      0.20,
+                                    ).withValues(
+                                      alpha: 0.20,
                                     ),
                                     blurRadius:
                                     20,
@@ -2360,6 +2391,7 @@ class _LetterGameState extends State<LetterGame>
     _correctController.dispose();
     _wrongController.dispose();
 
+    // gameTimer'i GameSessionMixin kapatir.
     super.dispose();
   }
 }

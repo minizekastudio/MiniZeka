@@ -231,9 +231,9 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF211A2A),
-                  Color(0xFF17131F),
-                  Color(0xFF17131F),
+                  Color(0xFF133120),
+                  Color(0xFF0E2418),
+                  Color(0xFF0E2418),
                 ],
               )
                   : const LinearGradient(
@@ -259,7 +259,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
               width: 165,
               height: 165,
               decoration: BoxDecoration(
-                color: const Color(0xFFDCC7FF).withOpacity(0.58),
+                color: const Color(0xFFC7FFCD).withValues(alpha: 0.58),
                 shape: BoxShape.circle,
               ),
             ),
@@ -276,7 +276,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
               width: 145,
               height: 145,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8D9FF).withOpacity(0.75),
+                color: const Color(0xFFD9FFDD).withValues(alpha: 0.75),
                 shape: BoxShape.circle,
               ),
             ),
@@ -293,7 +293,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
               width: 70,
               height: 70,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFE3CC).withOpacity(0.58),
+                color: const Color(0xFFFFE3CC).withValues(alpha: 0.58),
                 shape: BoxShape.circle,
               ),
             ),
@@ -310,7 +310,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
               width: 185,
               height: 185,
               decoration: BoxDecoration(
-                color: const Color(0xFFDDF3FF).withOpacity(0.85),
+                color: const Color(0xFFDDF3FF).withValues(alpha: 0.85),
                 shape: BoxShape.circle,
               ),
             ),
@@ -327,7 +327,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
               width: 180,
               height: 180,
               decoration: BoxDecoration(
-                color: const Color(0xFFE3D0FF).withOpacity(0.70),
+                color: const Color(0xFFD0FFD5).withValues(alpha: 0.70),
                 shape: BoxShape.circle,
               ),
             ),
@@ -360,7 +360,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
             right: 35,
             child: _Sparkle(
               size: 15,
-              color: Color(0xFFD7B9FF),
+              color: Color(0xFFB9FFC0),
             ),
           ),
 
@@ -393,11 +393,11 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.72),
+                              color: Colors.white.withValues(alpha: 0.72),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withValues(alpha: 0.05),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -406,7 +406,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                             child: const Icon(
                               Icons.arrow_back_rounded,
                               size: 22,
-                              color: Color(0xFF51425A),
+                              color: Color(0xFF1F7D38),
                             ),
                           ),
                         ),
@@ -428,7 +428,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF4E3865),
+                                color: Color(0xFF1F7E39),
                               ),
                             ),
                           ],
@@ -473,7 +473,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                                     fontSize: 27,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: -0.4,
-                                    color: Color(0xFF5D3D7A),
+                                    color: Color(0xFF259242),
                                   ),
                                 ),
 
@@ -488,7 +488,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                                       width: 25,
                                       height: 4,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFB178F5),
+                                        color: const Color(0xFF78F584),
                                         borderRadius:
                                         BorderRadius.circular(20),
                                       ),
@@ -498,7 +498,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                                       width: 8,
                                       height: 8,
                                       decoration: const BoxDecoration(
-                                        color: Color(0xFF7B42D1),
+                                        color: Color(0xFF35DE4E),
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -507,7 +507,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                                       width: 25,
                                       height: 4,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFB178F5),
+                                        color: const Color(0xFF78F584),
                                         borderRadius:
                                         BorderRadius.circular(20),
                                       ),
@@ -538,7 +538,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                                 fontSize: 13,
                                 height: 1.45,
                                 fontWeight: FontWeight.w500,
-                                color: Color(0xFF817487),
+                                color: Color(0xFF23D83E),
                               ),
                             ),
                           ),
@@ -558,9 +558,9 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                               emoji: '🧸',
                               title: '4 – 5 Yaş',
                               subtitle: 'Keşfetmeye ilk adım',
-                              backgroundColor: const Color(0xFFE8D5FF),
-                              secondaryColor: const Color(0xFFDCC1FF),
-                              iconColor: const Color(0xFF7A43C4),
+                              backgroundColor: const Color(0xFFD5FFD9),
+                              secondaryColor: const Color(0xFFC1FFC7),
+                              iconColor: const Color(0xFF2BDC45),
                               onTap: () => _selectAge(5),
                             ),
                           ),
@@ -646,7 +646,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                               Icon(
                                 Icons.auto_awesome_rounded,
                                 size: 15,
-                                color: Color(0xFF9A6BD1),
+                                color: Color(0xFF58E46D),
                               ),
                               SizedBox(width: 6),
                               Text(
@@ -654,7 +654,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF95829F),
+                                  color: Color(0xFF41E059),
                                 ),
                               ),
                             ],
@@ -735,8 +735,8 @@ class _AgeCardState extends State<AgeCard> {
         child: InkWell(
           onTap: _handleTap,
           borderRadius: BorderRadius.circular(25),
-          splashColor: widget.iconColor.withOpacity(0.08),
-          highlightColor: widget.iconColor.withOpacity(0.04),
+          splashColor: widget.iconColor.withValues(alpha: 0.08),
+          highlightColor: widget.iconColor.withValues(alpha: 0.04),
           child: Container(
             width: double.infinity,
             height: 82,
@@ -752,12 +752,12 @@ class _AgeCardState extends State<AgeCard> {
               ),
               borderRadius: BorderRadius.circular(25),
               border: Border.all(
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
                 width: 1.8,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: widget.iconColor.withOpacity(0.10),
+                  color: widget.iconColor.withValues(alpha: 0.10),
                   blurRadius: 15,
                   offset: const Offset(0, 7),
                 ),
@@ -773,7 +773,7 @@ class _AgeCardState extends State<AgeCard> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.16),
+                      color: Colors.white.withValues(alpha: 0.16),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -786,7 +786,7 @@ class _AgeCardState extends State<AgeCard> {
                   child: Icon(
                     Icons.star_rounded,
                     size: 19,
-                    color: widget.iconColor.withOpacity(0.32),
+                    color: widget.iconColor.withValues(alpha: 0.32),
                   ),
                 ),
 
@@ -804,15 +804,15 @@ class _AgeCardState extends State<AgeCard> {
                         width: 55,
                         height: 55,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.82),
+                          color: Colors.white.withValues(alpha: 0.82),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.95),
+                            color: Colors.white.withValues(alpha: 0.95),
                             width: 2,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: widget.iconColor.withOpacity(0.09),
+                              color: widget.iconColor.withValues(alpha: 0.09),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -846,7 +846,7 @@ class _AgeCardState extends State<AgeCard> {
                               style: TextStyle(
                                 fontSize: 17.5,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF51425A),
+                                color: const Color(0xFF1F7D38),
                               ),
                             ),
                             const SizedBox(height: 3),
@@ -857,8 +857,8 @@ class _AgeCardState extends State<AgeCard> {
                               style: TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF776A7A)
-                                    .withOpacity(0.85),
+                                color: const Color(0xFF21CA3A)
+                                    .withValues(alpha: 0.85),
                               ),
                             ),
                           ],
@@ -873,7 +873,7 @@ class _AgeCardState extends State<AgeCard> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.70),
+                          color: Colors.white.withValues(alpha: 0.70),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(

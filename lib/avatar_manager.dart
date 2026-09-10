@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AvatarManager {
@@ -23,7 +24,7 @@ class AvatarManager {
       _selectedAvatar =
           prefs.getString(_avatarKey) ?? '👦';
     } catch (e) {
-      print('❌ AVATAR AYARI YÜKLENEMEDİ: $e');
+      debugPrint('❌ AVATAR AYARI YÜKLENEMEDİ: $e');
     }
   }
 
@@ -41,10 +42,8 @@ class AvatarManager {
         _avatarKey,
         avatar,
       );
-
-      print('👤 AVATAR KAYDEDİLDİ: $avatar');
     } catch (e) {
-      print('❌ AVATAR KAYDEDİLEMEDİ: $e');
+      debugPrint('❌ AVATAR KAYDEDİLEMEDİ: $e');
     }
   }
 }

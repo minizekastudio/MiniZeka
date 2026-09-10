@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'achievement_manager.dart';
 
 class AchievementsPage extends StatefulWidget {
@@ -23,7 +22,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
       'emoji': '🧠',
       'title': 'Zihin Ustası',
       'description': '50 puana ulaştın!',
-      'color': const Color(0xFFE9D8FF),
+      'color': const Color(0xFFD8FFDC),
     },
     {
       'key': 'attention_master',
@@ -52,6 +51,20 @@ class _AchievementsPageState extends State<AchievementsPage> {
       'title': 'Mantık Ustası',
       'description': 'Mantık oyununu tamamladın!',
       'color': const Color(0xFFE1F4D4),
+    },
+    {
+      'key': 'word_master',
+      'emoji': '🔎',
+      'title': 'Kelime Avcısı',
+      'description': 'Kelime avı oyununu tamamladın!',
+      'color': const Color(0xFFEDE7FB),
+    },
+    {
+      'key': 'letter_master',
+      'emoji': '🔤',
+      'title': 'Harf Ustası',
+      'description': 'Harf oyununu tamamladın!',
+      'color': const Color(0xFFFFEAF2),
     },
     {
       'key': 'game_explorer',
@@ -113,7 +126,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [
-                  Color(0xFFE9D8FF),
+                  Color(0xFFD8FFDC),
                   Color(0xFFDDF5FF),
                 ],
               ),
@@ -146,7 +159,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                         style: TextStyle(
                           fontSize: 21,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF51376A),
+                          color: Color(0xFF20813A),
                         ),
                       ),
                       const SizedBox(height: 5),
@@ -154,7 +167,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                         '$unlockedCount / ${achievements.length} başarı açıldı',
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF66556F),
+                          color: Color(0xFF279D47),
                         ),
                       ),
                     ],
@@ -188,7 +201,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                   border: Border.all(
                     color: isUnlocked
                         ? Colors.transparent
-                        : const Color(0xFFE8DFEA),
+                        : const Color(0xFFD6F3D9),
                   ),
                 ),
                 child: Row(
@@ -199,7 +212,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                       decoration: BoxDecoration(
                         color: isUnlocked
                             ? Colors.white
-                            : const Color(0xFFF1EDF2),
+                            : const Color(0xFFE7F8E9),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -257,7 +270,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                     if (isUnlocked)
                       const Icon(
                         Icons.check_circle_rounded,
-                        color: Color(0xFF7653A8),
+                        color: Color(0xFF23D83E),
                         size: 25,
                       ),
                   ],

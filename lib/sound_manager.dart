@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SoundManager {
@@ -20,7 +21,7 @@ class SoundManager {
 
       _isSoundEnabled = prefs.getBool(_soundKey) ?? true;
     } catch (e) {
-      print('❌ SES AYARI YÜKLENEMEDİ: $e');
+      debugPrint('❌ SES AYARI YÜKLENEMEDİ: $e');
     }
   }
 
@@ -50,13 +51,8 @@ class SoundManager {
         await _player.stop();
       }
 
-      print(
-        enabled
-            ? '🔊 SES AÇILDI'
-            : '🔇 SES KAPATILDI',
-      );
     } catch (e) {
-      print('❌ SES AYARI KAYDEDİLEMEDİ: $e');
+      debugPrint('❌ SES AYARI KAYDEDİLEMEDİ: $e');
     }
   }
 
@@ -76,9 +72,8 @@ class SoundManager {
         AssetSource('sounds/correct.mp3'),
       );
 
-      print('✅ DOĞRU SESİ ÇALINDI');
     } catch (e) {
-      print('❌ SES HATASI: $e');
+      debugPrint('❌ SES HATASI: $e');
     }
   }
 
@@ -98,9 +93,8 @@ class SoundManager {
         AssetSource('sounds/wrong.mp3'),
       );
 
-      print('❌ YANLIŞ SESİ ÇALINDI');
     } catch (e) {
-      print('❌ SES HATASI: $e');
+      debugPrint('❌ SES HATASI: $e');
     }
   }
 
@@ -120,9 +114,8 @@ class SoundManager {
         AssetSource('sounds/game_over.mp3'),
       );
 
-      print('🎮 OYUN BİTTİ SESİ ÇALINDI');
     } catch (e) {
-      print('❌ SES HATASI: $e');
+      debugPrint('❌ SES HATASI: $e');
     }
   }
 }

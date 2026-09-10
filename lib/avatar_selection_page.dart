@@ -20,7 +20,7 @@ class _AvatarSelectionPageState
     _AvatarItem(
       emoji: '👦',
       name: 'Neşeli Çocuk',
-      color: Color(0xFFE4D5FF),
+      color: Color(0xFFD5FFD9),
     ),
     _AvatarItem(
       emoji: '👧',
@@ -55,7 +55,7 @@ class _AvatarSelectionPageState
     _AvatarItem(
       emoji: '🐰',
       name: 'Tavşan',
-      color: Color(0xFFF1DFFF),
+      color: Color(0xFFDFFFE2),
     ),
     _AvatarItem(
       emoji: '🐻',
@@ -70,7 +70,7 @@ class _AvatarSelectionPageState
     _AvatarItem(
       emoji: '🦄',
       name: 'Unicorn',
-      color: Color(0xFFE9D9FF),
+      color: Color(0xFFD9FFDD),
     ),
     _AvatarItem(
       emoji: '🐯',
@@ -110,7 +110,7 @@ class _AvatarSelectionPageState
         ),
         behavior: SnackBarBehavior.floating,
         backgroundColor:
-        const Color(0xFF7653A8),
+        const Color(0xFF23D83E),
         shape: RoundedRectangleBorder(
           borderRadius:
           BorderRadius.circular(16),
@@ -160,7 +160,7 @@ class _AvatarSelectionPageState
               width: 170,
               height: 170,
               decoration: BoxDecoration(
-                color: const Color(0xFFE4D5FF)
+                color: const Color(0xFFD5FFD9)
                     .withValues(alpha: 0.65),
                 shape: BoxShape.circle,
               ),
@@ -188,7 +188,7 @@ class _AvatarSelectionPageState
               width: 180,
               height: 180,
               decoration: BoxDecoration(
-                color: const Color(0xFFEADFFF)
+                color: const Color(0xFFDFFFE2)
                     .withValues(alpha: 0.70),
                 shape: BoxShape.circle,
               ),
@@ -245,7 +245,7 @@ class _AvatarSelectionPageState
                                 .arrow_back_ios_new_rounded,
                             size: 17,
                             color:
-                            Color(0xFF55465D),
+                            Color(0xFF21823B),
                           ),
                         ),
                       ),
@@ -260,7 +260,7 @@ class _AvatarSelectionPageState
                             fontWeight:
                             FontWeight.w900,
                             color:
-                            Color(0xFF5D3D7A),
+                            Color(0xFF259242),
                           ),
                         ),
                       ),
@@ -377,7 +377,7 @@ class _AvatarSelectionPageState
                       fontSize: 19,
                       fontWeight:
                       FontWeight.w900,
-                      color: Color(0xFF594267),
+                      color: Color(0xFF22873D),
                     ),
                   ),
                 ),
@@ -388,7 +388,7 @@ class _AvatarSelectionPageState
                   'Seni en iyi anlatan avatarı seç! 🌟',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF817584),
+                    color: Color(0xFF23D63E),
                   ),
                 ),
 
@@ -442,7 +442,7 @@ class _AvatarSelectionPageState
                                 fontWeight:
                                 FontWeight.w900,
                                 color:
-                                Color(0xFF51425A),
+                                Color(0xFF1F7D38),
                               ),
                             ),
                           ],
@@ -455,7 +455,7 @@ class _AvatarSelectionPageState
                           style: TextStyle(
                             fontSize: 11.5,
                             color:
-                            Color(0xFF897C8E),
+                            Color(0xFF2DDD48),
                           ),
                         ),
 

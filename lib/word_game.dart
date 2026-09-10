@@ -3,6 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'achievement_manager.dart';
+import 'game_kit.dart';
 import 'sound_manager.dart';
 
 class WordGame extends StatefulWidget {
@@ -37,7 +39,7 @@ class WordItem {
 // =============================================================
 
 class _WordGameState extends State<WordGame>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, GameSessionMixin {
   final Random _random = Random();
 
   // -------------------------------------------------------------
@@ -173,7 +175,6 @@ class _WordGameState extends State<WordGame>
   int _secondsLeft = 120;
 
   int _correctAnswers = 0;
-  int _wrongAnswers = 0;
 
   WordItem? _currentWord;
 
@@ -186,6 +187,29 @@ class _WordGameState extends State<WordGame>
   bool _showCorrectAnimation = false;
   bool _showWrongAnimation = false;
   bool _gameFinished = false;
+
+  // -------------------------------------------------------------
+  // GÜNLÜK SÜRE OTURUMU
+  // -------------------------------------------------------------
+
+  @override
+  String get gameName => 'Kelime Avı';
+
+  @override
+  int get defaultAllowedMinutes => 15;
+
+  @override
+  GamePalette get palette => GamePalette.word;
+
+  @override
+  String get timeUpMessage =>
+      'Kelime avı için belirlenen günlük süreyi kullandın. 🌙';
+
+  @override
+  int get currentScore => _score;
+
+  @override
+  bool get canShowTimeUpDialog => !_gameFinished;
 
   // -------------------------------------------------------------
   // ANİMASYON
@@ -219,6 +243,8 @@ class _WordGameState extends State<WordGame>
       curve: Curves.easeOut,
     );
 
+    startGameSession();
+
     _startGame();
   }
 
@@ -234,7 +260,6 @@ class _WordGameState extends State<WordGame>
     _lives = _maxLives;
     _secondsLeft = 120;
     _correctAnswers = 0;
-    _wrongAnswers = 0;
     _gameFinished = false;
 
     _loadQuestion();
@@ -452,7 +477,6 @@ class _WordGameState extends State<WordGame>
     if (!mounted) return;
 
     setState(() {
-      _wrongAnswers++;
       _lives--;
       _showWrongAnimation = true;
     });
@@ -509,6 +533,10 @@ class _WordGameState extends State<WordGame>
 
     _gameFinished = true;
 
+    await AchievementManager.unlock('first_step');
+    await AchievementManager.unlock('word_master');
+    await AchievementManager.markGamePlayed('word');
+
     await SoundManager.playGameOver();
 
     if (!mounted) return;
@@ -542,7 +570,7 @@ class _WordGameState extends State<WordGame>
       barrierDismissible: false,
       barrierLabel: 'Oyun Sonucu',
       barrierColor:
-      Colors.black.withOpacity(0.55),
+      Colors.black.withValues(alpha: 0.55),
       transitionDuration:
       const Duration(milliseconds: 400),
       pageBuilder:
@@ -566,14 +594,14 @@ class _WordGameState extends State<WordGame>
                 const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color:
-                  const Color(0xFFFFFBFF),
+                  const Color(0xFFE0FFE3),
                   borderRadius:
                   BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
                       color:
-                      Colors.black.withOpacity(
-                        0.16,
+                      Colors.black.withValues(
+                        alpha: 0.16,
                       ),
                       blurRadius: 30,
                       offset:
@@ -603,7 +631,7 @@ class _WordGameState extends State<WordGame>
                         fontWeight:
                         FontWeight.w900,
                         color:
-                        Color(0xFF5D3D7A),
+                        Color(0xFF259242),
                       ),
                     ),
 
@@ -616,7 +644,7 @@ class _WordGameState extends State<WordGame>
                       style: TextStyle(
                         fontSize: 12.5,
                         color:
-                        Color(0xFF817584),
+                        Color(0xFF23D63E),
                       ),
                     ),
 
@@ -668,7 +696,7 @@ class _WordGameState extends State<WordGame>
                         gradient:
                         const LinearGradient(
                           colors: [
-                            Color(0xFFF3E9FF),
+                            Color(0xFFE0FFE3),
                             Color(0xFFE9F8FF),
                           ],
                         ),
@@ -690,7 +718,7 @@ class _WordGameState extends State<WordGame>
                           fontWeight:
                           FontWeight.w700,
                           color:
-                          Color(0xFF654B76),
+                          Color(0xFF279A45),
                         ),
                       ),
                     ),
@@ -867,7 +895,7 @@ class _WordGameState extends State<WordGame>
           horizontal: 5,
         ),
         decoration: BoxDecoration(
-          color: const Color(0xFFF6F0FA),
+          color: const Color(0xFFE7F8E9),
           borderRadius:
           BorderRadius.circular(16),
         ),
@@ -889,7 +917,7 @@ class _WordGameState extends State<WordGame>
                 fontWeight:
                 FontWeight.w900,
                 color:
-                Color(0xFF5D3D7A),
+                Color(0xFF259242),
               ),
             ),
             const SizedBox(
@@ -900,7 +928,7 @@ class _WordGameState extends State<WordGame>
               style: const TextStyle(
                 fontSize: 9,
                 color:
-                Color(0xFF8A7B8E),
+                Color(0xFF2CDD47),
               ),
             ),
           ],
@@ -944,8 +972,8 @@ class _WordGameState extends State<WordGame>
             gradient: selected
                 ? const LinearGradient(
               colors: [
-                Color(0xFFE5D8EF),
-                Color(0xFFEDE8F1),
+                Color(0xFFD4F3D7),
+                Color(0xFFE2F7E4),
               ],
             )
                 : const LinearGradient(
@@ -955,22 +983,22 @@ class _WordGameState extends State<WordGame>
               Alignment.bottomRight,
               colors: [
                 Colors.white,
-                Color(0xFFF8F2FC),
+                Color(0xFFE6F9E8),
               ],
             ),
             borderRadius:
             BorderRadius.circular(18),
             border: Border.all(
               color: selected
-                  ? const Color(0xFFD5C7DF)
+                  ? const Color(0xFFB8EEBD)
                   : Colors.white,
               width: 2,
             ),
             boxShadow: [
               BoxShadow(
                 color:
-                Colors.black.withOpacity(
-                  selected ? 0.02 : 0.07,
+                Colors.black.withValues(
+                  alpha: selected ? 0.02 : 0.07,
                 ),
                 blurRadius:
                 selected ? 4 : 10,
@@ -1027,7 +1055,7 @@ class _WordGameState extends State<WordGame>
             color: Theme.of(context)
                 .colorScheme
                 .surface
-                .withOpacity(0.72),
+                .withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: Colors.white,
@@ -1041,7 +1069,7 @@ class _WordGameState extends State<WordGame>
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF9A8D9F),
+                color: Color(0xFF4AE261),
               ),
             ),
           )
@@ -1052,24 +1080,27 @@ class _WordGameState extends State<WordGame>
             children: List.generate(
               selectedLetters.length,
                   (position) {
-                return Container(
-                  width: 42,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE9D8FF),
-                    borderRadius:
-                    BorderRadius.circular(13),
-                    border: Border.all(
-                      color: const Color(0xFFDCC8F0),
+                return GestureDetector(
+                  onTap: () => _removeSelectedLetter(position),
+                  child: Container(
+                    width: 42,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD8FFDC),
+                      borderRadius:
+                      BorderRadius.circular(13),
+                      border: Border.all(
+                        color: const Color(0xFFC6F2CB),
+                      ),
                     ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      selectedLetters[position],
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF65488A),
+                    child: Center(
+                      child: Text(
+                        selectedLetters[position],
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2AA84C),
+                        ),
                       ),
                     ),
                   ),
@@ -1103,11 +1134,11 @@ class _WordGameState extends State<WordGame>
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor:
-                  const Color(0xFF7653A8),
+                  const Color(0xFF23D83E),
                   disabledForegroundColor:
-                  const Color(0xFFBDB4C2),
+                  const Color(0xFF91E599),
                   side: const BorderSide(
-                    color: Color(0xFFDCCBEA),
+                    color: Color(0xFFC4F1C8),
                   ),
                   minimumSize:
                   const Size(double.infinity, 46),
@@ -1138,12 +1169,12 @@ class _WordGameState extends State<WordGame>
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                  const Color(0xFF7653A8),
+                  const Color(0xFF23D83E),
                   foregroundColor: Colors.white,
                   disabledBackgroundColor:
-                  const Color(0xFFE4DDE8),
+                  const Color(0xFFD3F2D6),
                   disabledForegroundColor:
-                  const Color(0xFFAAA1AF),
+                  const Color(0xFF69E77C),
                   elevation: 3,
                   minimumSize:
                   const Size(double.infinity, 46),
@@ -1189,7 +1220,7 @@ class _WordGameState extends State<WordGame>
                   color:
                   const Color(
                     0xFFE4D5FF,
-                  ).withOpacity(0.65),
+                  ).withValues(alpha: 0.65),
                   shape:
                   BoxShape.circle,
                 ),
@@ -1207,7 +1238,7 @@ class _WordGameState extends State<WordGame>
                   color:
                   const Color(
                     0xFFDDF1FF,
-                  ).withOpacity(0.70),
+                  ).withValues(alpha: 0.70),
                   shape:
                   BoxShape.circle,
                 ),
@@ -1225,7 +1256,7 @@ class _WordGameState extends State<WordGame>
                   color:
                   const Color(
                     0xFFEADFFF,
-                  ).withOpacity(0.65),
+                  ).withValues(alpha: 0.65),
                   shape:
                   BoxShape.circle,
                 ),
@@ -1273,8 +1304,8 @@ class _WordGameState extends State<WordGame>
                                 BoxDecoration(
                                   color: Colors
                                       .white
-                                      .withOpacity(
-                                    0.90,
+                                      .withValues(
+                                    alpha: 0.90,
                                   ),
                                   shape:
                                   BoxShape
@@ -1424,8 +1455,8 @@ class _WordGameState extends State<WordGame>
                                 BoxDecoration(
                                   color: Colors
                                       .white
-                                      .withOpacity(
-                                    0.82,
+                                      .withValues(
+                                    alpha: 0.82,
                                   ),
                                   borderRadius:
                                   BorderRadius
@@ -1571,8 +1602,8 @@ class _WordGameState extends State<WordGame>
                                       color:
                                       const Color(
                                         0xFF8E69B4,
-                                      ).withOpacity(
-                                        0.10,
+                                      ).withValues(
+                                        alpha: 0.10,
                                       ),
                                       blurRadius:
                                       15,
@@ -1593,8 +1624,8 @@ class _WordGameState extends State<WordGame>
                                       BoxDecoration(
                                         color: Colors
                                             .white
-                                            .withOpacity(
-                                          0.75,
+                                            .withValues(
+                                          alpha: 0.75,
                                         ),
                                         shape:
                                         BoxShape
@@ -1690,8 +1721,8 @@ class _WordGameState extends State<WordGame>
                                 BoxDecoration(
                                   color: Colors
                                       .white
-                                      .withOpacity(
-                                    0.68,
+                                      .withValues(
+                                    alpha: 0.68,
                                   ),
                                   borderRadius:
                                   BorderRadius
@@ -1745,8 +1776,8 @@ class _WordGameState extends State<WordGame>
                                 BoxDecoration(
                                   color:
                                   Colors.white
-                                      .withOpacity(
-                                    0.55,
+                                      .withValues(
+                                    alpha: 0.55,
                                   ),
                                   borderRadius:
                                   BorderRadius
@@ -1811,7 +1842,7 @@ class _WordGameState extends State<WordGame>
                 child: IgnorePointer(
                   child: Container(
                     color: Colors.white
-                        .withOpacity(0.25),
+                        .withValues(alpha: 0.25),
                     child: Center(
                       child: TweenAnimationBuilder<
                           double>(
@@ -1850,8 +1881,8 @@ class _WordGameState extends State<WordGame>
                                 color:
                                 const Color(
                                   0xFF8CCF9A,
-                                ).withOpacity(
-                                  0.30,
+                                ).withValues(
+                                  alpha: 0.30,
                                 ),
                                 blurRadius: 30,
                                 spreadRadius: 5,
@@ -1924,8 +1955,8 @@ class _WordGameState extends State<WordGame>
                         color:
                         const Color(
                           0xFFFFDADA,
-                        ).withOpacity(
-                          0.20 * value,
+                        ).withValues(
+                          alpha: 0.20 * value,
                         ),
                         child: Center(
                           child:
@@ -1956,8 +1987,8 @@ class _WordGameState extends State<WordGame>
                                     color:
                                     const Color(
                                       0xFFE38C8C,
-                                    ).withOpacity(
-                                      0.20,
+                                    ).withValues(
+                                      alpha: 0.20,
                                     ),
                                     blurRadius:
                                     20,
@@ -2033,7 +2064,7 @@ class _WordGameState extends State<WordGame>
       ),
       decoration: BoxDecoration(
         color:
-        Colors.white.withOpacity(0.82),
+        Colors.white.withValues(alpha: 0.82),
         borderRadius:
         BorderRadius.circular(15),
       ),
@@ -2055,7 +2086,7 @@ class _WordGameState extends State<WordGame>
               fontWeight:
               FontWeight.w900,
               color:
-              Color(0xFF7653A8),
+              Color(0xFF23D83E),
             ),
           ),
         ],
@@ -2087,6 +2118,7 @@ class _WordGameState extends State<WordGame>
   void dispose() {
     _timer?.cancel();
     _animationController.dispose();
+    // gameTimer'i GameSessionMixin kapatir.
     super.dispose();
   }
 }
