@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_theme.dart';
 import 'settings_page.dart';
 import 'avatar_manager.dart';
 import 'avatar_selection_page.dart';
@@ -33,7 +34,6 @@ class _HomePageState extends State<HomePage>
   late AnimationController _controller;
 
   late Animation<double> _titleAnimation;
-  late Animation<double> _welcomeAnimation;
   late Animation<double> _infoAnimation;
 
   late Animation<double> _game1Animation;
@@ -62,14 +62,6 @@ class _HomePageState extends State<HomePage>
       ),
     );
 
-    _welcomeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.12,
-        0.38,
-        curve: Curves.easeOutCubic,
-      ),
-    );
 
     _infoAnimation = CurvedAnimation(
       parent: _controller,
@@ -197,7 +189,7 @@ class _HomePageState extends State<HomePage>
               width: 165,
               height: 165,
               decoration: BoxDecoration(
-                color: const Color(0xFFE4D3FF).withOpacity(0.55),
+                color: const Color(0xFFD3FFD7).withValues(alpha: 0.55),
                 shape: BoxShape.circle,
               ),
             ),
@@ -210,7 +202,7 @@ class _HomePageState extends State<HomePage>
               width: 145,
               height: 145,
               decoration: BoxDecoration(
-                color: const Color(0xFFEBDFFF).withOpacity(0.72),
+                color: const Color(0xFFDFFFE2).withValues(alpha: 0.72),
                 shape: BoxShape.circle,
               ),
             ),
@@ -223,7 +215,7 @@ class _HomePageState extends State<HomePage>
               width: 185,
               height: 185,
               decoration: BoxDecoration(
-                color: const Color(0xFFDDF3FF).withOpacity(0.8),
+                color: const Color(0xFFDDF3FF).withValues(alpha: 0.8),
                 shape: BoxShape.circle,
               ),
             ),
@@ -236,7 +228,7 @@ class _HomePageState extends State<HomePage>
               width: 175,
               height: 175,
               decoration: BoxDecoration(
-                color: const Color(0xFFE3D0FF).withOpacity(0.72),
+                color: const Color(0xFFD0FFD5).withValues(alpha: 0.72),
                 shape: BoxShape.circle,
               ),
             ),
@@ -266,7 +258,7 @@ class _HomePageState extends State<HomePage>
             right: 25,
             child: _Sparkle(
               size: 15,
-              color: Color(0xFFD3B5FF),
+              color: Color(0xFFB5FFBC),
             ),
           ),
 
@@ -302,13 +294,13 @@ class _HomePageState extends State<HomePage>
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.72),
+                            color: Colors.white.withValues(alpha: 0.72),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.arrow_back_ios_new_rounded,
                             size: 17,
-                            color: Color(0xFF55465D),
+                            color: Color(0xFF21823B),
                           ),
                         ),
                       ),
@@ -330,11 +322,11 @@ class _HomePageState extends State<HomePage>
                               width: 42,
                               height: 42,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.90),
+                                color: Colors.white.withValues(alpha: 0.90),
                                 borderRadius: BorderRadius.circular(14),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.06),
+                                    color: Colors.black.withValues(alpha: 0.06),
                                     blurRadius: 9,
                                     offset: const Offset(0, 4),
                                   ),
@@ -342,7 +334,7 @@ class _HomePageState extends State<HomePage>
                               ),
                               child: const Icon(
                                 Icons.settings_rounded,
-                                color: Color(0xFF7653A8),
+                                color: Color(0xFF23D83E),
                                 size: 21,
                               ),
                             ),
@@ -357,11 +349,11 @@ class _HomePageState extends State<HomePage>
                               width: 42,
                               height: 42,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.90),
+                                color: Colors.white.withValues(alpha: 0.90),
                                 borderRadius: BorderRadius.circular(14),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.06),
+                                    color: Colors.black.withValues(alpha: 0.06),
                                     blurRadius: 9,
                                     offset: const Offset(0, 4),
                                   ),
@@ -401,14 +393,14 @@ class _HomePageState extends State<HomePage>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFFE9D8FF),
+                              Color(0xFFD8FFDC),
                               Color(0xFFDDF5FF),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(19),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF9B70D4).withOpacity(0.12),
+                              color: const Color(0xFF5FE573).withValues(alpha: 0.12),
                               blurRadius: 12,
                               offset: const Offset(0, 5),
                             ),
@@ -430,12 +422,12 @@ class _HomePageState extends State<HomePage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'MiniZeka',
+                              'Zeka Bahçesi',
                               style: TextStyle(
                                 fontSize: 27,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.5,
-                                color: Color(0xFF5D3D7A),
+                                color: Color(0xFF259242),
                               ),
                             ),
                             SizedBox(height: 3),
@@ -444,7 +436,7 @@ class _HomePageState extends State<HomePage>
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF8A7598),
+                                color: Color(0xFF30DD4A),
                               ),
                             ),
                           ],
@@ -475,7 +467,7 @@ class _HomePageState extends State<HomePage>
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                Color(0xFFE9D8FF),
+                                Color(0xFFD8FFDC),
                                 Color(0xFFDDF5FF),
                               ],
                             ),
@@ -486,7 +478,7 @@ class _HomePageState extends State<HomePage>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF7653A8).withOpacity(0.14),
+                                color: const Color(0xFF23D83E).withValues(alpha: 0.14),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -507,124 +499,6 @@ class _HomePageState extends State<HomePage>
                 ),
 
                 const SizedBox(height: 22),
-                // =================================================
-                // HAZIR MISIN KARTI
-                // =================================================
-
-                _animatedSection(
-                  animation: _welcomeAnimation,
-                  slideBegin: 0.25,
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFFE9D8FF),
-                          Color(0xFFDDF5FF),
-                        ],
-                      ),
-                      borderRadius:
-                      BorderRadius.circular(28),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.9),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF8B62B5)
-                              .withOpacity(0.13),
-                          blurRadius: 17,
-                          offset: const Offset(0, 7),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Hazır mısın? 🚀',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF51376A),
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Bugün biraz eğlenmeye ve zekanı geliştirmeye ne dersin?',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  height: 1.45,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF66556F),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(width: 12),
-
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            color:
-                            Colors.white.withOpacity(0.70),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Text(
-                              '🌈',
-                              style:
-                              TextStyle(fontSize: 41),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                // =================================================
-                // BİLGİ KARTLARI
-                // =================================================
-
-                _animatedSection(
-                  animation: _infoAnimation,
-                  slideBegin: 0.18,
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: _InfoCard(
-                          emoji: '🎮',
-                          title: '5 Oyun',
-                          subtitle: 'Keşfet',
-                        ),
-                      ),
-
-                      const SizedBox(width: 10),
-
-                      const Expanded(
-                        child: _InfoCard(
-                          emoji: '🧠',
-                          title: 'Zekan Gelişsin',
-                          subtitle: 'Oyna & öğren',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 25),
 
                 // =================================================
                 // OYUNLAR BAŞLIĞI
@@ -650,20 +524,10 @@ class _HomePageState extends State<HomePage>
                             style: TextStyle(
                               fontSize: 21,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF503B5C),
+                              color: Color(0xFF1E7936),
                             ),
                           ),
                         ],
-                      ),
-
-                      SizedBox(height: 5),
-
-                      Text(
-                        'Her oyun farklı bir becerini geliştirir.',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: Color(0xFF8A7B8E),
-                        ),
                       ),
 
                       SizedBox(height: 15),
@@ -675,271 +539,162 @@ class _HomePageState extends State<HomePage>
                 // HAFIZA
                 // =================================================
 
-                _animatedSection(
-                  animation: _game1Animation,
-                  child: GameCard(
-                    emoji: '🧠',
-                    title: 'Hafıza Oyunu',
-                    description:
-                    'Kartların eşlerini bul!',
-                    difficulty: 'Kolay',
-                    color: const Color(0xFFE9D8FF),
-                    buttonColor:
-                    const Color(0xFF8B62B5),
-                    onTap: widget.onMemoryTap,
-                  ),
-                ),
-
-                // =================================================
-                // DİKKAT
-                // =================================================
-
-                _animatedSection(
-                  animation: _game2Animation,
-                  child: GameCard(
-                    emoji: '👀',
-                    title: 'Dikkat Oyunu',
-                    description:
-                    'Farklı olanı bul!',
-                    difficulty: 'Orta',
-                    color: const Color(0xFFFFE1C4),
-                    buttonColor:
-                    const Color(0xFFE88B42),
-                    onTap: widget.onAttentionTap,
-                  ),
-                ),
-
-                // =================================================
-                // MATEMATİK
-                // =================================================
-
-                _animatedSection(
-                  animation: _game3Animation,
-                  child: GameCard(
-                    emoji: '🔢',
-                    title: 'Matematik Oyunu',
-                    description:
-                    'Doğru sonucu bul!',
-                    difficulty: 'Orta',
-                    color: const Color(0xFFD8ECFF),
-                    buttonColor:
-                    const Color(0xFF4D91D0),
-                    onTap: widget.onMathTap,
-                  ),
-                ),
-
-                // =================================================
-                // EŞLEŞTİRME
-                // =================================================
-
-                _animatedSection(
-                  animation: _game4Animation,
-                  child: GameCard(
-                    emoji: '🔷',
-                    title: 'Eşleştirme Oyunu',
-                    description:
-                    'Doğru şekli eşleştir!',
-                    difficulty: 'Kolay',
-                    color: const Color(0xFFD6F6F1),
-                    buttonColor:
-                    const Color(0xFF3FA99C),
-                    onTap: widget.onShapeTap,
-                  ),
-                ),
-
-                // =================================================
-                // MANTIK
-                // =================================================
-
-                _animatedSection(
-                  animation: _game5Animation,
-                  child: GameCard(
-                    emoji: '🧩',
-                    title: 'Mantık Oyunu',
-                    description:
-                    'Mantığını kullan ve çöz!',
-                    difficulty: 'Zor',
-                    color: const Color(0xFFE1F4D4),
-                    buttonColor:
-                    const Color(0xFF6FA84A),
-                    onTap: widget.onLogicTap,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // =================================================
-// KELİME AVI
-// =================================================
-
-                _animatedSection(
-                  animation: _game6Animation,
-                  slideBegin: 0.10,
-                  child: GameCard(
-                    emoji: '🔎',
-                    title: 'Kelime Avı',
-                    description: 'Harfleri birleştir, kelimeyi bul!',
-                    difficulty: 'Orta',
-                    color: const Color(0xFFF3E2FF),
-                    buttonColor: const Color(0xFF9B70D4),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const WordGame(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // =================================================
-// HARFLERİ YERLEŞTİR
-// =================================================
-
-                _animatedSection(
-                  animation: _game7Animation,
-                  slideBegin: 0.10,
-                  child: GameCard(
-                    emoji: '🔤',
-                    title: 'Harfleri Yerleştir',
-                    description: 'Harfleri doğru sıraya koy!',
-                    difficulty: 'Kolay',
-                    color: const Color(0xFFE4F3FF),
-                    buttonColor: const Color(0xFF6B9ED1),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const LetterGame(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // =================================================
-                // BUGÜNÜN HEDEFİ
-                // =================================================
-
-                _animatedSection(
-                  animation: _game5Animation,
-                  slideBegin: 0.08,
-                  child: Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color:
-                      Colors.white.withOpacity(0.88),
-                      borderRadius:
-                      BorderRadius.circular(22),
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color:
-                          Colors.black.withOpacity(0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      children: [
-                        Text(
-                          '🌟',
-                          style:
-                          TextStyle(fontSize: 29),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Bugünün hedefi',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight:
-                                  FontWeight.w900,
-                                  color:
-                                  Color(0xFF51425A),
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Bir oyun seç ve bugün yeni bir şey öğren! 💜',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  height: 1.4,
-                                  color:
-                                  Color(0xFF776A7A),
-                                ),
-                              ),
-                            ],
+                // ÖRNEK: yeni kare kart tasarimi (2 sutun, yazi yok,
+                // zorluk yildizla, kartin tamami tiklanabilir)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 13),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _animatedSection(
+                          animation: _game1Animation,
+                          child: OyunKartiKare(
+                            emoji: '🧠',
+                            baslik: 'Hafıza',
+                            yildiz: 1,
+                            renk: Marka.oyunHafiza,
+                            onTap: widget.onMemoryTap,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // =================================================
-                // ALT MOTİVASYON
-                // =================================================
-
-                _animatedSection(
-                  animation: _game5Animation,
-                  slideBegin: 0.08,
-                  child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFF3E9FF),
-                          Color(0xFFE9F8FF),
-                        ],
                       ),
-                      borderRadius:
-                      BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      children: [
-                        Text(
-                          '💡',
-                          style:
-                          TextStyle(fontSize: 25),
-                        ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Her doğru cevap seni biraz daha ileri götürür! 🌟',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight:
-                              FontWeight.w700,
-                              color:
-                              Color(0xFF654B76),
-                              height: 1.35,
-                            ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: _animatedSection(
+                          animation: _game2Animation,
+                          child: OyunKartiKare(
+                            emoji: '👀',
+                            baslik: 'Dikkat',
+                            yildiz: 2,
+                            renk: Marka.oyunDikkat,
+                            onTap: widget.onAttentionTap,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+
+                // =================================================
+                // MATEMATİK  ·  EŞLEŞTİRME
+                // =================================================
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 13),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _animatedSection(
+                          animation: _game3Animation,
+                          child: OyunKartiKare(
+                            emoji: '🔢',
+                            baslik: 'Matematik',
+                            yildiz: 2,
+                            renk: Marka.oyunMatematik,
+                            onTap: widget.onMathTap,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: _animatedSection(
+                          animation: _game4Animation,
+                          child: OyunKartiKare(
+                            emoji: '🔷',
+                            baslik: 'Eşleştirme',
+                            yildiz: 1,
+                            renk: Marka.oyunEslestirme,
+                            onTap: widget.onShapeTap,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // =================================================
+                // MANTIK  ·  KELİME AVI
+                // =================================================
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 13),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _animatedSection(
+                          animation: _game5Animation,
+                          child: OyunKartiKare(
+                            emoji: '🧩',
+                            baslik: 'Mantık',
+                            yildiz: 3,
+                            renk: Marka.oyunMantik,
+                            onTap: widget.onLogicTap,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: _animatedSection(
+                          animation: _game6Animation,
+                          slideBegin: 0.10,
+                          child: OyunKartiKare(
+                            emoji: '🔎',
+                            baslik: 'Kelime Avı',
+                            yildiz: 2,
+                            renk: Marka.oyunKelimeAvi,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const WordGame(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // =================================================
+                // HARFLER  (tek kalan — yarim genislik)
+                // =================================================
+
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 13),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _animatedSection(
+                          animation: _game7Animation,
+                          slideBegin: 0.10,
+                          child: OyunKartiKare(
+                            emoji: '🔤',
+                            baslik: 'Harfler',
+                            yildiz: 1,
+                            renk: Marka.oyunHarf,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const LetterGame(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      // Yedinci oyun tek kaldi; sag hucre bos birakiliyor.
+                      const Expanded(child: SizedBox()),
+                    ],
+                  ),
+                ),
+
               ],
             ),
           ),
@@ -950,290 +705,151 @@ class _HomePageState extends State<HomePage>
 }
 
 // =============================================================
-// BİLGİ KARTI
+// YENİ KARE OYUN KARTI  (örnek tasarım)
 // =============================================================
+//
+// CLAUDE.md "ekran sadeleştirmesi" 1. maddesi:
+// 2 sutunlu buyuk kare kart, sadece ikon + oyun adi, zorluk 1-3
+// yildizla, kartin tamami tiklanabilir. Renkler Marka'dan gelir.
 
-class _InfoCard extends StatelessWidget {
+class OyunKartiKare extends StatefulWidget {
   final String emoji;
-  final String title;
-  final String subtitle;
+  final String baslik;
 
-  const _InfoCard({
-    required this.emoji,
-    required this.title,
-    required this.subtitle,
-  });
+  /// 1 = kolay, 2 = orta, 3 = zor
+  final int yildiz;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 15,
-        horizontal: 10,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
-        borderRadius: BorderRadius.circular(19),
-        border: Border.all(
-          color: Colors.white,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 24),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF51425A),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 10.5,
-              color: Color(0xFF8A7B8E),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+  /// Marka.oyunHafiza gibi, oyuna ait sabit renk.
+  final Color renk;
 
-// =============================================================
-// OYUN KARTI
-// =============================================================
-
-class GameCard extends StatefulWidget {
-  final String emoji;
-  final String title;
-  final String description;
-  final String difficulty;
-  final Color color;
-  final Color buttonColor;
   final VoidCallback onTap;
 
-  const GameCard({
+  const OyunKartiKare({
     super.key,
     required this.emoji,
-    required this.title,
-    required this.description,
-    required this.difficulty,
-    required this.color,
-    required this.buttonColor,
+    required this.baslik,
+    required this.yildiz,
+    required this.renk,
     required this.onTap,
   });
 
   @override
-  State<GameCard> createState() => _GameCardState();
+  State<OyunKartiKare> createState() => _OyunKartiKareState();
 }
 
-class _GameCardState extends State<GameCard> {
-  bool _pressed = false;
+class _OyunKartiKareState extends State<OyunKartiKare> {
+  bool _basili = false;
 
-  Future<void> _handleTap() async {
-    if (_pressed) return;
+  Future<void> _dokun() async {
+    if (_basili) return;
 
-    setState(() {
-      _pressed = true;
-    });
+    setState(() => _basili = true);
 
-    await Future.delayed(
-      const Duration(milliseconds: 110),
-    );
+    await Future.delayed(const Duration(milliseconds: 110));
 
     if (!mounted) return;
 
-    setState(() {
-      _pressed = false;
-    });
+    setState(() => _basili = false);
 
     widget.onTap();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedScale(
-      scale: _pressed ? 0.965 : 1.0,
-      duration:
-      const Duration(milliseconds: 110),
-      curve: Curves.easeOut,
-      child: Container(
-        margin:
-        const EdgeInsets.only(bottom: 13),
-        padding: const EdgeInsets.all(13),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              widget.color,
-              Color.lerp(
-                widget.color,
-                Colors.white,
-                0.08,
-              )!,
-            ],
-          ),
-          borderRadius:
-          BorderRadius.circular(25),
-          border: Border.all(
-            color:
-            Colors.white.withOpacity(0.85),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: widget.buttonColor
-                  .withOpacity(0.10),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // OYUN İKONU
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color:
-                Colors.white.withOpacity(0.78),
-                borderRadius:
-                BorderRadius.circular(20),
-                border: Border.all(
-                  color:
-                  Colors.white.withOpacity(0.9),
-                  width: 1.5,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  widget.emoji,
-                  style:
-                  const TextStyle(fontSize: 32),
-                ),
-              ),
-            ),
+    final zemin = Color.lerp(widget.renk, Colors.white, 0.86)!;
+    final yazi = Color.lerp(widget.renk, Colors.black, 0.35)!;
+    final sonukYildiz = Color.lerp(widget.renk, Colors.white, 0.62)!;
 
-            const SizedBox(width: 12),
-
-            // METİNLER
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight:
-                      FontWeight.w900,
-                      color:
-                      Color(0xFF4F4353),
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    widget.description,
-                    maxLines: 1,
-                    overflow:
-                    TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color:
-                      Color(0xFF716574),
-                    ),
-                  ),
-
-                  const SizedBox(height: 7),
-
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white
-                          .withOpacity(0.72),
-                      borderRadius:
-                      BorderRadius.circular(9),
-                    ),
-                    child: Text(
-                      '⭐ ${widget.difficulty}',
-                      style:
-                      const TextStyle(
-                        fontSize: 9.5,
-                        fontWeight:
-                        FontWeight.bold,
-                        color:
-                        Color(0xFF67576D),
-                      ),
-                    ),
-                  ),
+    return GestureDetector(
+      // Kartin tamami tiklanabilir — eskiden yalnizca kucuk ▶ dugmesiydi.
+      onTap: _dokun,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _basili ? 0.965 : 1.0,
+        duration: const Duration(milliseconds: 110),
+        curve: Curves.easeOut,
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  zemin,
+                  Color.lerp(zemin, Colors.white, 0.45)!,
                 ],
               ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // OYNA BUTONU
-            GestureDetector(
-              onTap: _handleTap,
-              child: AnimatedContainer(
-                duration:
-                const Duration(
-                  milliseconds: 110,
-                ),
-                width:
-                _pressed ? 47 : 51,
-                height:
-                _pressed ? 47 : 51,
-                decoration:
-                BoxDecoration(
-                  color:
-                  widget.buttonColor,
-                  borderRadius:
-                  BorderRadius.circular(17),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.buttonColor
-                          .withOpacity(0.25),
-                      blurRadius: 9,
-                      offset:
-                      const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 29,
-                ),
+              borderRadius: BorderRadius.circular(Marka.kartYaricap),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.85),
+                width: 1.5,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.renk.withValues(alpha: 0.18),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
-          ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // İKON
+                Container(
+                  width: Marka.dokunmaEnAz,
+                  height: Marka.dokunmaEnAz,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      widget.emoji,
+                      style: const TextStyle(fontSize: 34),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // OYUN ADI — tek kelime, aciklama cumlesi yok
+                Text(
+                  widget.baslik,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: yazi,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // ZORLUK — "Kolay/Orta/Zor" yerine yildiz
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(3, (i) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                      child: Icon(
+                        Icons.star_rounded,
+                        size: 17,
+                        color: i < widget.yildiz ? widget.renk : sonukYildiz,
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

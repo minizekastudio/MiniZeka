@@ -5,6 +5,7 @@ import 'achievements.dart';
 import 'age_selection.dart';
 import 'app_theme.dart';
 import 'avatar_manager.dart';
+import 'child_manager.dart';
 import 'games/attention_game.dart';
 import 'games/logic_game.dart';
 import 'games/math_game.dart';
@@ -25,6 +26,7 @@ Future<void> main() async {
   await ThemeManager.loadTheme();
   await SoundManager.loadSoundSetting();
   await AvatarManager.loadAvatar();
+  await ChildManager.load();
 
   runApp(const MiniZekaApp());
 }
@@ -46,7 +48,7 @@ class MiniZekaApp extends StatelessWidget {
           builder: (context, child) => SplashOverlay(
             child: child ?? const SizedBox.shrink(),
           ),
-          title: 'MiniZeka',
+          title: 'Zeka Bahçesi',
           theme: MiniZekaTheme.lightTheme,
           darkTheme: MiniZekaTheme.darkTheme,
           themeMode: themeMode,

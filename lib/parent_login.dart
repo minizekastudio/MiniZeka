@@ -245,7 +245,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
         behavior: SnackBarBehavior.floating,
         backgroundColor: isError
             ? const Color(0xFFB96A7A)
-            : const Color(0xFF7653A8),
+            : const Color(0xFF23D83E),
         margin: const EdgeInsets.fromLTRB(
           18,
           0,
@@ -275,7 +275,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
         backgroundColor: Color(0xFFFFF9F4),
         body: Center(
           child: CircularProgressIndicator(
-            color: Color(0xFF7653A8),
+            color: Color(0xFF23D83E),
           ),
         ),
       );
@@ -296,7 +296,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
             left: -55,
             child: _backgroundCircle(
               size: 190,
-              color: const Color(0xFFE9D8FF),
+              color: const Color(0xFFD8FFDC),
             ),
           ),
 
@@ -314,7 +314,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
             right: -45,
             child: _backgroundCircle(
               size: 190,
-              color: const Color(0xFFE8DFFF),
+              color: const Color(0xFFDFFFE2),
             ),
           ),
 
@@ -357,7 +357,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF51425A),
+                            color: Color(0xFF1F7D38),
                             letterSpacing: -0.3,
                           ),
                         ),
@@ -438,7 +438,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                       end: Alignment
                                           .bottomRight,
                                       colors: [
-                                        Color(0xFFE9D8FF),
+                                        Color(0xFFD8FFDC),
                                         Color(0xFFDDF5FF),
                                       ],
                                     ),
@@ -489,7 +489,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                     fontWeight:
                                     FontWeight.w900,
                                     color:
-                                    Color(0xFF5D3D7A),
+                                    Color(0xFF259242),
                                     letterSpacing: -0.5,
                                   ),
                                 ),
@@ -498,7 +498,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
 
                                 Text(
                                   hasPin
-                                      ? 'MiniZeka ayarlarına devam etmek için\\nPIN kodunu gir.'
+                                      ? 'Zeka Bahçesi ayarlarına devam etmek için\\nPIN kodunu gir.'
                                       : 'Çocuk bölümünün ayarlarını korumak için\\n4 haneli bir PIN belirle.',
                                   textAlign:
                                   TextAlign.center,
@@ -508,7 +508,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                     fontWeight:
                                     FontWeight.w500,
                                     color:
-                                    Color(0xFF8A7B8E),
+                                    Color(0xFF2CDD47),
                                   ),
                                 ),
 
@@ -531,7 +531,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                       fontWeight:
                                       FontWeight.w800,
                                       color:
-                                      Color(0xFF654B76),
+                                      Color(0xFF279A45),
                                     ),
                                   ),
                                 ),
@@ -575,7 +575,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                         fontWeight:
                                         FontWeight.w800,
                                         color:
-                                        Color(0xFF654B76),
+                                        Color(0xFF279A45),
                                       ),
                                     ),
                                   ),
@@ -772,12 +772,12 @@ class _ParentLoginPageState extends State<ParentLoginPage>
       decoration: BoxDecoration(
         color: hasError
             ? const Color(0xFFFFF1F3)
-            : const Color(0xFFF7F1FC),
+            : const Color(0xFFE6FAE8),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: hasError
               ? const Color(0xFFD47A7A)
-              : const Color(0xFFE8DDF0),
+              : const Color(0xFFD9F4DC),
           width: 1.2,
         ),
       ),
@@ -801,7 +801,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
           fontSize: 24,
           fontWeight: FontWeight.w900,
           letterSpacing: 8,
-          color: Color(0xFF5D3D7A),
+          color: Color(0xFF259242),
         ),
         decoration: InputDecoration(
           counterText: '',
@@ -810,7 +810,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
             fontSize: 13,
             fontWeight: FontWeight.w600,
             letterSpacing: 0,
-            color: Color(0xFFB0A6B5),
+            color: Color(0xFF73E884),
           ),
           border: InputBorder.none,
           contentPadding:
@@ -827,7 +827,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
             obscureText
             ? Icons.visibility_off_rounded
                 : Icons.visibility_rounded,
-            color: const Color(0xFF8D78A0),
+            color: const Color(0xFF39DF52),
             size: 21,
           ),
         ),
@@ -858,7 +858,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF7653A8)
+              color: const Color(0xFF23D83E)
                   .withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
@@ -868,7 +868,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
         child: Icon(
           icon,
           size: 19,
-          color: const Color(0xFF654B76),
+          color: const Color(0xFF279A45),
         ),
       ),
     );

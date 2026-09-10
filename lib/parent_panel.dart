@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'child_manager.dart';
+
 class ParentPanel extends StatefulWidget {
   const ParentPanel({super.key});
 
@@ -181,6 +183,110 @@ class _ParentPanelState extends State<ParentPanel> {
   // =====================================================
   // PIN DEĞİŞTİR
   // =====================================================
+  // =====================================================
+  // ÇOCUĞUN ADI
+  // =====================================================
+
+  Future<void> changeChildName() async {
+    final denetleyici = TextEditingController(text: ChildManager.name);
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            '👧 Çocuğun Adı',
+            textAlign: TextAlign.center,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Giriş ekranında çocuğun kendi adını görmesi, '
+                'adını tanımasına yardımcı olur.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF21CA3A),
+                ),
+              ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: denetleyici,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                maxLength: 12,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF1F7D38),
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Örnek: Asya',
+                  counterText: '',
+                  filled: true,
+                  fillColor: const Color(0xFFF2FBF3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                'Vazgeç',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // await'ten once yakala
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(dialogContext);
+
+                await ChildManager.setName(denetleyici.text);
+
+                if (!mounted) return;
+
+                setState(() {});
+
+                navigator.pop();
+
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ChildManager.hasName
+                          ? '✅ ${ChildManager.name} kaydedildi.'
+                          : '✅ Çocuğun adı kaldırıldı.',
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF23D83E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text('Kaydet'),
+            ),
+          ],
+        );
+      },
+    );
+
+    denetleyici.dispose();
+  }
+
   Future<void> changeChildAge() async {
     int selectedAge = childAge == 0 ? 9 : childAge;
 
@@ -198,15 +304,24 @@ class _ParentPanelState extends State<ParentPanel> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              content: RadioGroup<int>(
+                groupValue: selectedAge,
+                onChanged: (value) {
+                  if (value == null) return;
+
+                  setDialogState(() {
+                    selectedAge = value;
+                  });
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   const Text(
                     'Yaş grubunu seçin. Oyunların zorluk seviyesi bu seçime göre ayarlanır.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF776A7A),
+                      color: Color(0xFF21CA3A),
                     ),
                   ),
 
@@ -214,52 +329,29 @@ class _ParentPanelState extends State<ParentPanel> {
 
                   RadioListTile<int>(
                     value: 5,
-                    groupValue: selectedAge,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedAge = value!;
-                      });
-                    },
                     title: const Text('🧸 4 – 5 Yaş'),
-                    activeColor: const Color(0xFF7653A8),
+                    activeColor: const Color(0xFF23D83E),
                   ),
 
                   RadioListTile<int>(
                     value: 7,
-                    groupValue: selectedAge,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedAge = value!;
-                      });
-                    },
                     title: const Text('🌈 6 – 7 Yaş'),
-                    activeColor: const Color(0xFF7653A8),
+                    activeColor: const Color(0xFF23D83E),
                   ),
 
                   RadioListTile<int>(
                     value: 9,
-                    groupValue: selectedAge,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedAge = value!;
-                      });
-                    },
                     title: const Text('🚀 8 – 9 Yaş'),
-                    activeColor: const Color(0xFF7653A8),
+                    activeColor: const Color(0xFF23D83E),
                   ),
 
                   RadioListTile<int>(
                     value: 12,
-                    groupValue: selectedAge,
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedAge = value!;
-                      });
-                    },
                     title: const Text('🧠 10 – 12 Yaş'),
-                    activeColor: const Color(0xFF7653A8),
+                    activeColor: const Color(0xFF23D83E),
                   ),
-                ],
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -276,6 +368,10 @@ class _ParentPanelState extends State<ParentPanel> {
 
                 ElevatedButton(
                   onPressed: () async {
+                    // await'ten once yakala: sonrasinda context gecersiz olabilir
+                    final messenger = ScaffoldMessenger.of(context);
+                    final navigator = Navigator.of(dialogContext);
+
                     final prefs =
                     await SharedPreferences.getInstance();
 
@@ -290,9 +386,9 @@ class _ParentPanelState extends State<ParentPanel> {
                       childAge = selectedAge;
                     });
 
-                    Navigator.pop(dialogContext);
+                    navigator.pop();
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       const SnackBar(
                         content: Text(
                           '✅ Çocuğun yaşı güncellendi.',
@@ -302,7 +398,7 @@ class _ParentPanelState extends State<ParentPanel> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
-                    const Color(0xFF7653A8),
+                    const Color(0xFF23D83E),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius:
@@ -344,7 +440,7 @@ class _ParentPanelState extends State<ParentPanel> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF776A7A),
+                    color: Color(0xFF21CA3A),
                   ),
                 ),
 
@@ -360,7 +456,7 @@ class _ParentPanelState extends State<ParentPanel> {
                     labelText: 'Mevcut PIN',
                     counterText: '',
                     filled: true,
-                    fillColor: const Color(0xFFF7F1FC),
+                    fillColor: const Color(0xFFE6FAE8),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide.none,
@@ -380,7 +476,7 @@ class _ParentPanelState extends State<ParentPanel> {
                     labelText: 'Yeni PIN',
                     counterText: '',
                     filled: true,
-                    fillColor: const Color(0xFFF7F1FC),
+                    fillColor: const Color(0xFFE6FAE8),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide.none,
@@ -400,7 +496,7 @@ class _ParentPanelState extends State<ParentPanel> {
                     labelText: 'Yeni PIN Tekrar',
                     counterText: '',
                     filled: true,
-                    fillColor: const Color(0xFFF7F1FC),
+                    fillColor: const Color(0xFFE6FAE8),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide.none,
@@ -424,6 +520,10 @@ class _ParentPanelState extends State<ParentPanel> {
             ),
             ElevatedButton(
               onPressed: () async {
+                // await'ten once yakala: sonrasinda context gecersiz olabilir
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(dialogContext);
+
                 final currentPin =
                 currentPinController.text.trim();
                 final newPin =
@@ -434,7 +534,7 @@ class _ParentPanelState extends State<ParentPanel> {
                 if (currentPin.length != 4 ||
                     newPin.length != 4 ||
                     confirmPin.length != 4) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(
                       content:
                       Text('⚠️ Tüm PIN alanları 4 haneli olmalıdır.'),
@@ -444,7 +544,7 @@ class _ParentPanelState extends State<ParentPanel> {
                 }
 
                 if (newPin != confirmPin) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(
                       content:
                       Text('❌ Yeni PIN kodları eşleşmiyor.'),
@@ -461,7 +561,7 @@ class _ParentPanelState extends State<ParentPanel> {
 
                 if (savedPin == null ||
                     savedPin != currentPin) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(
                       content:
                       Text('❌ Mevcut PIN yanlış.'),
@@ -477,9 +577,9 @@ class _ParentPanelState extends State<ParentPanel> {
 
                 if (!mounted) return;
 
-                Navigator.pop(dialogContext);
+                navigator.pop();
 
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(
                     content:
                     Text('✅ PIN başarıyla değiştirildi.'),
@@ -487,7 +587,7 @@ class _ParentPanelState extends State<ParentPanel> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7653A8),
+                backgroundColor: const Color(0xFF23D83E),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -567,10 +667,10 @@ class _ParentPanelState extends State<ParentPanel> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBFF),
+        color: const Color(0xFFE0FFE3),
         borderRadius: BorderRadius.circular(17),
         border: Border.all(
-          color: const Color(0xFFEDE3F5),
+          color: const Color(0xFFE2F6E4),
         ),
       ),
       child: Column(
@@ -583,7 +683,7 @@ class _ParentPanelState extends State<ParentPanel> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF51425A),
+                    color: Color(0xFF1F7D38),
                   ),
                 ),
               ),
@@ -592,7 +692,7 @@ class _ParentPanelState extends State<ParentPanel> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF63448D),
+                  color: Color(0xFF2AA74B),
                 ),
               ),
             ],
@@ -605,11 +705,11 @@ class _ParentPanelState extends State<ParentPanel> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 7,
-              backgroundColor: const Color(0xFFEDE7F2),
+              backgroundColor: const Color(0xFFE2F7E4),
               valueColor: AlwaysStoppedAnimation<Color>(
                 isFinished
                     ? const Color(0xFFD47A7A)
-                    : const Color(0xFF7653A8),
+                    : const Color(0xFF23D83E),
               ),
             ),
           ),
@@ -624,14 +724,14 @@ class _ParentPanelState extends State<ParentPanel> {
                 'Kullanılan: ${formatUsage(usedSeconds)}',
                 style: const TextStyle(
                   fontSize: 11,
-                  color: Color(0xFF776A7A),
+                  color: Color(0xFF21CA3A),
                 ),
               ),
               Text(
                 'Limit: $allowedMinutes dk',
                 style: const TextStyle(
                   fontSize: 11,
-                  color: Color(0xFF776A7A),
+                  color: Color(0xFF21CA3A),
                 ),
               ),
             ],
@@ -690,7 +790,7 @@ class _ParentPanelState extends State<ParentPanel> {
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [
-                    Color(0xFFE9D8FF),
+                    Color(0xFFD8FFDC),
                     Color(0xFFDDF5FF),
                   ],
                 ),
@@ -705,7 +805,7 @@ class _ParentPanelState extends State<ParentPanel> {
                     style: TextStyle(
                       fontSize: 23,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF51376A),
+                      color: Color(0xFF20813A),
                     ),
                   ),
 
@@ -715,7 +815,7 @@ class _ParentPanelState extends State<ParentPanel> {
                     'Çocuğun her oyunu günlük kaç dakika oynayabileceğini belirleyin.',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF66556F),
+                      color: Color(0xFF279D47),
                     ),
                   ),
                 ],
@@ -723,6 +823,81 @@ class _ParentPanelState extends State<ParentPanel> {
             ),
 
             const SizedBox(height: 20),
+
+            GestureDetector(
+              onTap: changeChildName,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD8FFDC),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.badge_rounded,
+                        color: Color(0xFF23D83E),
+                        size: 27,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '👧 Çocuğun Adı',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF1F7D38),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            ChildManager.hasName
+                                ? ChildManager.name
+                                : 'Henüz girilmedi',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF21CA3A),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Giriş ekranında çocuğa bu ad gösterilir.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 17,
+                      color: Color(0xFF23D83E),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             GestureDetector(
               onTap: changeChildAge,
               child: Container(
@@ -744,12 +919,12 @@ class _ParentPanelState extends State<ParentPanel> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE9D8FF),
+                        color: const Color(0xFFD8FFDC),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
                         Icons.child_care_rounded,
-                        color: Color(0xFF7653A8),
+                        color: Color(0xFF23D83E),
                         size: 27,
                       ),
                     ),
@@ -766,7 +941,7 @@ class _ParentPanelState extends State<ParentPanel> {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF51425A),
+                              color: Color(0xFF1F7D38),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -780,7 +955,7 @@ class _ParentPanelState extends State<ParentPanel> {
                                 : '10 – 12 Yaş',
                             style: const TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF776A7A),
+                              color: Color(0xFF21CA3A),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -798,7 +973,7 @@ class _ParentPanelState extends State<ParentPanel> {
                     const Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 17,
-                      color: Color(0xFF7653A8),
+                      color: Color(0xFF23D83E),
                     ),
                   ],
                 ),
@@ -828,12 +1003,12 @@ class _ParentPanelState extends State<ParentPanel> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0E6FA),
+                        color: const Color(0xFFE5FAE8),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
                         Icons.lock_outline_rounded,
-                        color: Color(0xFF7653A8),
+                        color: Color(0xFF23D83E),
                         size: 26,
                       ),
                     ),
@@ -850,7 +1025,7 @@ class _ParentPanelState extends State<ParentPanel> {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF51425A),
+                              color: Color(0xFF1F7D38),
                             ),
                           ),
                           SizedBox(height: 4),
@@ -858,7 +1033,7 @@ class _ParentPanelState extends State<ParentPanel> {
                             'Ebeveyn giriş PIN kodunuzu değiştirebilirsiniz.',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF776A7A),
+                              color: Color(0xFF21CA3A),
                             ),
                           ),
                         ],
@@ -868,7 +1043,7 @@ class _ParentPanelState extends State<ParentPanel> {
                     const Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 17,
-                      color: Color(0xFF7653A8),
+                      color: Color(0xFF23D83E),
                     ),
                   ],
                 ),
@@ -914,7 +1089,7 @@ class _ParentPanelState extends State<ParentPanel> {
                                 fontWeight:
                                 FontWeight.bold,
                                 color:
-                                Color(0xFF51425A),
+                                Color(0xFF1F7D38),
                               ),
                             ),
                           ),
@@ -944,7 +1119,7 @@ class _ParentPanelState extends State<ParentPanel> {
                                 fontWeight:
                                 FontWeight.bold,
                                 color:
-                                Color(0xFF63448D),
+                                Color(0xFF2AA74B),
                               ),
                             ),
                           ),
@@ -957,7 +1132,7 @@ class _ParentPanelState extends State<ParentPanel> {
                         max: 60,
                         divisions: 11,
                         activeColor:
-                        const Color(0xFF7653A8),
+                        const Color(0xFF23D83E),
                         onChanged: (value) {
                           changeDuration(
                             game,
@@ -1015,7 +1190,7 @@ class _ParentPanelState extends State<ParentPanel> {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                  const Color(0xFF7653A8),
+                  const Color(0xFF23D83E),
                   foregroundColor: Colors.white,
                   shape:
                   RoundedRectangleBorder(
@@ -1070,7 +1245,7 @@ class _ParentPanelState extends State<ParentPanel> {
                               fontWeight:
                               FontWeight.w900,
                               color:
-                              Color(0xFF51425A),
+                              Color(0xFF1F7D38),
                             ),
                           ),
                         ),
@@ -1097,7 +1272,7 @@ class _ParentPanelState extends State<ParentPanel> {
                                 .arrow_forward_ios_rounded,
                             size: 16,
                             color:
-                            Color(0xFF7653A8),
+                            Color(0xFF23D83E),
                           ),
                         ),
                       ],
@@ -1110,7 +1285,7 @@ class _ParentPanelState extends State<ParentPanel> {
                       style: TextStyle(
                         fontSize: 14,
                         height: 1.4,
-                        color: Color(0xFF776A7A),
+                        color: Color(0xFF21CA3A),
                       ),
                     ),
 
@@ -1212,7 +1387,7 @@ class _ParentPanelState extends State<ParentPanel> {
                       decoration:
                       BoxDecoration(
                         color:
-                        const Color(0xFFF4ECFA),
+                        const Color(0xFFE7F9E9),
                         borderRadius:
                         BorderRadius.circular(
                           15,
@@ -1225,7 +1400,7 @@ class _ParentPanelState extends State<ParentPanel> {
                           const Icon(
                             Icons.timer_outlined,
                             color:
-                            Color(0xFF7653A8),
+                            Color(0xFF23D83E),
                           ),
 
                           const SizedBox(width: 10),
@@ -1238,7 +1413,7 @@ class _ParentPanelState extends State<ParentPanel> {
                                 fontWeight:
                                 FontWeight.bold,
                                 color:
-                                Color(0xFF51425A),
+                                Color(0xFF1F7D38),
                               ),
                             ),
                           ),
@@ -1253,7 +1428,7 @@ class _ParentPanelState extends State<ParentPanel> {
                               fontWeight:
                               FontWeight.w900,
                               color:
-                              Color(0xFF63448D),
+                              Color(0xFF2AA74B),
                             ),
                           ),
                         ],
@@ -1362,7 +1537,7 @@ class GameHistoryPage extends StatelessWidget {
                     fontWeight:
                     FontWeight.bold,
                     color:
-                    Color(0xFF51425A),
+                    Color(0xFF1F7D38),
                   ),
                 ),
               ),
@@ -1374,7 +1549,7 @@ class GameHistoryPage extends StatelessWidget {
                   fontWeight:
                   FontWeight.bold,
                   color:
-                  Color(0xFF63448D),
+                  Color(0xFF2AA74B),
                 ),
               ),
             ],
@@ -1391,7 +1566,7 @@ class GameHistoryPage extends StatelessWidget {
               value: progress,
               minHeight: 8,
               backgroundColor:
-              const Color(0xFFEDE7F2),
+              const Color(0xFFE2F7E4),
 
               valueColor:
               AlwaysStoppedAnimation<
@@ -1423,7 +1598,7 @@ class GameHistoryPage extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   color:
-                  Color(0xFF776A7A),
+                  Color(0xFF21CA3A),
                 ),
               ),
 
@@ -1434,7 +1609,7 @@ class GameHistoryPage extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   color:
-                  Color(0xFF776A7A),
+                  Color(0xFF21CA3A),
                 ),
               ),
             ],
@@ -1511,7 +1686,7 @@ class GameHistoryPage extends StatelessWidget {
                 gradient:
                 const LinearGradient(
                   colors: [
-                    Color(0xFFE9D8FF),
+                    Color(0xFFD8FFDC),
                     Color(0xFFDDF5FF),
                   ],
                 ),
@@ -1534,7 +1709,7 @@ class GameHistoryPage extends StatelessWidget {
                       fontWeight:
                       FontWeight.w900,
                       color:
-                      Color(0xFF51376A),
+                      Color(0xFF20813A),
                     ),
                   ),
 
@@ -1547,7 +1722,7 @@ class GameHistoryPage extends StatelessWidget {
                       fontSize: 14,
                       height: 1.4,
                       color:
-                      Color(0xFF66556F),
+                      Color(0xFF279D47),
                     ),
                   ),
                 ],
@@ -1653,7 +1828,7 @@ class GameHistoryPage extends StatelessWidget {
 
               decoration: BoxDecoration(
                 color:
-                const Color(0xFFF4ECFA),
+                const Color(0xFFE7F9E9),
 
                 borderRadius:
                 BorderRadius.circular(20),
@@ -1665,7 +1840,7 @@ class GameHistoryPage extends StatelessWidget {
                   const Icon(
                     Icons.timer_outlined,
                     color:
-                    Color(0xFF7653A8),
+                    Color(0xFF23D83E),
                     size: 28,
                   ),
 
@@ -1680,7 +1855,7 @@ class GameHistoryPage extends StatelessWidget {
                         fontWeight:
                         FontWeight.bold,
                         color:
-                        Color(0xFF51425A),
+                        Color(0xFF1F7D38),
                       ),
                     ),
                   ),
@@ -1696,7 +1871,7 @@ class GameHistoryPage extends StatelessWidget {
                       fontWeight:
                       FontWeight.w900,
                       color:
-                      Color(0xFF63448D),
+                      Color(0xFF2AA74B),
                     ),
                   ),
                 ],

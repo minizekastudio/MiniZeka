@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'animated_logo.dart';
+import 'child_manager.dart';
+
 class RoleSelectionPage extends StatefulWidget {
   final VoidCallback onChildTap;
   final VoidCallback onParentTap;
@@ -217,16 +220,16 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFF211A2A),
-                  Color(0xFF17131F),
-                  Color(0xFF17131F),
+                  Color(0xFF133120),
+                  Color(0xFF0E2418),
+                  Color(0xFF0E2418),
                 ],
               )
                   : const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFFFFE5FF),
+                  Color(0xFFE0FFE3),
                   Color(0xFFFFF9F9),
                   Color(0xFFFFFBF5),
                 ],
@@ -243,7 +246,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             left: -85,
             child: _decorativeCircle(
               size: 180,
-              color: const Color(0xFFD9C2FF).withOpacity(0.55),
+              color: const Color(0xFFC2FFC8).withValues(alpha: 0.55),
             ),
           ),
 
@@ -256,7 +259,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             right: -55,
             child: _decorativeCircle(
               size: 155,
-              color: const Color(0xFFE8D8FF).withOpacity(0.75),
+              color: const Color(0xFFD8FFDC).withValues(alpha: 0.75),
             ),
           ),
 
@@ -269,7 +272,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             right: 24,
             child: _decorativeCircle(
               size: 34,
-              color: const Color(0xFFD9B9FF).withOpacity(0.70),
+              color: const Color(0xFFB9FFC0).withValues(alpha: 0.70),
             ),
           ),
 
@@ -282,7 +285,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             left: -28,
             child: _decorativeCircle(
               size: 65,
-              color: const Color(0xFFFFE4CB).withOpacity(0.60),
+              color: const Color(0xFFFFE4CB).withValues(alpha: 0.60),
             ),
           ),
 
@@ -295,7 +298,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             left: -55,
             child: _decorativeCircle(
               size: 190,
-              color: const Color(0xFFDDF3FF).withOpacity(0.85),
+              color: const Color(0xFFDDF3FF).withValues(alpha: 0.85),
             ),
           ),
 
@@ -308,7 +311,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             right: -65,
             child: _decorativeCircle(
               size: 205,
-              color: const Color(0xFFDCC6FF).withOpacity(0.70),
+              color: const Color(0xFFC6FFCC).withValues(alpha: 0.70),
             ),
           ),
 
@@ -339,7 +342,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             left: 35,
             child: _Sparkle(
               size: 13,
-              color: Color(0xFFE1C8FF),
+              color: Color(0xFFC8FFCD),
             ),
           ),
 
@@ -348,7 +351,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             right: 38,
             child: _Sparkle(
               size: 18,
-              color: Color(0xFFD6B6FF),
+              color: Color(0xFFB6FFBD),
             ),
           ),
 
@@ -383,20 +386,43 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                     const SizedBox(height: 17),
 
                     // =========================================
-                    // MINİZEKA
+                    // BAŞLIK
                     // =========================================
 
                     FadeTransition(
                       opacity: _titleOpacity,
-                      child: const Text(
-                        'MiniZeka',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 38,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -1.2,
-                          color: Color(0xFF5B32A3),
-                        ),
+                      child: ValueListenableBuilder<String>(
+                        valueListenable: ChildManager.nameNotifier,
+                        builder: (context, _, _) {
+                          return Column(
+                            children: [
+                              // Ad girildiyse ustte kucuk satir:
+                              // "Asya'nın" + "Zeka Bahçesi"
+                              if (ChildManager.hasName)
+                                Text(
+                                  ChildManager.possessiveName,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF4AC46A),
+                                  ),
+                                ),
+                              const Text(
+                                'Zeka Bahçesi',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 38,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -1.2,
+                                  color: Color(0xFF2BAA4D),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
 
@@ -415,7 +441,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
-                          color: Color(0xFF78628E),
+                          color: Color(0xFF22CE3C),
                         ),
                       ),
                     ),
@@ -430,18 +456,6 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                       opacity: _questionOpacity,
                       child: Column(
                         children: [
-                          const Text(
-                            'Kim olarak devam etmek istiyorsun?',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF4E3865),
-                            ),
-                          ),
-
-                          const SizedBox(height: 10),
-
                           // Dekoratif çizgi
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -450,7 +464,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                 width: 28,
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFB178F5),
+                                  color: const Color(0xFF78F584),
                                   borderRadius:
                                   BorderRadius.circular(20),
                                 ),
@@ -460,7 +474,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                 width: 9,
                                 height: 9,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFF7B42D1),
+                                  color: Color(0xFF35DE4E),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -469,7 +483,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                 width: 28,
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFB178F5),
+                                  color: const Color(0xFF78F584),
                                   borderRadius:
                                   BorderRadius.circular(20),
                                 ),
@@ -490,18 +504,21 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                       opacity: _childOpacity,
                       child: SlideTransition(
                         position: _childSlide,
-                        child: RoleCard(
+                        // Ad ebeveyn panelinden degistirilebilir; burasi
+                        // degisikligi aninda yansitir.
+                        child: ValueListenableBuilder<String>(
+                          valueListenable: ChildManager.nameNotifier,
+                          builder: (context, _, _) => RoleCard(
                           icon: '👧',
-                          title: 'Çocuk',
-                          description:
-                          'Eğlenceli oyunlarla öğrenmeye başla!',
-                          backgroundColor: const Color(0xFFE9D7FF),
-                          secondaryColor: const Color(0xFFDCC1FF),
-                          textColor: const Color(0xFF5A2E9D),
-                          arrowColor: const Color(0xFF6F35CF),
+                          title: ChildManager.displayName,
+                          backgroundColor: const Color(0xFFD7FFDB),
+                          secondaryColor: const Color(0xFFC1FFC7),
+                          textColor: const Color(0xFF29A249),
+                          arrowColor: const Color(0xFF28DC43),
                           onTap: widget.onChildTap,
                           decorativeColor:
-                          const Color(0xFFC9A5FF),
+                          const Color(0xFFA5FFAE),
+                          ),
                         ),
                       ),
                     ),
@@ -519,8 +536,6 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                         child: RoleCard(
                           icon: '👨‍👩‍👧',
                           title: 'Ebeveyn',
-                          description:
-                          'Çocuğunun gelişimini takip et ve yönet!',
                           backgroundColor: const Color(0xFFDDF2FF),
                           secondaryColor: const Color(0xFFC9E8FF),
                           textColor: const Color(0xFF28689B),
@@ -547,13 +562,13 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                             width: 30,
                             height: 30,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.75),
+                              color: Colors.white.withValues(alpha: 0.75),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.verified_rounded,
                               size: 18,
-                              color: Color(0xFF8B57D2),
+                              color: Color(0xFF48E15F),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -562,7 +577,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF89739A),
+                              color: Color(0xFF30DD4A),
                             ),
                           ),
                         ],
@@ -579,7 +594,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFFA28FAE),
+                          color: Color(0xFF59E46E),
                         ),
                       ),
                     ),
@@ -616,74 +631,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
   // =========================================================
 
   Widget _buildMascot() {
-    return Container(
-      width: 176,
-      height: 176,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF1E5FF),
-            Color(0xFFE1F4FF),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8754D4).withOpacity(0.13),
-            blurRadius: 28,
-            spreadRadius: 5,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // İç halka
-          Container(
-            width: 145,
-            height: 145,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withOpacity(0.55),
-                width: 2,
-              ),
-            ),
-          ),
-
-          // Beyin
-          const Text(
-            '🧠',
-            style: TextStyle(
-              fontSize: 105,
-            ),
-          ),
-
-          // Küçük yıldız
-          const Positioned(
-            top: 18,
-            right: 21,
-            child: _Sparkle(
-              size: 15,
-              color: Colors.white,
-            ),
-          ),
-
-          // Küçük yıldız
-          const Positioned(
-            bottom: 28,
-            left: 20,
-            child: _Sparkle(
-              size: 11,
-              color: Color(0xFFD2B2FF),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const AnimasyonluLogo(cap: 212);
   }
 }
 
@@ -694,7 +642,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
 class RoleCard extends StatefulWidget {
   final String icon;
   final String title;
-  final String description;
+  final String? description;
 
   final Color backgroundColor;
   final Color secondaryColor;
@@ -708,7 +656,7 @@ class RoleCard extends StatefulWidget {
     super.key,
     required this.icon,
     required this.title,
-    required this.description,
+    this.description,
     required this.backgroundColor,
     required this.secondaryColor,
     required this.textColor,
@@ -756,9 +704,9 @@ class _RoleCardState extends State<RoleCard> {
           onTap: _handleTap,
           borderRadius: BorderRadius.circular(29),
           splashColor:
-          widget.textColor.withOpacity(0.08),
+          widget.textColor.withValues(alpha: 0.08),
           highlightColor:
-          widget.textColor.withOpacity(0.04),
+          widget.textColor.withValues(alpha: 0.04),
           child: Container(
             width: double.infinity,
             height: 142,
@@ -774,13 +722,13 @@ class _RoleCardState extends State<RoleCard> {
               ),
               borderRadius: BorderRadius.circular(29),
               border: Border.all(
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
                   color:
-                  widget.textColor.withOpacity(0.12),
+                  widget.textColor.withValues(alpha: 0.12),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -799,7 +747,7 @@ class _RoleCardState extends State<RoleCard> {
                     width: 120,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
+                      color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(70),
                     ),
                   ),
@@ -817,7 +765,7 @@ class _RoleCardState extends State<RoleCard> {
                     height: 45,
                     decoration: BoxDecoration(
                       color:
-                      widget.decorativeColor.withOpacity(0.18),
+                      widget.decorativeColor.withValues(alpha: 0.18),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -857,15 +805,15 @@ class _RoleCardState extends State<RoleCard> {
                         height: 82,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.80),
+                          color: Colors.white.withValues(alpha: 0.80),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.95),
+                            color: Colors.white.withValues(alpha: 0.95),
                             width: 3,
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: widget.textColor
-                                  .withOpacity(0.10),
+                                  .withValues(alpha: 0.10),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -902,19 +850,21 @@ class _RoleCardState extends State<RoleCard> {
                                 color: widget.textColor,
                               ),
                             ),
-                            const SizedBox(height: 5),
-                            Text(
-                              widget.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                height: 1.35,
-                                fontWeight: FontWeight.w600,
-                                color: widget.textColor
-                                    .withOpacity(0.72),
+                            if (widget.description != null) ...[
+                              const SizedBox(height: 5),
+                              Text(
+                                widget.description!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  height: 1.35,
+                                  fontWeight: FontWeight.w600,
+                                  color: widget.textColor
+                                      .withValues(alpha: 0.72),
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -935,13 +885,13 @@ class _RoleCardState extends State<RoleCard> {
                             end: Alignment.bottomRight,
                             colors: [
                               widget.arrowColor,
-                              widget.arrowColor.withOpacity(0.82),
+                              widget.arrowColor.withValues(alpha: 0.82),
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: widget.arrowColor
-                                  .withOpacity(0.22),
+                                  .withValues(alpha: 0.22),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),

@@ -128,7 +128,7 @@ class _SettingsPageState extends State<SettingsPage> {
               decoration: BoxDecoration(
                 color: const Color(
                   0xFFE4D3FF,
-                ).withOpacity(0.55),
+                ).withValues(alpha: 0.55),
                 shape: BoxShape.circle,
               ),
             ),
@@ -143,7 +143,7 @@ class _SettingsPageState extends State<SettingsPage> {
               decoration: BoxDecoration(
                 color: const Color(
                   0xFFEBDFFF,
-                ).withOpacity(0.72),
+                ).withValues(alpha: 0.72),
                 shape: BoxShape.circle,
               ),
             ),
@@ -158,7 +158,7 @@ class _SettingsPageState extends State<SettingsPage> {
               decoration: BoxDecoration(
                 color: const Color(
                   0xFFDDF3FF,
-                ).withOpacity(0.75),
+                ).withValues(alpha: 0.75),
                 shape: BoxShape.circle,
               ),
             ),
@@ -203,8 +203,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         decoration:
                         BoxDecoration(
                           color: Colors.white
-                              .withOpacity(
-                            0.85,
+                              .withValues(
+                            alpha: 0.85,
                           ),
                           shape:
                           BoxShape.circle,
@@ -248,8 +248,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       decoration:
                       BoxDecoration(
                         color: Colors.white
-                            .withOpacity(
-                          0.9,
+                            .withValues(
+                          alpha: 0.9,
                         ),
                         borderRadius:
                         BorderRadius
@@ -314,8 +314,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         color:
                         const Color(
                           0xFF8B62B5,
-                        ).withOpacity(
-                          0.10,
+                        ).withValues(
+                          alpha: 0.10,
                         ),
                         blurRadius: 14,
                         offset:
@@ -351,7 +351,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           children: [
 
                             Text(
-                              'MiniZeka Ayarları',
+                              'Zeka Bahçesi Ayarları',
                               style:
                               TextStyle(
                                 fontSize: 20,
@@ -450,8 +450,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   BoxDecoration(
                     color: _soundEnabled
                         ? Colors.white
-                        .withOpacity(
-                      0.92,
+                        .withValues(
+                      alpha: 0.92,
                     )
                         : const Color(
                       0xFFF2EDF5,
@@ -477,8 +477,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black
-                            .withOpacity(
-                          0.05,
+                            .withValues(
+                          alpha: 0.05,
                         ),
                         blurRadius: 12,
                         offset:
@@ -585,7 +585,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         _soundEnabled,
                         onChanged:
                         _changeSoundSetting,
-                        activeColor:
+                        activeThumbColor:
                         const Color(
                           0xFF7653A8,
                         ),
@@ -732,8 +732,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   decoration:
                   BoxDecoration(
                     color: Colors.white
-                        .withOpacity(
-                      0.90,
+                        .withValues(
+                      alpha: 0.90,
                     ),
 
                     borderRadius:
@@ -752,8 +752,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black
-                            .withOpacity(
-                          0.04,
+                            .withValues(
+                          alpha: 0.04,
                         ),
                         blurRadius: 10,
                         offset:
@@ -853,7 +853,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
 
                             Text(
-                              'MiniZeka görünümünü aydınlık veya karanlık kullan.',
+                              'Zeka Bahçesi görünümünü aydınlık veya karanlık kullan.',
                               style:
                               TextStyle(
                                 fontSize: 11.5,
@@ -873,7 +873,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         _darkMode,
                         onChanged:
                         _changeTheme,
-                        activeColor:
+                        activeThumbColor:
                         const Color(
                           0xFF7653A8,
                         ),
@@ -942,8 +942,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     decoration:
                     BoxDecoration(
                       color: Colors.white
-                          .withOpacity(
-                        0.90,
+                          .withValues(
+                        alpha: 0.90,
                       ),
 
                       borderRadius:
@@ -960,8 +960,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black
-                              .withOpacity(
-                            0.04,
+                              .withValues(
+                            alpha: 0.04,
                           ),
                           blurRadius: 10,
                           offset:
@@ -1040,7 +1040,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
 
                               Text(
-                                'Kendi avatarını seç ve MiniZeka\'nı kişiselleştir.',
+                                'Kendi avatarını seç ve Zeka Bahçesi\'ni kişiselleştir.',
                                 style:
                                 TextStyle(
                                   fontSize: 11,
