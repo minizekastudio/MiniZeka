@@ -40,16 +40,90 @@ Bu dosya, projenin bugünkü durumunu ve alınmış kararları özetler.
 - Hafıza oyunundaki çökme düzeltildi (`cards` alanı `late` idi, ilk build'de boştu)
 - Aynı çökme Dikkat (`items`) ve Mantık (`questions`) oyunlarında da vardı, düzeltildi
 
+## Kod kuralları
+
+Bu bölüm bağlayıcıdır. Yeni kod bunlara uyar; mevcut kod dokunuldukça uyar.
+
+### Dil
+
+- **Tanımlayıcılar İngilizce.** Sınıf, mixin, enum, metot, alan, değişken,
+  parametre ve dosya adları. Türkçe ad yazılmaz.
+- **Kullanıcıya görünen metinler Türkçe.** `'Hafıza Oyunu'`, `'Süren doldu'`
+  gibi ekranda çıkan her şey Türkçe kalır. Bu bir Türkçe çocuk uygulaması.
+- **Yorumlar İngilizce.** Yeni yazılan her yorum ve `///` belgesi İngilizce.
+  Eski Türkçe yorumlar toplu çevrilmez; o dosyaya iş düştükçe çevrilir.
+- Kontrol: `grep` ile Türkçe kök taraması yapılabilir; şu an 0 Türkçe
+  tanımlayıcı var, bu sayı 0 kalmalı.
+
+### Adlandırma
+
+- Tipler `UpperCamelCase`, üyeler ve değişkenler `lowerCamelCase`,
+  dosyalar `lowercase_with_underscores.dart`. Sabitler de `lowerCamelCase`
+  (Dart'ta `SCREAMING_CAPS` kullanılmaz).
+- Ad niyeti anlatır: `_handleTap`, `minTouchTarget`, `linkingConsonant`.
+  `data`, `temp`, `x2`, `doStuff` gibi adlar kabul edilmez.
+- Boolean'lar `is`/`has`/`can` ile başlar: `isFinished`, `hasName`.
+- Kısaltma açılır (`btn` değil `button`), yaygın olanlar hariç (`id`, `url`).
+- Widget'ın private State sınıfı `_<WidgetAdı>State` olur.
+
+### Tek doğru kaynak
+
+- **Oyun kimliği `GameId`'dir** (`lib/game_id.dart`). Bir oyunun adı, kısa adı,
+  emojisi, zorluğu ve varsayılan süresi yalnızca burada tanımlanır. Hiçbir
+  ekran, panel ya da liste bu bilgiyi tekrar yazmaz; `GameId.values` üzerinde
+  dönülür.
+- **Depolama anahtarları `StorageKeys`'indir** (`lib/storage_keys.dart`).
+  Başka hiçbir dosyada anahtar dizesi yazılmaz. `prefs.getInt('bir_sey')`
+  görürsen bu bir hatadır.
+- **Depolanan kimlik asla görünen metinden türetilmez.** `GameId.storageId`
+  değişmez ASCII belirteçtir; `title` serbestçe düzenlenebilir. Eskiden
+  anahtarlar Türkçe adlardan üretiliyordu ve adı değiştiren biri ebeveynin
+  ayarlarını sessizce siliyordu.
+- Bir anahtarın adı ya da biçimi değişecekse **önce `StorageMigration`'a bir
+  adım eklenir** ve `currentVersion` artırılır. Veri kaybı kabul edilmez.
+
+### Tasarım kalıpları
+
+- **Yeni oyun eklemek:** `GameId`'ye bir giriş, `game_kit.dart`'a bir
+  `GamePalette`, `lib/games/` altına ekran dosyası, `home_page`'e kart,
+  `main.dart`'a gezinme. Panel ve geçmiş kendiliğinden gelir.
+- **Oyun ekranları `GameSessionMixin` kullanır.** Günlük süre sayacı, çocuğun
+  yaşı ve süre dolunca çıkan uyarı oradan gelir; hiçbir oyun bunları tekrar
+  yazmaz. Sözleşme tek satırdır: `GameId get game`.
+- **Statik manager sınıfları yenisi eklenmez.** Mevcut beşi
+  (`ThemeManager`, `SoundManager`, `AvatarManager`, `AchievementManager`,
+  `ChildManager`) yerinde kalır ama kalıp büyütülmez: global statik durum
+  testler arasında sızıyor ve `load()` çağrısını unutmak sessiz hataya yol
+  açıyor — bu hata bir kez gerçekten yaşandı (ses ayarı hiç yüklenmiyordu).
+  Yeni durum için sade bir sınıf yazıp ihtiyacı olana parametre olarak geçir.
+- **Zamana ve rastgeleliğe bağlı mantık enjekte edilir.** `GameTimerController`
+  saatini dışarıdan alır (`clock`); gece yarısı devri bu sayede test
+  edilebiliyor. Yeni zaman/rastgelelik bağımlılıkları da böyle yazılır.
+- Durum yönetimi paketi (Bloc, Riverpod vb.) **şimdilik gerekmiyor.**
+  `setState` + `ValueNotifier` bu boyut için yeterli. Bunu değiştirecek şey:
+  birden çok çocuk profili, ekranlar arası paylaşılan karmaşık durum ya da
+  sunucu senkronizasyonu. O gün gelmeden paket eklenmez.
+
+### Testler
+
+- Davranış değiştiren her düzeltme testle gelir. Özellikle: günlük süre
+  limiti, başarı açılması, yaşa göre zorluk, veri taşıma.
+- Test edilebilirlik için seam gerekiyorsa seam açılır (saat enjeksiyonu gibi),
+  test edilebilsin diye mimari bozulmaz.
+- `flutter analyze` **0 sorun** vermeden ve `flutter test` tamamen geçmeden
+  commit edilmez.
+- Görsel iş emülatörde gözle doğrulanır; ekran görüntüsü almak yeterlidir.
+
 ## Tasarım kuralları
 
-Renkler ve ölçüler **daima** `Marka` sınıfından alınır, ekranlarda `Color(0xFF...)`
-yazılmaz. Palet logodan türetildi:
+Renkler ve ölçüler **daima** `Brand` sınıfından alınır (`lib/app_theme.dart`),
+ekranlarda `Color(0xFF...)` yazılmaz. Palet logodan türetildi:
 
 - gökyüzü `#2BB4F5` · yaprak `#2FB84C` · güneş `#FFC53D` · uğur böceği `#E24B3F` · krem `#FFF6E3`
-- Oyun renkleri: turuncu, gökyüzü, güneş, yaprak, kırmızı, turkuaz, pembe (`Marka.oyunRenkleri`)
+- Oyun renkleri: turuncu, gökyüzü, güneş, yaprak, kırmızı, turkuaz, pembe (`Brand.gameColors`)
 - **Mor kullanılmaz.**
 
-Çocuk kullanımı için ölçüler (`Marka` içinde sabit):
+Çocuk kullanımı için ölçüler (`Brand` içinde sabit):
 
 - En küçük dokunma alanı 64 px (Material'ın 48'i yetersiz), buton yüksekliği 68 px
 - Gövde yazısı en az 17 punto, kart yarıçapı 28, buton yarıçapı 24
@@ -98,13 +172,22 @@ hedefleniyor. Tespit edilen sorunlar ve planlanan çözümler:
 ## Klasör düzeni
 
 ```
-lib/                 uygulama kodu
-lib/games/           beş oyun (hafıza, dikkat, matematik, eşleştirme, mantık)
-lib/game_kit.dart    oyunların ortak altyapısı: GameSessionMixin, GamePalette,
-                     GameResultBox, InfoBox, levelForAge
-lib/child_manager.dart   çocuğun adı + Türkçe iyelik eki üretimi
-lib/animated_logo.dart   giriş ekranındaki animasyonlu logo sahnesi
-test/                oyunların açılış duman testi
+lib/                      uygulama kodu
+lib/game_id.dart          TEK DOĞRU KAYNAK: yedi oyunun kimliği, başlığı,
+                          emojisi, zorluğu, varsayılan süresi
+lib/storage_keys.dart     TEK DOĞRU KAYNAK: bütün SharedPreferences anahtarları
+lib/storage_migration.dart  açılışta çalışan sürümlü veri taşıma
+lib/game_timer.dart       günlük süre sayacı (saat enjekte edilebilir)
+lib/games/                beş oyun (hafıza, dikkat, matematik, eşleştirme, mantık)
+lib/word_game.dart        Kelime Avı — henüz lib/games/ altına taşınmadı
+lib/letter_game.dart      Harfleri Yerleştir — aynı şekilde
+lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
+                          GamePalette, GameResultBox, InfoBox, levelForAge
+lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
+lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
+lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
+test/                     25 test: oyun duman testleri, süre sayacı,
+                          veri taşıma, iyelik eki, giriş ekranı
 assets/icon/         app_icon.png (tam dolgu) + app_icon_foreground.png (adaptive)
 assets/splash/       splash_full.png (tam ekran), splash_logo.png, splash_android12.png
 assets/fonts/        Baloo2 (Medium/Bold/ExtraBold, Türkçe'ye budanmış)
@@ -125,13 +208,37 @@ Logo.png             kullanıcının ürettiği ana logo (kapak görseli için)
   ton yeşile çevrilir.
   **Kullanıcı bunu bilerek erteledi** ("şu an kalabilir, rahatsız etmiyor") —
   açıkça istenmedikçe bu geçişe girişme.
-- Ekranlarda hâlâ doğrudan `Color(0xFF...)` yazılıyor; `Marka` sınıfına geçiş
-  yapılmadı. `game_kit.dart`'taki `GamePalette` sabitleri de beş eski oyunun
+- **`Brand` fiilen kullanılmıyor.** Kural "renkler daima `Brand`'dan" diyor ama
+  `Brand` yalnızca 3 dosyada geçiyor; kalan ~20 dosya ham `Color(0xFF...)`
+  yazıyor. `game_kit.dart`'taki `GamePalette` sabitleri de beş eski oyunun
   mevcut renklerini birebir koruyor (refactor görüntüyü değiştirmesin diye).
-  Kelime Avı ve Harf oyununun paletleri `Marka.oyunKelimeAvi` / `Marka.oyunHarf`
-  üzerinden tanımlı.
+  Dokunulan dosyada `Brand`'a geçilmeli.
+- **"Gövde yazısı en az 17 punto" kuralı tutulmuyor.** Kodda 11pt'den 20,
+  12pt'den 18, 13pt'den 22, 14pt'den 21 kullanım var. Hedef kitle okuma
+  bilmeyen 4-8 yaş; bu kural boşuna konmamış. Ekran ekran ele alınmalı.
+- `game_explorer` başarısı 5 oyunda açılıyor, artık 7 oyun var. Açıklaması da
+  "5 farklı oyun" dediği için kendi içinde tutarlı; eşiğin 7'ye çıkarılıp
+  çıkarılmayacağı ürün kararı.
 
-## Çözülmüş olanlar (önceki oturum)
+## Çözülmüş olanlar
+
+### Kod incelemesi turu
+
+- **Gece yarısı hatası.** `game_timer.dart` tarih anahtarını her kayıtta
+  yeniden hesaplıyordu; gece yarısını geçen oturum akşamın toplamını ertesi
+  günün anahtarına yazıyor, çocuk uygulamayı açmadan hakkını tüketmiş oluyordu.
+- **Depolama anahtarları Türkçe adlardan kurtarıldı.** `GameId` + `StorageKeys`
+  geldi; `parent_panel.dart` 1884 → 1690 satır, elle yazılmış oyun adı 84 → 0.
+- **Çalışma zamanı çökmesi.** `GameHistoryPage`'e `Map<String,int>.from` ile
+  `Map<GameId,int>` geçiriliyordu; analyzer görmüyordu, Oyun Geçmişi açılınca
+  patlayacaktı.
+- **Veri taşıma** yazıldı ve gerçek cihaz verisinde doğrulandı: 7 eski anahtar
+  yeni forma geçti, değerler korundu, eskiler silindi.
+- **140 Türkçe tanımlayıcı** İngilizce'ye çevrildi (envanter taraması 140 → 0).
+- Logo görseli 1152×1152 tam boyutta çözülüyordu; `cacheWidth` eklendi.
+- Testler 17 → 25.
+
+### Önceki oturum
 
 - `flutter analyze` 294 → 0 uyarı; `flutter test` 17/17 geçiyor
   (7 oyun duman testi + 7 Türkçe iyelik eki testi + 3 giriş ekranı ad testi)
