@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Cocugun adi.
@@ -9,8 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ChildManager {
   ChildManager._();
 
-  static const String _nameKey = 'child_name';
-
+  
   /// Ad degisince dinleyen ekranlar kendini yeniler.
   /// Bos string "ad girilmemis" demektir.
   static final ValueNotifier<String> nameNotifier = ValueNotifier('');
@@ -86,7 +86,7 @@ class ChildManager {
   static Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
 
-    nameNotifier.value = prefs.getString(_nameKey) ?? '';
+    nameNotifier.value = prefs.getString(StorageKeys.childName) ?? '';
   }
 
   static Future<void> setName(String value) async {
@@ -95,9 +95,9 @@ class ChildManager {
     final prefs = await SharedPreferences.getInstance();
 
     if (temiz.isEmpty) {
-      await prefs.remove(_nameKey);
+      await prefs.remove(StorageKeys.childName);
     } else {
-      await prefs.setString(_nameKey, temiz);
+      await prefs.setString(StorageKeys.childName, temiz);
     }
 
     nameNotifier.value = temiz;

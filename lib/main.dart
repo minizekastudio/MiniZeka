@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'achievements.dart';
@@ -15,11 +16,15 @@ import 'home_page.dart';
 import 'parent_login.dart';
 import 'sound_manager.dart';
 import 'splash_overlay.dart';
+import 'storage_migration.dart';
 import 'theme_manager.dart';
 import 'welcome_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Depolanan veriyi once guncel semaya tasi, sonra oku.
+  await StorageMigration.run();
 
   // Kayitli ayarlar uygulama acilmadan once yuklenir; aksi halde ses
   // tercihi her acilista varsayilana (acik) donuyordu.
@@ -83,7 +88,7 @@ Future<void> _openChildSection(BuildContext context) async {
   final navigator = Navigator.of(context);
 
   final prefs = await SharedPreferences.getInstance();
-  final childAge = prefs.getInt('child_age');
+  final childAge = prefs.getInt(StorageKeys.childAge);
 
   if (!context.mounted) return;
 

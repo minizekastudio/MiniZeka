@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
+import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
 
@@ -21,13 +22,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
   // ---- GameSessionMixin sozlesmesi ----
 
   @override
-  String get gameName => 'Dikkat Oyunu';
-
-  @override
-  int get defaultAllowedMinutes => 15;
-
-  @override
-  GamePalette get palette => GamePalette.attention;
+  GameId get game => GameId.attention;
 
   @override
   String get timeUpMessage =>

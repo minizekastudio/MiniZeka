@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'storage_keys.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'parent_panel.dart';
@@ -59,7 +60,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
   Future<void> checkPin() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final savedPin = prefs.getString('parent_pin');
+    final savedPin = prefs.getString(StorageKeys.parentPin);
 
     if (!mounted) return;
 
@@ -113,7 +114,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
     });
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('parent_pin', pin);
+    await prefs.setString(StorageKeys.parentPin, pin);
 
     if (!mounted) return;
 
@@ -150,7 +151,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
     });
 
     final prefs = await SharedPreferences.getInstance();
-    final savedPin = prefs.getString('parent_pin');
+    final savedPin = prefs.getString(StorageKeys.parentPin);
 
     if (!mounted) return;
 

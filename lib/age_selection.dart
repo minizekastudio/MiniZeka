@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AgeSelectionPage extends StatefulWidget {
@@ -206,7 +207,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
   Future<void> _selectAge(int age) async {
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setInt('child_age', age);
+    await prefs.setInt(StorageKeys.childAge, age);
 
     if (!mounted) return;
 

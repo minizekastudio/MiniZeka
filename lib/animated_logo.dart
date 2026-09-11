@@ -127,6 +127,10 @@ class _AnimasyonluLogoState extends State<AnimasyonluLogo>
                 child: Image.asset(
                   'assets/splash/splash_logo.png',
                   fit: BoxFit.cover,
+                  // Kaynak 1152x1152; daire en fazla ~cap*3 fiziksel piksel
+                  // kaplar. Tam boyutta cozulurse ilk ekranda ~5 MB bellek
+                  // tutuyordu.
+                  cacheWidth: (cap * 3).round(),
                 ),
               ),
 

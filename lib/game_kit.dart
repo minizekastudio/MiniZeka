@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_theme.dart';
+import 'game_id.dart';
 import 'game_timer.dart';
 
 /// Her oyunun kendi renk seti. Oyunlarda kopyalanan sabit renkler
@@ -108,6 +110,20 @@ int levelForAge(int age) {
   if (age <= 7) return 1;
   if (age <= 9) return 2;
   return 3;
+}
+
+/// Maps a game to its colours. Lives here rather than on [GameId] so the
+/// enum stays free of Flutter imports.
+extension GameIdPalette on GameId {
+  GamePalette get palette => switch (this) {
+        GameId.memory => GamePalette.memory,
+        GameId.attention => GamePalette.attention,
+        GameId.math => GamePalette.math,
+        GameId.shape => GamePalette.shape,
+        GameId.logic => GamePalette.logic,
+        GameId.word => GamePalette.word,
+        GameId.letter => GamePalette.letter,
+      };
 }
 
 /// Oyunlarin alt kismindaki kucuk istatistik kutusu.
@@ -289,14 +305,11 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
 
   bool timeUpDialogShown = false;
 
-  /// Ebeveyn panelindeki isimle birebir ayni olmali; sure anahtarlari
-  /// bu isimden uretilir.
-  String get gameName;
+  /// Which game this screen is. Storage keys, default limit, title and
+  /// palette all come from here, so a screen no longer restates them.
+  GameId get game;
 
-  /// Ebeveyn bir sure belirlemediyse kullanilacak varsayilan.
-  int get defaultAllowedMinutes;
-
-  GamePalette get palette;
+  GamePalette get palette => game.palette;
 
   /// "Suren doldu" diyalogunda gosterilecek metin.
   String get timeUpMessage;
@@ -311,10 +324,7 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
   void onChildAgeLoaded() {}
 
   void startGameSession() {
-    gameTimer = GameTimerController(
-      gameName: gameName,
-      allowedMinutes: defaultAllowedMinutes,
-    );
+    gameTimer = GameTimerController(game: game);
 
     gameTimer.addListener(_handleTimerTick);
 
@@ -325,7 +335,7 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
   Future<void> _loadChildAge() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final savedAge = prefs.getInt('child_age') ?? 9;
+    final savedAge = prefs.getInt(StorageKeys.childAge) ?? 9;
 
     if (!mounted) return;
 

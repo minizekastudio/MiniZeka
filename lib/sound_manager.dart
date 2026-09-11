@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'storage_keys.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -6,8 +7,7 @@ class SoundManager {
   static final AudioPlayer _player = AudioPlayer();
 
   // Ses ayarının anahtarı
-  static const String _soundKey = 'sound_enabled';
-
+  
   // Varsayılan olarak ses açık
   static bool _isSoundEnabled = true;
 
@@ -19,7 +19,7 @@ class SoundManager {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      _isSoundEnabled = prefs.getBool(_soundKey) ?? true;
+      _isSoundEnabled = prefs.getBool(StorageKeys.soundEnabled) ?? true;
     } catch (e) {
       debugPrint('❌ SES AYARI YÜKLENEMEDİ: $e');
     }
@@ -42,7 +42,7 @@ class SoundManager {
       final prefs = await SharedPreferences.getInstance();
 
       await prefs.setBool(
-        _soundKey,
+        StorageKeys.soundEnabled,
         enabled,
       );
 

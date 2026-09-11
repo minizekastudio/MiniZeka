@@ -1,17 +1,17 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'storage_keys.dart';
 
 class AchievementManager {
-  static const String _storageKey = 'unlocked_achievements';
-
+  
   static Future<void> unlock(String achievementKey) async {
     final prefs = await SharedPreferences.getInstance();
 
     final unlocked =
-        prefs.getStringList(_storageKey) ?? <String>[];
+        prefs.getStringList(StorageKeys.unlockedAchievements) ?? <String>[];
 
     if (!unlocked.contains(achievementKey)) {
       unlocked.add(achievementKey);
-      await prefs.setStringList(_storageKey, unlocked);
+      await prefs.setStringList(StorageKeys.unlockedAchievements, unlocked);
       await prefs.reload();
     }
   }
@@ -22,7 +22,7 @@ class AchievementManager {
     await prefs.reload();
 
     final unlocked =
-        prefs.getStringList(_storageKey) ?? <String>[];
+        prefs.getStringList(StorageKeys.unlockedAchievements) ?? <String>[];
 
     return unlocked.toSet();
   }
@@ -35,13 +35,13 @@ class AchievementManager {
     final prefs = await SharedPreferences.getInstance();
 
     final playedGames =
-        prefs.getStringList('played_games') ?? <String>[];
+        prefs.getStringList(StorageKeys.playedGames) ?? <String>[];
 
     if (!playedGames.contains(gameKey)) {
       playedGames.add(gameKey);
 
       await prefs.setStringList(
-        'played_games',
+        StorageKeys.playedGames,
         playedGames,
       );
     }

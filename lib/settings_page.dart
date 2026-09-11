@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'sound_manager.dart';
 import 'avatar_manager.dart';
@@ -43,7 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await SharedPreferences.getInstance();
 
     final savedDarkMode =
-        prefs.getBool('dark_mode') ?? false;
+        prefs.getBool(StorageKeys.darkMode) ?? false;
 
     if (!mounted) return;
 

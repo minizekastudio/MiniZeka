@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'child_manager.dart';
+import 'game_id.dart';
+import 'storage_keys.dart';
 
 class ParentPanel extends StatefulWidget {
   const ParentPanel({super.key});
@@ -15,14 +17,8 @@ class _ParentPanelState extends State<ParentPanel> {
   // OYUN SÜRELERİ
   // =====================================================
 
-  final Map<String, int> gameDurations = {
-    '🧠 Hafıza Oyunu': 10,
-    '👀 Dikkat Oyunu': 15,
-    '🔢 Matematik Oyunu': 20,
-    '🔷 Eşleştirme Oyunu': 10,
-    '🧩 Mantık Oyunu': 15,
-    '🔎 Kelime Avı': 15,
-    '🔤 Harfleri Yerleştir': 15,
+  final Map<GameId, int> gameDurations = {
+    for (final game in GameId.values) game: game.defaultLimitMinutes,
   };
   int childAge = 0;
 
@@ -30,14 +26,8 @@ class _ParentPanelState extends State<ParentPanel> {
   // BUGÜNKÜ KULLANIM SÜRELERİ
   // =====================================================
 
-  final Map<String, int> gameUsage = {
-    '🧠 Hafıza Oyunu': 0,
-    '👀 Dikkat Oyunu': 0,
-    '🔢 Matematik Oyunu': 0,
-    '🔷 Eşleştirme Oyunu': 0,
-    '🧩 Mantık Oyunu': 0,
-    '🔎 Kelime Avı': 0,
-    '🔤 Harfleri Yerleştir': 0,
+  final Map<GameId, int> gameUsage = {
+    for (final game in GameId.values) game: 0,
   };
 
   @override
@@ -49,7 +39,7 @@ class _ParentPanelState extends State<ParentPanel> {
   Future<void> loadChildAge() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final savedAge = prefs.getInt('child_age') ?? 9;
+    final savedAge = prefs.getInt(StorageKeys.childAge) ?? 9;
 
     if (!mounted) return;
 
@@ -77,26 +67,11 @@ class _ParentPanelState extends State<ParentPanel> {
     if (!mounted) return;
 
     setState(() {
-      gameDurations['🧠 Hafıza Oyunu'] =
-          prefs.getInt('duration_Hafıza Oyunu') ?? 10;
-
-      gameDurations['👀 Dikkat Oyunu'] =
-          prefs.getInt('duration_Dikkat Oyunu') ?? 15;
-
-      gameDurations['🔢 Matematik Oyunu'] =
-          prefs.getInt('duration_Matematik Oyunu') ?? 20;
-
-      gameDurations['🔷 Eşleştirme Oyunu'] =
-          prefs.getInt('duration_Eşleştirme Oyunu') ?? 10;
-
-      gameDurations['🧩 Mantık Oyunu'] =
-          prefs.getInt('duration_Mantık Oyunu') ?? 15;
-
-      gameDurations['🔎 Kelime Avı'] =
-          prefs.getInt('duration_Kelime Avı') ?? 15;
-
-      gameDurations['🔤 Harfleri Yerleştir'] =
-          prefs.getInt('duration_Harfleri Yerleştir') ?? 15;
+      for (final game in GameId.values) {
+        gameDurations[game] =
+            prefs.getInt(StorageKeys.gameLimitMinutes(game)) ??
+                game.defaultLimitMinutes;
+      }
     });
   }
 
@@ -107,37 +82,15 @@ class _ParentPanelState extends State<ParentPanel> {
   Future<void> loadGameUsage() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final now = DateTime.now();
-
-    final dateKey = '${now.year}-'
-        '${now.month.toString().padLeft(2, '0')}-'
-        '${now.day.toString().padLeft(2, '0')}';
+    final today = StorageKeys.isoDate(DateTime.now());
 
     if (!mounted) return;
 
     setState(() {
-      gameUsage['🧠 Hafıza Oyunu'] =
-          prefs.getInt('game_time_Hafıza Oyunu_$dateKey') ?? 0;
-
-      gameUsage['👀 Dikkat Oyunu'] =
-          prefs.getInt('game_time_Dikkat Oyunu_$dateKey') ?? 0;
-
-      gameUsage['🔢 Matematik Oyunu'] =
-          prefs.getInt('game_time_Matematik Oyunu_$dateKey') ?? 0;
-
-      gameUsage['🔷 Eşleştirme Oyunu'] =
-          prefs.getInt('game_time_Eşleştirme Oyunu_$dateKey') ?? 0;
-
-      gameUsage['🧩 Mantık Oyunu'] =
-          prefs.getInt('game_time_Mantık Oyunu_$dateKey') ?? 0;
-
-      gameUsage['🔎 Kelime Avı'] =
-          prefs.getInt('game_time_Kelime Avı_$dateKey') ?? 0;
-
-      gameUsage['🔤 Harfleri Yerleştir'] =
-          prefs.getInt(
-            'game_time_Harfleri Yerleştir_$dateKey',
-          ) ?? 0;
+      for (final game in GameId.values) {
+        gameUsage[game] =
+            prefs.getInt(StorageKeys.gamePlayedSeconds(game, today)) ?? 0;
+      }
     });
   }
 
@@ -145,7 +98,7 @@ class _ParentPanelState extends State<ParentPanel> {
   // SÜRE DEĞİŞTİR
   // =====================================================
 
-  void changeDuration(String game, int value) {
+  void changeDuration(GameId game, int value) {
     setState(() {
       gameDurations[game] = value;
     });
@@ -159,10 +112,8 @@ class _ParentPanelState extends State<ParentPanel> {
     final prefs = await SharedPreferences.getInstance();
 
     for (final entry in gameDurations.entries) {
-      final gameName = entry.key.split(' ').skip(1).join(' ');
-
       await prefs.setInt(
-        'duration_$gameName',
+        StorageKeys.gameLimitMinutes(entry.key),
         entry.value,
       );
     }
@@ -376,7 +327,7 @@ class _ParentPanelState extends State<ParentPanel> {
                     await SharedPreferences.getInstance();
 
                     await prefs.setInt(
-                      'child_age',
+                      StorageKeys.childAge,
                       selectedAge,
                     );
 
@@ -557,7 +508,7 @@ class _ParentPanelState extends State<ParentPanel> {
                 await SharedPreferences.getInstance();
 
                 final savedPin =
-                prefs.getString('parent_pin');
+                prefs.getString(StorageKeys.parentPin);
 
                 if (savedPin == null ||
                     savedPin != currentPin) {
@@ -571,7 +522,7 @@ class _ParentPanelState extends State<ParentPanel> {
                 }
 
                 await prefs.setString(
-                  'parent_pin',
+                  StorageKeys.parentPin,
                   newPin,
                 );
 
@@ -637,8 +588,8 @@ class _ParentPanelState extends State<ParentPanel> {
       context,
       MaterialPageRoute(
         builder: (_) => GameHistoryPage(
-          gameUsage: Map<String, int>.from(gameUsage),
-          gameDurations: Map<String, int>.from(gameDurations),
+          gameUsage: Map<GameId, int>.from(gameUsage),
+          gameDurations: Map<GameId, int>.from(gameDurations),
         ),
       ),
     );
@@ -1083,7 +1034,7 @@ class _ParentPanelState extends State<ParentPanel> {
                         children: [
                           Expanded(
                             child: Text(
-                              game,
+                              game.labelWithEmoji,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight:
@@ -1291,86 +1242,13 @@ class _ParentPanelState extends State<ParentPanel> {
 
                     const SizedBox(height: 16),
 
-                    // Hafıza
-                    buildUsageCard(
-                      game: '🧠 Hafıza Oyunu',
-                      usedSeconds:
-                      gameUsage[
-                      '🧠 Hafıza Oyunu'] ??
-                          0,
-                      allowedMinutes:
-                      gameDurations[
-                      '🧠 Hafıza Oyunu'] ??
-                          10,
-                    ),
-
-                    // Dikkat
-                    buildUsageCard(
-                      game: '👀 Dikkat Oyunu',
-                      usedSeconds:
-                      gameUsage[
-                      '👀 Dikkat Oyunu'] ??
-                          0,
-                      allowedMinutes:
-                      gameDurations[
-                      '👀 Dikkat Oyunu'] ??
-                          15,
-                    ),
-
-                    // Matematik
-                    buildUsageCard(
-                      game: '🔢 Matematik Oyunu',
-                      usedSeconds:
-                      gameUsage[
-                      '🔢 Matematik Oyunu'] ??
-                          0,
-                      allowedMinutes:
-                      gameDurations[
-                      '🔢 Matematik Oyunu'] ??
-                          20,
-                    ),
-
-                    // Eşleştirme
-                    buildUsageCard(
-                      game: '🔷 Eşleştirme Oyunu',
-                      usedSeconds:
-                      gameUsage[
-                      '🔷 Eşleştirme Oyunu'] ??
-                          0,
-                      allowedMinutes:
-                      gameDurations[
-                      '🔷 Eşleştirme Oyunu'] ??
-                          10,
-                    ),
-
-                    // Mantık
-                    buildUsageCard(
-                      game: '🧩 Mantık Oyunu',
-                      usedSeconds:
-                      gameUsage[
-                      '🧩 Mantık Oyunu'] ??
-                          0,
-                      allowedMinutes:
-                      gameDurations[
-                      '🧩 Mantık Oyunu'] ??
-                          15,
-                    ),
-
-                    // KELİME AVI
-                    buildUsageCard(
-                      game: '🔎 Kelime Avı',
-                      usedSeconds:
-                      gameUsage['🔎 Kelime Avı'] ?? 0,
-                      allowedMinutes:
-                      gameDurations['🔎 Kelime Avı'] ?? 15,
-                    ),
-
-                    buildUsageCard(
-                      game: '🔤 Harfleri Yerleştir',
-                      usedSeconds:
-                      gameUsage['🔤 Harfleri Yerleştir'] ?? 0,
-                      allowedMinutes:
-                      gameDurations['🔤 Harfleri Yerleştir'] ?? 15,
+                    ...GameId.values.map(
+                      (game) => buildUsageCard(
+                        game: game.labelWithEmoji,
+                        usedSeconds: gameUsage[game] ?? 0,
+                        allowedMinutes:
+                            gameDurations[game] ?? game.defaultLimitMinutes,
+                      ),
                     ),
 
                     const SizedBox(height: 5),
@@ -1450,8 +1328,8 @@ class _ParentPanelState extends State<ParentPanel> {
 // =============================================================
 
 class GameHistoryPage extends StatelessWidget {
-  final Map<String, int> gameUsage;
-  final Map<String, int> gameDurations;
+  final Map<GameId, int> gameUsage;
+  final Map<GameId, int> gameDurations;
 
   const GameHistoryPage({
     super.key,
@@ -1735,86 +1613,14 @@ class GameHistoryPage extends StatelessWidget {
             // OYUNLAR
             // =================================================
 
-            historyCard(
-              game: '🧠 Hafıza Oyunu',
-              usedSeconds:
-              gameUsage[
-              '🧠 Hafıza Oyunu'] ??
-                  0,
-              allowedMinutes:
-              gameDurations[
-              '🧠 Hafıza Oyunu'] ??
-                  10,
+            ...GameId.values.map(
+              (game) => historyCard(
+                game: game.labelWithEmoji,
+                usedSeconds: gameUsage[game] ?? 0,
+                allowedMinutes:
+                    gameDurations[game] ?? game.defaultLimitMinutes,
+              ),
             ),
-
-            historyCard(
-              game: '👀 Dikkat Oyunu',
-              usedSeconds:
-              gameUsage[
-              '👀 Dikkat Oyunu'] ??
-                  0,
-              allowedMinutes:
-              gameDurations[
-              '👀 Dikkat Oyunu'] ??
-                  15,
-            ),
-
-            historyCard(
-              game: '🔢 Matematik Oyunu',
-              usedSeconds:
-              gameUsage[
-              '🔢 Matematik Oyunu'] ??
-                  0,
-              allowedMinutes:
-              gameDurations[
-              '🔢 Matematik Oyunu'] ??
-                  20,
-            ),
-
-            historyCard(
-              game: '🔷 Eşleştirme Oyunu',
-              usedSeconds:
-              gameUsage[
-              '🔷 Eşleştirme Oyunu'] ??
-                  0,
-              allowedMinutes:
-              gameDurations[
-              '🔷 Eşleştirme Oyunu'] ??
-                  10,
-            ),
-
-            historyCard(
-              game: '🧩 Mantık Oyunu',
-              usedSeconds:
-              gameUsage[
-              '🧩 Mantık Oyunu'] ??
-                  0,
-              allowedMinutes:
-              gameDurations[
-              '🧩 Mantık Oyunu'] ??
-                  15,
-            ),
-
-            historyCard(
-              game: '🔎 Kelime Avı',
-              usedSeconds:
-              gameUsage[
-              '🔎 Kelime Avı'] ??
-                  0,
-              allowedMinutes:
-              gameDurations[
-              '🔎 Kelime Avı'] ??
-                  15,
-            ),
-
-            historyCard(
-              game: '🔤 Harfleri Yerleştir',
-              usedSeconds:
-              gameUsage['🔤 Harfleri Yerleştir'] ?? 0,
-              allowedMinutes:
-              gameDurations['🔤 Harfleri Yerleştir'] ?? 15,
-            ),
-
 
             const SizedBox(height: 5),
 

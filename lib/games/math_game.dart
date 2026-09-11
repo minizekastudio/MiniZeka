@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
+import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
 
@@ -21,13 +22,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
   // ---- GameSessionMixin sozlesmesi ----
 
   @override
-  String get gameName => 'Matematik Oyunu';
-
-  @override
-  int get defaultAllowedMinutes => 20;
-
-  @override
-  GamePalette get palette => GamePalette.math;
+  GameId get game => GameId.math;
 
   @override
   String get timeUpMessage =>

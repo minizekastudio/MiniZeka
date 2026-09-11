@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AvatarManager {
-  static const String _avatarKey = 'selected_avatar';
-
+  
   // Varsayılan avatar
   static String _selectedAvatar = '👦';
 
@@ -22,7 +22,7 @@ class AvatarManager {
       final prefs = await SharedPreferences.getInstance();
 
       _selectedAvatar =
-          prefs.getString(_avatarKey) ?? '👦';
+          prefs.getString(StorageKeys.selectedAvatar) ?? '👦';
     } catch (e) {
       debugPrint('❌ AVATAR AYARI YÜKLENEMEDİ: $e');
     }
@@ -39,7 +39,7 @@ class AvatarManager {
       final prefs = await SharedPreferences.getInstance();
 
       await prefs.setString(
-        _avatarKey,
+        StorageKeys.selectedAvatar,
         avatar,
       );
     } catch (e) {

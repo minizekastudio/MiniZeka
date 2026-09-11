@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'achievement_manager.dart';
+import 'game_id.dart';
 import 'game_kit.dart';
 import 'sound_manager.dart';
 
@@ -220,13 +221,7 @@ class _LetterGameState extends State<LetterGame>
   // -------------------------------------------------------------
 
   @override
-  String get gameName => 'Harfleri Yerleştir';
-
-  @override
-  int get defaultAllowedMinutes => 15;
-
-  @override
-  GamePalette get palette => GamePalette.letter;
+  GameId get game => GameId.letter;
 
   @override
   String get timeUpMessage =>

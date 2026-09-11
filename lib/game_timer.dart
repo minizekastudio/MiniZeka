@@ -1,9 +1,31 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'game_id.dart';
+import 'storage_keys.dart';
+
+/// Tracks how long a child has played one game today and enforces the daily
+/// limit a parent set in the parent panel.
+///
+/// The day this session is accounted against is frozen at [load]. Previously
+/// the date was recomputed on every save, so a session running past midnight
+/// wrote the whole evening's total into the next day's key and ate the next
+/// day's allowance.
 class GameTimerController extends ChangeNotifier {
-  final String gameName;
+  GameTimerController({
+    required this.game,
+    DateTime Function()? clock,
+  })  : _clock = clock ?? DateTime.now,
+        allowedMinutes = game.defaultLimitMinutes;
+
+  final GameId game;
+
+  /// Injectable so tests can cross midnight without waiting for it.
+  final DateTime Function() _clock;
+
+  /// Limit in minutes; replaced by the parent's setting in [load].
   int allowedMinutes;
 
   Timer? _timer;
@@ -12,10 +34,9 @@ class GameTimerController extends ChangeNotifier {
   bool isFinished = false;
   bool isLoading = true;
 
-  GameTimerController({
-    required this.gameName,
-    required this.allowedMinutes,
-  });
+  /// Day this session counts against, as yyyy-MM-dd. Frozen at [load] and
+  /// only advanced deliberately by [_rollOverTo].
+  String _sessionDate = '';
 
   int get allowedSeconds => allowedMinutes * 60;
 
@@ -41,29 +62,16 @@ class GameTimerController extends ChangeNotifier {
     return '$minutes dk $seconds sn';
   }
 
-  String get _dateKey {
-    final now = DateTime.now();
-
-    return '${now.year}-'
-        '${now.month.toString().padLeft(2, '0')}-'
-        '${now.day.toString().padLeft(2, '0')}';
-  }
-
-  String get _storageKey {
-    return 'game_time_${gameName}_$_dateKey';
-  }
-
-  String get _durationKey {
-    return 'duration_$gameName';
-  }
-
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
 
     allowedMinutes =
-        prefs.getInt(_durationKey) ?? allowedMinutes;
+        prefs.getInt(StorageKeys.gameLimitMinutes(game)) ?? allowedMinutes;
 
-    usedSeconds = prefs.getInt(_storageKey) ?? 0;
+    _sessionDate = StorageKeys.isoDate(_clock());
+
+    usedSeconds =
+        prefs.getInt(StorageKeys.gamePlayedSeconds(game, _sessionDate)) ?? 0;
 
     if (usedSeconds >= allowedSeconds) {
       usedSeconds = allowedSeconds;
@@ -75,49 +83,66 @@ class GameTimerController extends ChangeNotifier {
   }
 
   void start() {
-    if (isFinished || timeIsOver) {
+    if (isFinished || timeIsOver) return;
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _tick() {
+    final today = StorageKeys.isoDate(_clock());
+
+    // Gece yarisi gecildi: eski gunun toplamini kendi anahtarina birak ve
+    // yeni gune temiz basla.
+    if (today != _sessionDate) {
+      _rollOverTo(today);
+      notifyListeners();
       return;
     }
 
-    _timer?.cancel();
+    if (timeIsOver) {
+      isFinished = true;
+      stop();
+      notifyListeners();
+      return;
+    }
 
-    _timer = Timer.periodic(
-      const Duration(seconds: 1),
-          (_) {
-        if (timeIsOver) {
-          stop();
-          isFinished = true;
-          notifyListeners();
-          return;
-        }
+    usedSeconds++;
+    _save(_sessionDate, usedSeconds);
 
-        usedSeconds++;
+    if (timeIsOver) {
+      isFinished = true;
+      stop();
+    }
 
-        _save();
+    notifyListeners();
+  }
 
-        if (timeIsOver) {
-          isFinished = true;
-          stop();
-        }
+  void _rollOverTo(String newDate) {
+    _save(_sessionDate, usedSeconds);
 
-        notifyListeners();
-      },
-    );
+    _sessionDate = newDate;
+    usedSeconds = 0;
+    isFinished = false;
   }
 
   void stop() {
     _timer?.cancel();
     _timer = null;
 
-    _save();
+    _save(_sessionDate, usedSeconds);
   }
 
-  Future<void> _save() async {
+  /// Date and value are passed in so an in-flight save can never land on a
+  /// day that rolled over while it was awaiting.
+  Future<void> _save(String date, int seconds) async {
+    if (date.isEmpty) return;
+
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setInt(
-      _storageKey,
-      usedSeconds,
+      StorageKeys.gamePlayedSeconds(game, date),
+      seconds,
     );
   }
 

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'achievement_manager.dart';
+import 'game_id.dart';
 import 'game_kit.dart';
 import 'sound_manager.dart';
 
@@ -193,13 +194,7 @@ class _WordGameState extends State<WordGame>
   // -------------------------------------------------------------
 
   @override
-  String get gameName => 'Kelime Avı';
-
-  @override
-  int get defaultAllowedMinutes => 15;
-
-  @override
-  GamePalette get palette => GamePalette.word;
+  GameId get game => GameId.word;
 
   @override
   String get timeUpMessage =>

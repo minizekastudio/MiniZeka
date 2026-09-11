@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
+import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
 
@@ -21,13 +22,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
   // ---- GameSessionMixin sozlesmesi ----
 
   @override
-  String get gameName => 'Eşleştirme Oyunu';
-
-  @override
-  int get defaultAllowedMinutes => 10;
-
-  @override
-  GamePalette get palette => GamePalette.shape;
+  GameId get game => GameId.shape;
 
   @override
   String get timeUpMessage =>
