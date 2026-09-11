@@ -6,7 +6,7 @@ import 'app_theme.dart';
 import 'game_id.dart';
 import 'game_timer.dart';
 
-/// Her oyunun kendi renk seti. Oyunlarda kopyalanan sabit renkler
+/// Her oyunun kendi color seti. Oyunlarda kopyalanan sabit renkler
 /// buraya toplandi; gorunum aynen korunur.
 class GamePalette {
   /// Sonuc kutusu / istatistik kutusu arka plani.
@@ -81,24 +81,24 @@ class GamePalette {
     button: Color(0xFF587047),
   );
 
-  /// Kelime Avi — Marka.oyunKelimeAvi (turkuaz).
+  /// Kelime Avi — Brand.gameWord (turkuaz).
   static const word = GamePalette(
     softBackground: Color(0xFFDFF6F3),
     dialogChip: Color(0xFFDFF6F3),
     label: Color(0xFF4E8F88),
     value: Color(0xFF0E8C80),
     heading: Color(0xFF0B6E64),
-    button: Marka.oyunKelimeAvi,
+    button: Brand.gameWord,
   );
 
-  /// Harfleri Yerlestir — Marka.oyunHarf (pembe).
+  /// Harfleri Yerlestir — Brand.gameLetter (pembe).
   static const letter = GamePalette(
     softBackground: Color(0xFFFFE4EE),
     dialogChip: Color(0xFFFFE4EE),
     label: Color(0xFFA8718A),
     value: Color(0xFFC93B72),
     heading: Color(0xFFA12A57),
-    button: Marka.oyunHarf,
+    button: Brand.gameLetter,
   );
 }
 

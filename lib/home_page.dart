@@ -539,7 +539,7 @@ class _HomePageState extends State<HomePage>
                 // HAFIZA
                 // =================================================
 
-                // ÖRNEK: yeni kare kart tasarimi (2 sutun, yazi yok,
+                // ÖRNEK: yeni kare kart tasarimi (2 sutun, labelColor yok,
                 // zorluk yildizla, kartin tamami tiklanabilir)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 13),
@@ -549,11 +549,11 @@ class _HomePageState extends State<HomePage>
                       Expanded(
                         child: _animatedSection(
                           animation: _game1Animation,
-                          child: OyunKartiKare(
+                          child: GameCard(
                             emoji: '🧠',
-                            baslik: 'Hafıza',
-                            yildiz: 1,
-                            renk: Marka.oyunHafiza,
+                            label: 'Hafıza',
+                            difficulty: 1,
+                            color: Brand.gameMemory,
                             onTap: widget.onMemoryTap,
                           ),
                         ),
@@ -562,11 +562,11 @@ class _HomePageState extends State<HomePage>
                       Expanded(
                         child: _animatedSection(
                           animation: _game2Animation,
-                          child: OyunKartiKare(
+                          child: GameCard(
                             emoji: '👀',
-                            baslik: 'Dikkat',
-                            yildiz: 2,
-                            renk: Marka.oyunDikkat,
+                            label: 'Dikkat',
+                            difficulty: 2,
+                            color: Brand.gameAttention,
                             onTap: widget.onAttentionTap,
                           ),
                         ),
@@ -587,11 +587,11 @@ class _HomePageState extends State<HomePage>
                       Expanded(
                         child: _animatedSection(
                           animation: _game3Animation,
-                          child: OyunKartiKare(
+                          child: GameCard(
                             emoji: '🔢',
-                            baslik: 'Matematik',
-                            yildiz: 2,
-                            renk: Marka.oyunMatematik,
+                            label: 'Matematik',
+                            difficulty: 2,
+                            color: Brand.gameMath,
                             onTap: widget.onMathTap,
                           ),
                         ),
@@ -600,11 +600,11 @@ class _HomePageState extends State<HomePage>
                       Expanded(
                         child: _animatedSection(
                           animation: _game4Animation,
-                          child: OyunKartiKare(
+                          child: GameCard(
                             emoji: '🔷',
-                            baslik: 'Eşleştirme',
-                            yildiz: 1,
-                            renk: Marka.oyunEslestirme,
+                            label: 'Eşleştirme',
+                            difficulty: 1,
+                            color: Brand.gameShape,
                             onTap: widget.onShapeTap,
                           ),
                         ),
@@ -625,11 +625,11 @@ class _HomePageState extends State<HomePage>
                       Expanded(
                         child: _animatedSection(
                           animation: _game5Animation,
-                          child: OyunKartiKare(
+                          child: GameCard(
                             emoji: '🧩',
-                            baslik: 'Mantık',
-                            yildiz: 3,
-                            renk: Marka.oyunMantik,
+                            label: 'Mantık',
+                            difficulty: 3,
+                            color: Brand.gameLogic,
                             onTap: widget.onLogicTap,
                           ),
                         ),
@@ -639,11 +639,11 @@ class _HomePageState extends State<HomePage>
                         child: _animatedSection(
                           animation: _game6Animation,
                           slideBegin: 0.10,
-                          child: OyunKartiKare(
+                          child: GameCard(
                             emoji: '🔎',
-                            baslik: 'Kelime Avı',
-                            yildiz: 2,
-                            renk: Marka.oyunKelimeAvi,
+                            label: 'Kelime Avı',
+                            difficulty: 2,
+                            color: Brand.gameWord,
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -672,11 +672,11 @@ class _HomePageState extends State<HomePage>
                         child: _animatedSection(
                           animation: _game7Animation,
                           slideBegin: 0.10,
-                          child: OyunKartiKare(
+                          child: GameCard(
                             emoji: '🔤',
-                            baslik: 'Harfler',
-                            yildiz: 1,
-                            renk: Marka.oyunHarf,
+                            label: 'Harfler',
+                            difficulty: 1,
+                            color: Brand.gameLetter,
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -705,67 +705,66 @@ class _HomePageState extends State<HomePage>
 }
 
 // =============================================================
-// YENİ KARE OYUN KARTI  (örnek tasarım)
+// SQUARE GAME CARD
 // =============================================================
 //
-// CLAUDE.md "ekran sadeleştirmesi" 1. maddesi:
-// 2 sutunlu buyuk kare kart, sadece ikon + oyun adi, zorluk 1-3
-// yildizla, kartin tamami tiklanabilir. Renkler Marka'dan gelir.
+// Two-column square card: icon and game name only, difficulty as 1-3
+// stars, the whole card tappable. Colours come from Brand.
 
-class OyunKartiKare extends StatefulWidget {
+class GameCard extends StatefulWidget {
   final String emoji;
-  final String baslik;
+  final String label;
 
-  /// 1 = kolay, 2 = orta, 3 = zor
-  final int yildiz;
+  /// 1 = easy, 2 = medium, 3 = hard
+  final int difficulty;
 
-  /// Marka.oyunHafiza gibi, oyuna ait sabit renk.
-  final Color renk;
+  /// Brand.gameMemory gibi, oyuna ait sabit color.
+  final Color color;
 
   final VoidCallback onTap;
 
-  const OyunKartiKare({
+  const GameCard({
     super.key,
     required this.emoji,
-    required this.baslik,
-    required this.yildiz,
-    required this.renk,
+    required this.label,
+    required this.difficulty,
+    required this.color,
     required this.onTap,
   });
 
   @override
-  State<OyunKartiKare> createState() => _OyunKartiKareState();
+  State<GameCard> createState() => _GameCardState();
 }
 
-class _OyunKartiKareState extends State<OyunKartiKare> {
-  bool _basili = false;
+class _GameCardState extends State<GameCard> {
+  bool _pressed = false;
 
-  Future<void> _dokun() async {
-    if (_basili) return;
+  Future<void> _handleTap() async {
+    if (_pressed) return;
 
-    setState(() => _basili = true);
+    setState(() => _pressed = true);
 
     await Future.delayed(const Duration(milliseconds: 110));
 
     if (!mounted) return;
 
-    setState(() => _basili = false);
+    setState(() => _pressed = false);
 
     widget.onTap();
   }
 
   @override
   Widget build(BuildContext context) {
-    final zemin = Color.lerp(widget.renk, Colors.white, 0.86)!;
-    final yazi = Color.lerp(widget.renk, Colors.black, 0.35)!;
-    final sonukYildiz = Color.lerp(widget.renk, Colors.white, 0.62)!;
+    final background = Color.lerp(widget.color, Colors.white, 0.86)!;
+    final labelColor = Color.lerp(widget.color, Colors.black, 0.35)!;
+    final dimStar = Color.lerp(widget.color, Colors.white, 0.62)!;
 
     return GestureDetector(
-      // Kartin tamami tiklanabilir — eskiden yalnizca kucuk ▶ dugmesiydi.
-      onTap: _dokun,
+      // The whole card is tappable; it used to be only the small play button.
+      onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedScale(
-        scale: _basili ? 0.965 : 1.0,
+        scale: _pressed ? 0.965 : 1.0,
         duration: const Duration(milliseconds: 110),
         curve: Curves.easeOut,
         child: AspectRatio(
@@ -777,18 +776,18 @@ class _OyunKartiKareState extends State<OyunKartiKare> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  zemin,
-                  Color.lerp(zemin, Colors.white, 0.45)!,
+                  background,
+                  Color.lerp(background, Colors.white, 0.45)!,
                 ],
               ),
-              borderRadius: BorderRadius.circular(Marka.kartYaricap),
+              borderRadius: BorderRadius.circular(Brand.cardRadius),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.85),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: widget.renk.withValues(alpha: 0.18),
+                  color: widget.color.withValues(alpha: 0.18),
                   blurRadius: 14,
                   offset: const Offset(0, 6),
                 ),
@@ -797,10 +796,10 @@ class _OyunKartiKareState extends State<OyunKartiKare> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // İKON
+                // ICON
                 Container(
-                  width: Marka.dokunmaEnAz,
-                  height: Marka.dokunmaEnAz,
+                  width: Brand.minTouchTarget,
+                  height: Brand.minTouchTarget,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.82),
                     borderRadius: BorderRadius.circular(20),
@@ -819,21 +818,21 @@ class _OyunKartiKareState extends State<OyunKartiKare> {
 
                 const SizedBox(height: 10),
 
-                // OYUN ADI — tek kelime, aciklama cumlesi yok
+                // GAME NAME - one word, no description sentence
                 Text(
-                  widget.baslik,
+                  widget.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
-                    color: yazi,
+                    color: labelColor,
                   ),
                 ),
 
                 const SizedBox(height: 6),
 
-                // ZORLUK — "Kolay/Orta/Zor" yerine yildiz
+                // ZORLUK — "Kolay/Orta/Zor" yerine difficulty
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(3, (i) {
@@ -842,7 +841,7 @@ class _OyunKartiKareState extends State<OyunKartiKare> {
                       child: Icon(
                         Icons.star_rounded,
                         size: 17,
-                        color: i < widget.yildiz ? widget.renk : sonukYildiz,
+                        color: i < widget.difficulty ? widget.color : dimStar,
                       ),
                     );
                   }),

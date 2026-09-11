@@ -631,7 +631,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
   // =========================================================
 
   Widget _buildMascot() {
-    return const AnimasyonluLogo(cap: 212);
+    return const AnimatedLogo(diameter: 212);
   }
 }
 

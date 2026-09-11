@@ -75,7 +75,7 @@ class _SplashArt extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF11B5FE), // logonun gokyuzu
+            Color(0xFF11B5FE), // logonun sky
             Color(0xFF7FD0FF),
             Color(0xFF3FA64A),
             Color(0xFF0A7A15), // logonun alt yesili

@@ -54,8 +54,8 @@ class MiniZekaApp extends StatelessWidget {
             child: child ?? const SizedBox.shrink(),
           ),
           title: 'Zeka Bahçesi',
-          theme: MiniZekaTheme.lightTheme,
-          darkTheme: MiniZekaTheme.darkTheme,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
           themeMode: themeMode,
           home: Builder(
             builder: (context) {

@@ -139,7 +139,7 @@ class _ParentPanelState extends State<ParentPanel> {
   // =====================================================
 
   Future<void> changeChildName() async {
-    final denetleyici = TextEditingController(text: ChildManager.name);
+    final controller = TextEditingController(text: ChildManager.name);
 
     await showDialog(
       context: context,
@@ -166,7 +166,7 @@ class _ParentPanelState extends State<ParentPanel> {
               ),
               const SizedBox(height: 18),
               TextField(
-                controller: denetleyici,
+                controller: controller,
                 autofocus: true,
                 textCapitalization: TextCapitalization.words,
                 maxLength: 12,
@@ -203,7 +203,7 @@ class _ParentPanelState extends State<ParentPanel> {
                 final messenger = ScaffoldMessenger.of(context);
                 final navigator = Navigator.of(dialogContext);
 
-                await ChildManager.setName(denetleyici.text);
+                await ChildManager.setName(controller.text);
 
                 if (!mounted) return;
 
@@ -235,7 +235,7 @@ class _ParentPanelState extends State<ParentPanel> {
       },
     );
 
-    denetleyici.dispose();
+    controller.dispose();
   }
 
   Future<void> changeChildAge() async {
