@@ -202,7 +202,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                       : 'Doğru cevap: $targetName',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     height: 1.4,
                     color: Color(0xFF21CA3A),
                   ),
@@ -267,7 +267,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                           ? 'Sonucu Gör'
                           : 'Devam Et',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -357,7 +357,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                   'Eşleştirme oyununu tamamladın! 🔷✨',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     color: Color(0xFF21CA3A),
                   ),
                 ),
@@ -424,7 +424,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                     label: const Text(
                       'Tekrar Oyna',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -566,7 +566,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                         const Text(
                           'Hedef şeklin aynısını bul!',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 17,
                             color:
                             Color(0xFF6F827F),
                           ),
@@ -761,7 +761,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                   Text(
                     targetName,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 18,
                       fontWeight:
                       FontWeight.bold,
                       color:
@@ -852,7 +852,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                           option['name']!,
                           style:
                           const TextStyle(
-                            fontSize: 14,
+                            fontSize: 17,
                             fontWeight:
                             FontWeight.bold,
                           ),

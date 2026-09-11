@@ -199,30 +199,35 @@ Logo.png             kullanıcının ürettiği ana logo (kapak görseli için)
 
 ## Bilinen sorunlar
 
-- **Mor geçişi yarım kaldı.** `Mor kullanılmaz` kuralına rağmen 8 dosyada 89 mor
-  kullanımı var: `settings_page.dart` (30), `letter_game.dart` (21),
-  `word_game.dart` (16), `games/memory_game.dart` (6), `parent_login.dart` (6),
-  `avatar_selection_page.dart` (5), `parent_panel.dart` (3), `achievements.dart` (2).
-  35 farklı tonun 16'sı `renk-haritasi.json` içinde hazır (en sık kullanılan
-  `#7653A8` x25 dahil); kalan 19 ton için aynı kural uygulanmalı: açıklık korunur,
-  ton yeşile çevrilir.
-  **Kullanıcı bunu bilerek erteledi** ("şu an kalabilir, rahatsız etmiyor") —
-  açıkça istenmedikçe bu geçişe girişme.
-- **`Brand` fiilen kullanılmıyor.** Kural "renkler daima `Brand`'dan" diyor ama
-  `Brand` yalnızca 3 dosyada geçiyor; kalan ~20 dosya ham `Color(0xFF...)`
-  yazıyor. `game_kit.dart`'taki `GamePalette` sabitleri de beş eski oyunun
-  mevcut renklerini birebir koruyor (refactor görüntüyü değiştirmesin diye).
-  Dokunulan dosyada `Brand`'a geçilmeli.
-- **"Gövde yazısı en az 17 punto" kuralı tutulmuyor.** Kodda 11pt'den 20,
-  12pt'den 18, 13pt'den 22, 14pt'den 21 kullanım var. Hedef kitle okuma
-  bilmeyen 4-8 yaş; bu kural boşuna konmamış. Ekran ekran ele alınmalı.
+- **`Brand` hâlâ az kullanılıyor.** Kural "renkler daima `Brand`'dan" diyor ama
+  `Brand` 3 dosyada geçiyor; kodda 608 ham `Color(0xFF...)` ve **268 farklı ton**
+  var, bunların 177'si yalnızca bir kez kullanılmış. 268 tonu `Brand`'ın ~20
+  semantik token'ına indirmek bir refactor değil görsel yeniden tasarım olur;
+  bilinçli olarak yapılmadı. Doğru yol: dokunulan dosyada `Brand`'a geçmek ve
+  zamanla token setini büyütmek. Palet birleştirme ayrı bir tasarım işi olarak
+  ele alınmalı.
 - `game_explorer` başarısı 5 oyunda açılıyor, artık 7 oyun var. Açıklaması da
   "5 farklı oyun" dediği için kendi içinde tutarlı; eşiğin 7'ye çıkarılıp
   çıkarılmayacağı ürün kararı.
+- 17pt altında kalan 86 kullanım bilerek bırakıldı: ebeveyn paneli ve PIN
+  ekranı yetişkin okuyor, büyük sayıların yanındaki etiketler ve dekoratif
+  alt yazılar kuralın hedefi değil.
 
 ## Çözülmüş olanlar
 
-### Kod incelemesi turu
+### Kod incelemesi turu — ikinci parti
+
+- **Mor geçişi tamamlandı.** Kalan 89 kullanım (35 ton) yeşile çevrildi.
+  `renk-haritasi.json`'un kodladığı kural çıkarıldı (açıklık korunur, ton
+  ~127°'ye gider, doygunluk açıklığa göre ayarlanır); 16 ton haritadan,
+  19 ton aynı kuralla türetildi. Mor taraması 89 -> 0.
+- **Çocuk-UX punto kuralı uygulandı.** 66 yazı boyutu büyütüldü; 17pt altı
+  kullanım 139 -> 86'ya indi. Karar ekran ekran verildi: çocuğun okuduğu
+  metin >= 17pt, ebeveyn paneli ve dekoratif alt yazılar muaf. Üç istatistik
+  kutusunda değer büyütülürken `FittedBox` eklendi ki uzun değerler
+  ("10:05") kırpılmasın.
+
+### Kod incelemesi turu — ilk parti
 
 - **Gece yarısı hatası.** `game_timer.dart` tarih anahtarını her kayıtta
   yeniden hesaplıyordu; gece yarısını geçen oturum akşamın toplamını ertesi

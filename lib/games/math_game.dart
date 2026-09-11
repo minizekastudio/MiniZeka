@@ -237,7 +237,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                       : 'Doğru cevap: $correctAnswer',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     height: 1.4,
                     color: Color(0xFF6F7C87),
                   ),
@@ -302,7 +302,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                           ? 'Sonucu Gör'
                           : 'Sonraki Soru',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -405,7 +405,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                   message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     color: Color(0xFF6F7C87),
                   ),
                 ),
@@ -478,7 +478,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                     label: const Text(
                       'Tekrar Oyna',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -622,7 +622,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                         const Text(
                           'Doğru sonucu seç ve puanını artır!',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 17,
                             color:
                             Color(0xFF6F7C87),
                           ),
@@ -819,7 +819,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                   const Text(
                     'Doğru cevabı seç! 🧠',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 17,
                       color:
                       Color(0xFF7C8993),
                     ),

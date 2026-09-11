@@ -674,7 +674,7 @@ class _ParentPanelState extends State<ParentPanel> {
               Text(
                 'Kullanılan: ${formatUsage(usedSeconds)}',
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: Color(0xFF21CA3A),
                 ),
               ),
@@ -832,7 +832,7 @@ class _ParentPanelState extends State<ParentPanel> {
                           const Text(
                             'Giriş ekranında çocuğa bu ad gösterilir.',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               color: Colors.grey,
                             ),
                           ),
@@ -913,7 +913,7 @@ class _ParentPanelState extends State<ParentPanel> {
                           const Text(
                             'Oyun zorluğu bu yaşa göre ayarlanır.',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               color: Colors.grey,
                             ),
                           ),

@@ -277,7 +277,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                   'Tüm kartların eşlerini buldun! 🧠✨',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     color: Color(0xFF21CA3A),
                   ),
                 ),
@@ -335,7 +335,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                     label: const Text(
                       'Tekrar Oyna',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -475,7 +475,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                         Text(
                           'Aynı iki kartı bulmaya çalış.',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 17,
                             color:
                             Color(0xFF21CA3A),
                           ),
@@ -806,7 +806,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                   label: const Text(
                     'Yeni Oyun',
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 18,
                       fontWeight:
                       FontWeight.bold,
                     ),

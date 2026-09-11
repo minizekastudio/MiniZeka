@@ -438,7 +438,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                         'Oyna • Öğren • Keşfet! ✨',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 17,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
                           color: Color(0xFF22CE3C),

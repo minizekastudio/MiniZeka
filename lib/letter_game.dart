@@ -821,7 +821,7 @@ class _LetterGameState extends State<LetterGame>
                     const Text(
                       'Harika bir çalışma yaptın!',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 17,
                         color:
                         Color(0xFF23D63E),
                       ),
@@ -887,7 +887,7 @@ class _LetterGameState extends State<LetterGame>
                         TextAlign.center,
                         style:
                         const TextStyle(
-                          fontSize: 12,
+                          fontSize: 17,
                           fontWeight:
                           FontWeight.w700,
                           color:
@@ -938,7 +938,7 @@ class _LetterGameState extends State<LetterGame>
                               'Tekrar Oyna',
                               style:
                               TextStyle(
-                                fontSize: 14,
+                                fontSize: 17,
                                 fontWeight:
                                 FontWeight.w900,
                               ),
@@ -1000,7 +1000,7 @@ class _LetterGameState extends State<LetterGame>
                           'Ana Sayfaya Dön',
                           style:
                           TextStyle(
-                            fontSize: 13,
+                            fontSize: 17,
                             fontWeight:
                             FontWeight.w800,
                           ),
@@ -1305,15 +1305,15 @@ class _LetterGameState extends State<LetterGame>
             const SizedBox(
               height: 5,
             ),
-            Text(
-              value,
-              style:
-              const TextStyle(
-                fontSize: 15,
-                fontWeight:
-                FontWeight.w900,
-                color:
-                Color(0xFF259242),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF259242),
+                ),
               ),
             ),
             const SizedBox(
@@ -1372,7 +1372,7 @@ class _LetterGameState extends State<LetterGame>
             value,
             style:
             const TextStyle(
-              fontSize: 11,
+              fontSize: 15,
               fontWeight:
               FontWeight.w900,
               color:

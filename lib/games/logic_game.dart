@@ -305,7 +305,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
                       : 'Doğru cevap: $correctAnswer',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     height: 1.4,
                     color: Color(0xFF71806A),
                   ),
@@ -369,7 +369,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
                           ? 'Sonucu Gör'
                           : 'Devam Et',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -450,7 +450,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
                   message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     height: 1.4,
                     color: Color(0xFF71806A),
                   ),
@@ -536,7 +536,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
                     label: const Text(
                       'Tekrar Oyna',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -674,7 +674,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
                         Text(
                           'Soruyu dikkatlice düşün ve doğru cevabı bul.',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 17,
                             color:
                             Color(0xFF71806A),
                           ),
@@ -873,7 +873,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
                   const Text(
                     'Düşün ve doğru cevabı seç! 💭',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 17,
                       color:
                       Color(0xFF71806A),
                     ),

@@ -728,7 +728,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                               : 'PIN kodunuzu kimseyle paylaşmayın.',
                                           style:
                                           const TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 13,
                                             height: 1.35,
                                             fontWeight:
                                             FontWeight.w600,

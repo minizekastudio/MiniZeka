@@ -374,7 +374,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               'Uygulamanı kendi tercihine göre düzenle.',
                               style:
                               TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 height: 1.4,
                                 color:
                                 Color(
@@ -550,7 +550,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               'Ses Efektleri',
                               style:
                               TextStyle(
-                                fontSize: 15,
+                                fontSize: 17,
                                 fontWeight:
                                 FontWeight
                                     .w900,
@@ -569,7 +569,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               'Oyunlardaki ses efektlerini aç veya kapat.',
                               style:
                               TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 13,
                                 height: 1.35,
                                 color:
                                 Color(
@@ -657,7 +657,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                           style:
                           TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 13,
                             fontWeight:
                             FontWeight
                                 .w700,
@@ -838,7 +838,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               'Tema',
                               style:
                               TextStyle(
-                                fontSize: 15,
+                                fontSize: 17,
                                 fontWeight:
                                 FontWeight
                                     .w900,
@@ -857,7 +857,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               'Zeka Bahçesi görünümünü aydınlık veya karanlık kullan.',
                               style:
                               TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 13,
                                 height: 1.35,
                                 color:
                                 Color(
@@ -1025,7 +1025,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 'Avatarını Özelleştir',
                                 style:
                                 TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 17,
                                   fontWeight:
                                   FontWeight
                                       .w800,
@@ -1044,7 +1044,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 'Kendi avatarını seç ve Zeka Bahçesi\'ni kişiselleştir.',
                                 style:
                                 TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 13,
                                   color:
                                   Color(
                                     0xFF8A7B8E,

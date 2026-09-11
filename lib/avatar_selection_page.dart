@@ -387,7 +387,7 @@ class _AvatarSelectionPageState
                 const Text(
                   'Seni en iyi anlatan avatarı seç! 🌟',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 17,
                     color: Color(0xFF23D63E),
                   ),
                 ),
@@ -666,7 +666,7 @@ class _AvatarSelectionPageState
                                 Text(
                                   'Avatarımı Kaydet',
                                   style: TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 19,
                                     fontWeight:
                                     FontWeight.w900,
                                   ),

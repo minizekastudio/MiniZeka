@@ -165,17 +165,20 @@ class GameResultBox extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 13,
                 color: palette.label,
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-                color: palette.value,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: palette.value,
+                ),
               ),
             ),
           ],
@@ -236,7 +239,7 @@ Future<void> showTimeUpDialog({
                 message,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 17,
                   height: 1.4,
                   color: palette.label,
                 ),
@@ -279,7 +282,7 @@ Future<void> showTimeUpDialog({
                   child: const Text(
                     'Tamam',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

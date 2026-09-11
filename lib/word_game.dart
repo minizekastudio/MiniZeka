@@ -637,7 +637,7 @@ class _WordGameState extends State<WordGame>
                     const Text(
                       'Kelime Avı tamamlandı!',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 17,
                         color:
                         Color(0xFF23D63E),
                       ),
@@ -709,7 +709,7 @@ class _WordGameState extends State<WordGame>
                         TextAlign.center,
                         style:
                         const TextStyle(
-                          fontSize: 12,
+                          fontSize: 17,
                           fontWeight:
                           FontWeight.w700,
                           color:
@@ -833,7 +833,7 @@ class _WordGameState extends State<WordGame>
                           'Ana Sayfaya Dön',
                           style:
                           TextStyle(
-                            fontSize: 13,
+                            fontSize: 17,
                             fontWeight:
                             FontWeight
                                 .w800,
@@ -905,14 +905,15 @@ class _WordGameState extends State<WordGame>
             const SizedBox(
               height: 5,
             ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight:
-                FontWeight.w900,
-                color:
-                Color(0xFF259242),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF259242),
+                ),
               ),
             ),
             const SizedBox(
@@ -1062,7 +1063,7 @@ class _WordGameState extends State<WordGame>
             child: Text(
               'Harfleri seçerek kelimeyi oluştur',
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 17,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF4AE261),
               ),
@@ -2077,7 +2078,7 @@ class _WordGameState extends State<WordGame>
           Text(
             value,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 15,
               fontWeight:
               FontWeight.w900,
               color:

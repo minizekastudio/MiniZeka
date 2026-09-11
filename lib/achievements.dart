@@ -166,7 +166,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                       Text(
                         '$unlockedCount / ${achievements.length} başarı açıldı',
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 17,
                           color: Color(0xFF279D47),
                         ),
                       ),
@@ -237,7 +237,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                           Text(
                             achievement['title'],
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 17.5,
                               fontWeight:
                               FontWeight.w900,
                               color: isUnlocked
@@ -253,7 +253,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                           Text(
                             achievement['description'],
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 17,
                               color: isUnlocked
                                   ? const Color(
                                 0xFF776A7A,

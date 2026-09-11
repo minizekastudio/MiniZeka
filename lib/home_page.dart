@@ -434,7 +434,7 @@ class _HomePageState extends State<HomePage>
                             Text(
                               'Oyna • Öğren • Keşfet! ✨',
                               style: TextStyle(
-                                fontSize: 12.5,
+                                fontSize: 17,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF30DD4A),
                               ),

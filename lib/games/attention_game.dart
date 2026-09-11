@@ -239,7 +239,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                       : 'Bir sonraki soruda daha dikkatli ol!',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     height: 1.4,
                     color: Color(0xFF21CA3A),
                   ),
@@ -301,7 +301,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                           ? 'Sonucu Gör'
                           : 'Devam Et',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -377,7 +377,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                   'Dikkat testini tamamladın! 👀✨',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 17,
                     color: Color(0xFF21CA3A),
                   ),
                 ),
@@ -441,7 +441,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                     label: const Text(
                       'Tekrar Oyna',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -577,7 +577,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                         const Text(
                           'Diğerlerinden farklı olanı bul!',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 17,
                             color: Color(0xFF806D60),
                           ),
                         ),
@@ -796,7 +796,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                             ? 'Biraz daha dikkatli ol! 👀'
                             : 'Son seviye! Gözlerini dört aç! 🔍',
                         style: const TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 17,
                           color: Color(0xFF806D60),
                           fontWeight: FontWeight.w600,
                         ),

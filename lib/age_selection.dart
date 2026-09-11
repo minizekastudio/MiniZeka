@@ -536,7 +536,7 @@ class _AgeSelectionPageState extends State<AgeSelectionPage>
                               'Sana uygun oyunları hazırlayabilmemiz için yaş grubunu seç.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 17,
                                 height: 1.45,
                                 fontWeight: FontWeight.w500,
                                 color: Color(0xFF23D83E),
@@ -856,7 +856,7 @@ class _AgeCardState extends State<AgeCard> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF21CA3A)
                                     .withValues(alpha: 0.85),
