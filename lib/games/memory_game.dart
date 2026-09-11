@@ -580,7 +580,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                       minHeight: 7,
                       backgroundColor:
                       const Color(
-                        0xFFE6DCEF,
+                        0xFFD1FAD5,
                       ),
                       valueColor:
                       AlwaysStoppedAnimation<
@@ -590,7 +590,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                           0xFFD47A7A,
                         )
                             : const Color(
-                          0xFF7653A8,
+                          0xFF23D83E,
                         ),
                       ),
                     ),
@@ -683,10 +683,10 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                             Alignment.bottomRight,
                             colors: [
                               Color(
-                                0xFF9A70C2,
+                                0xFF50E263,
                               ),
                               Color(
-                                0xFF7653A8,
+                                0xFF23D83E,
                               ),
                             ],
                           ),
@@ -816,12 +816,12 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                   OutlinedButton.styleFrom(
                     foregroundColor:
                     const Color(
-                      0xFF7653A8,
+                      0xFF23D83E,
                     ),
                     side:
                     const BorderSide(
                       color: Color(
-                        0xFF7653A8,
+                        0xFF23D83E,
                       ),
                     ),
                     shape:

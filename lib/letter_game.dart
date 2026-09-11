@@ -915,7 +915,7 @@ class _LetterGameState extends State<LetterGame>
                             .styleFrom(
                           backgroundColor:
                           const Color(
-                            0xFF7653A8,
+                            0xFF23D83E,
                           ),
                           foregroundColor:
                           Colors.white,
@@ -979,12 +979,12 @@ class _LetterGameState extends State<LetterGame>
                             .styleFrom(
                           foregroundColor:
                           const Color(
-                            0xFF7653A8,
+                            0xFF23D83E,
                           ),
                           side:
                           const BorderSide(
                             color: Color(
-                              0xFFE1D3EF,
+                              0xFFC9F9CE,
                             ),
                           ),
                           shape:
@@ -1199,14 +1199,14 @@ class _LetterGameState extends State<LetterGame>
               color: letter == null
                   ? isHovering
                   ? const Color(
-                0xFFE9D8FF,
+                0xFFD8FFDC,
               )
                   : Colors.white
                   .withValues(
                 alpha: 0.68,
               )
                   : const Color(
-                0xFFE9D8FF,
+                0xFFD8FFDC,
               ),
               borderRadius:
               BorderRadius.circular(
@@ -1215,12 +1215,12 @@ class _LetterGameState extends State<LetterGame>
               border: Border.all(
                 color: isHovering
                     ? const Color(
-                  0xFF9B70D4,
+                  0xFF5FE573,
                 )
                     : letter == null
                     ? Colors.white
                     : const Color(
-                  0xFFD8C4EB,
+                  0xFFB8F7BE,
                 ),
                 width: 2,
               ),
@@ -1228,7 +1228,7 @@ class _LetterGameState extends State<LetterGame>
                 BoxShadow(
                   color:
                   const Color(
-                    0xFF7653A8,
+                    0xFF23D83E,
                   ).withValues(
                     alpha: isHovering
                         ? 0.15
@@ -1247,7 +1247,7 @@ class _LetterGameState extends State<LetterGame>
                 Icons.add_rounded,
                 color:
                 const Color(
-                  0xFFC2B5C8,
+                  0xFF90ED9C,
                 ),
                 size: 22,
               )
@@ -1260,7 +1260,7 @@ class _LetterGameState extends State<LetterGame>
                   FontWeight.w900,
                   color:
                   Color(
-                    0xFF65488A,
+                    0xFF2AA84C,
                   ),
                 ),
               ),
@@ -1440,7 +1440,7 @@ class _LetterGameState extends State<LetterGame>
                 BoxDecoration(
                   color:
                   const Color(
-                    0xFFE4D5FF,
+                    0xFFD5FFD9,
                   ).withValues(
                     alpha: 0.62,
                   ),
@@ -1480,7 +1480,7 @@ class _LetterGameState extends State<LetterGame>
                 BoxDecoration(
                   color:
                   const Color(
-                    0xFFEADFFF,
+                    0xFFDFFFE2,
                   ).withValues(
                     alpha: 0.60,
                   ),
@@ -1541,7 +1541,7 @@ class _LetterGameState extends State<LetterGame>
                                   .arrow_back_ios_new_rounded,
                               size: 17,
                               color: Color(
-                                0xFF55465D,
+                                0xFF21823B,
                               ),
                             ),
                           ),
@@ -1569,7 +1569,7 @@ class _LetterGameState extends State<LetterGame>
                                       .w900,
                                   color:
                                   Color(
-                                    0xFF5D3D7A,
+                                    0xFF259242,
                                   ),
                                 ),
                               ),
@@ -1587,7 +1587,7 @@ class _LetterGameState extends State<LetterGame>
                                       .w600,
                                   color:
                                   Color(
-                                    0xFF8A7598,
+                                    0xFF30DD4A,
                                   ),
                                 ),
                               ),
@@ -1724,13 +1724,13 @@ class _LetterGameState extends State<LetterGame>
                                       8,
                                       backgroundColor:
                                       const Color(
-                                        0xFFEDE7F1,
+                                        0xFFDDFBE0,
                                       ),
                                       valueColor:
                                       const AlwaysStoppedAnimation<
                                           Color>(
                                         Color(
-                                          0xFF9A72C4,
+                                          0xFF53E366,
                                         ),
                                       ),
                                     ),
@@ -1750,7 +1750,7 @@ class _LetterGameState extends State<LetterGame>
                                         .w900,
                                     color:
                                     Color(
-                                      0xFF7653A8,
+                                      0xFF23D83E,
                                     ),
                                   ),
                                 ),
@@ -1812,7 +1812,7 @@ class _LetterGameState extends State<LetterGame>
                                     .bottomRight,
                                 colors: [
                                   Color(
-                                    0xFFE9D8FF,
+                                    0xFFD8FFDC,
                                   ),
                                   Color(
                                     0xFFDDF5FF,
@@ -1828,7 +1828,7 @@ class _LetterGameState extends State<LetterGame>
                                 BoxShadow(
                                   color:
                                   const Color(
-                                    0xFF8E69B4,
+                                    0xFF3EE053,
                                   ).withValues(
                                     alpha: 0.10,
                                   ),
@@ -1889,7 +1889,7 @@ class _LetterGameState extends State<LetterGame>
                                         .w900,
                                     color:
                                     Color(
-                                      0xFF51376A,
+                                      0xFF20813A,
                                     ),
                                   ),
                                 ),

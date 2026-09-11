@@ -524,7 +524,7 @@ class _AvatarSelectionPageState
                                     Border.all(
                                       color: isSelected
                                           ? const Color(
-                                        0xFF7653A8,
+                                        0xFF23D83E,
                                       )
                                           : Colors.white,
                                       width:
@@ -536,7 +536,7 @@ class _AvatarSelectionPageState
                                       BoxShadow(
                                         color: isSelected
                                             ? const Color(
-                                          0xFF7653A8,
+                                          0xFF23D83E,
                                         ).withValues(
                                           alpha:
                                           0.18,
@@ -611,7 +611,7 @@ class _AvatarSelectionPageState
                                               .w700,
                                           color: isSelected
                                               ? const Color(
-                                            0xFF65488A,
+                                            0xFF2AA84C,
                                           )
                                               : const Color(
                                             0xFF65596A,
@@ -639,14 +639,14 @@ class _AvatarSelectionPageState
                             ElevatedButton.styleFrom(
                               backgroundColor:
                               const Color(
-                                0xFF7653A8,
+                                0xFF23D83E,
                               ),
                               foregroundColor:
                               Colors.white,
                               elevation: 5,
                               shadowColor:
                               const Color(
-                                0xFF7653A8,
+                                0xFF23D83E,
                               ).withValues(
                                 alpha: 0.28,
                               ),

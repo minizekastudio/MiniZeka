@@ -413,7 +413,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(
-                                    0xFF7653A8,
+                                    0xFF23D83E,
                                   ).withValues(alpha: 0.10),
                                   blurRadius: 28,
                                   offset:
@@ -447,7 +447,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(
-                                          0xFF7653A8,
+                                          0xFF23D83E,
                                         ).withValues(
                                           alpha: 0.12,
                                         ),
@@ -622,11 +622,11 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                       elevation: 0,
                                       backgroundColor:
                                       const Color(
-                                        0xFF7653A8,
+                                        0xFF23D83E,
                                       ),
                                       disabledBackgroundColor:
                                       const Color(
-                                        0xFFB9A6D0,
+                                        0xFF8AEC97,
                                       ),
                                       foregroundColor:
                                       Colors.white,
@@ -701,7 +701,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                   decoration:
                                   BoxDecoration(
                                     color: const Color(
-                                      0xFFF6F0FB,
+                                      0xFFEEFDEF,
                                     ),
                                     borderRadius:
                                     BorderRadius.circular(
@@ -715,7 +715,7 @@ class _ParentLoginPageState extends State<ParentLoginPage>
                                             .security_rounded,
                                         size: 18,
                                         color: Color(
-                                          0xFF7653A8,
+                                          0xFF23D83E,
                                         ),
                                       ),
                                       const SizedBox(

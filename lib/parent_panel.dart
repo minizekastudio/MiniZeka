@@ -1056,7 +1056,7 @@ class _ParentPanelState extends State<ParentPanel> {
                             BoxDecoration(
                               color:
                               const Color(
-                                0xFFF0E6FA,
+                                0xFFE5FAE8,
                               ),
                               borderRadius:
                               BorderRadius.circular(
@@ -1210,7 +1210,7 @@ class _ParentPanelState extends State<ParentPanel> {
                           BoxDecoration(
                             color:
                             const Color(
-                              0xFFF0E6FA,
+                              0xFFE5FAE8,
                             ),
                             borderRadius:
                             BorderRadius.circular(
@@ -1454,7 +1454,7 @@ class GameHistoryPage extends StatelessWidget {
                   0xFFD47A7A,
                 )
                     : const Color(
-                  0xFF7653A8,
+                  0xFF23D83E,
                 ),
               ),
             ),

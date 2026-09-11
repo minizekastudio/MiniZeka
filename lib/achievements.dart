@@ -57,7 +57,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
       'emoji': '🔎',
       'title': 'Kelime Avcısı',
       'description': 'Kelime avı oyununu tamamladın!',
-      'color': const Color(0xFFEDE7FB),
+      'color': const Color(0xFFE6FCE8),
     },
     {
       'key': 'letter_master',
@@ -242,7 +242,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
                               FontWeight.w900,
                               color: isUnlocked
                                   ? const Color(
-                                0xFF51425A,
+                                0xFF1F7D38,
                               )
                                   : const Color(
                                 0xFF938996,

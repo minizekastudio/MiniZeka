@@ -128,7 +128,7 @@ class _SettingsPageState extends State<SettingsPage> {
               height: 160,
               decoration: BoxDecoration(
                 color: const Color(
-                  0xFFE4D3FF,
+                  0xFFD3FFD7,
                 ).withValues(alpha: 0.55),
                 shape: BoxShape.circle,
               ),
@@ -143,7 +143,7 @@ class _SettingsPageState extends State<SettingsPage> {
               height: 140,
               decoration: BoxDecoration(
                 color: const Color(
-                  0xFFEBDFFF,
+                  0xFFDFFFE2,
                 ).withValues(alpha: 0.72),
                 shape: BoxShape.circle,
               ),
@@ -217,7 +217,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           size: 17,
                           color:
                           Color(
-                            0xFF55465D,
+                            0xFF21823B,
                           ),
                         ),
                       ),
@@ -237,7 +237,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           FontWeight.w900,
                           color:
                           Color(
-                            0xFF5D3D7A,
+                            0xFF259242,
                           ),
                         ),
                       ),
@@ -265,7 +265,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             .settings_rounded,
                         color:
                         Color(
-                          0xFF7653A8,
+                          0xFF23D83E,
                         ),
                         size: 22,
                       ),
@@ -297,7 +297,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           .bottomRight,
                       colors: [
                         Color(
-                          0xFFE9D8FF,
+                          0xFFD8FFDC,
                         ),
                         Color(
                           0xFFDDF5FF,
@@ -314,7 +314,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       BoxShadow(
                         color:
                         const Color(
-                          0xFF8B62B5,
+                          0xFF38DF51,
                         ).withValues(
                           alpha: 0.10,
                         ),
@@ -361,7 +361,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     .w900,
                                 color:
                                 Color(
-                                  0xFF51376A,
+                                  0xFF20813A,
                                 ),
                               ),
                             ),
@@ -378,7 +378,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 height: 1.4,
                                 color:
                                 Color(
-                                  0xFF66556F,
+                                  0xFF279D47,
                                 ),
                               ),
                             ),
@@ -421,7 +421,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         FontWeight.w900,
                         color:
                         Color(
-                          0xFF51425A,
+                          0xFF1F7D38,
                         ),
                       ),
                     ),
@@ -455,7 +455,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       alpha: 0.92,
                     )
                         : const Color(
-                      0xFFF2EDF5,
+                      0xFFE6FCE8,
                     ),
 
                     borderRadius:
@@ -467,7 +467,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Border.all(
                       color: _soundEnabled
                           ? const Color(
-                        0xFFE4D5F1,
+                        0xFFCDF9D1,
                       )
                           : const Color(
                         0xFFE1DDE3,
@@ -508,10 +508,10 @@ class _SettingsPageState extends State<SettingsPage> {
                           color:
                           _soundEnabled
                               ? const Color(
-                            0xFFE9D8FF,
+                            0xFFD8FFDC,
                           )
                               : const Color(
-                            0xFFE4E0E6,
+                            0xFFCDF9D1,
                           ),
 
                           borderRadius:
@@ -556,7 +556,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     .w900,
                                 color:
                                 Color(
-                                  0xFF51425A,
+                                  0xFF1F7D38,
                                 ),
                               ),
                             ),
@@ -588,7 +588,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         _changeSoundSetting,
                         activeThumbColor:
                         const Color(
-                          0xFF7653A8,
+                          0xFF23D83E,
                         ),
                       ),
                     ],
@@ -620,7 +620,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   BoxDecoration(
                     color: _soundEnabled
                         ? const Color(
-                      0xFFF1E9FA,
+                      0xFFE7FCE9,
                     )
                         : const Color(
                       0xFFF0EEF1,
@@ -664,7 +664,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             color:
                             _soundEnabled
                                 ? const Color(
-                              0xFF7653A8,
+                              0xFF23D83E,
                             )
                                 : const Color(
                               0xFF776F7A,
@@ -708,7 +708,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         FontWeight.w900,
                         color:
                         Color(
-                          0xFF51425A,
+                          0xFF1F7D38,
                         ),
                       ),
                     ),
@@ -745,7 +745,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     border:
                     Border.all(
                       color: const Color(
-                        0xFFE7DDF0,
+                        0xFFD3FAD7,
                       ),
                       width: 1.2,
                     ),
@@ -786,15 +786,15 @@ class _SettingsPageState extends State<SettingsPage> {
                             _darkMode
                                 ? const [
                               Color(
-                                0xFF3A2D4A,
+                                0xFF185F2B,
                               ),
                               Color(
-                                0xFF51406A,
+                                0xFF22883D,
                               ),
                             ]
                                 : const [
                               Color(
-                                0xFFE9D8FF,
+                                0xFFD8FFDC,
                               ),
                               Color(
                                 0xFFDDF5FF,
@@ -844,7 +844,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                     .w900,
                                 color:
                                 Color(
-                                  0xFF51425A,
+                                  0xFF1F7D38,
                                 ),
                               ),
                             ),
@@ -876,7 +876,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         _changeTheme,
                         activeThumbColor:
                         const Color(
-                          0xFF7653A8,
+                          0xFF23D83E,
                         ),
                       ),
                     ],
@@ -915,7 +915,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         FontWeight.w900,
                         color:
                         Color(
-                          0xFF51425A,
+                          0xFF1F7D38,
                         ),
                       ),
                     ),
@@ -987,7 +987,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           BoxDecoration(
                             color:
                             const Color(
-                              0xFFE9D8FF,
+                              0xFFD8FFDC,
                             ),
 
                             borderRadius:
@@ -1031,7 +1031,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                       .w800,
                                   color:
                                   Color(
-                                    0xFF51425A,
+                                    0xFF1F7D38,
                                   ),
                                 ),
                               ),
@@ -1065,7 +1065,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           const BoxDecoration(
                             color:
                             Color(
-                              0xFFE9D8FF,
+                              0xFFD8FFDC,
                             ),
                             shape:
                             BoxShape.circle,
@@ -1078,7 +1078,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             size: 15,
                             color:
                             Color(
-                              0xFF7653A8,
+                              0xFF23D83E,
                             ),
                           ),
                         ),

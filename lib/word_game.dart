@@ -740,7 +740,7 @@ class _WordGameState extends State<WordGame>
                             .styleFrom(
                           backgroundColor:
                           const Color(
-                            0xFF7653A8,
+                            0xFF23D83E,
                           ),
                           foregroundColor:
                           Colors.white,
@@ -811,12 +811,12 @@ class _WordGameState extends State<WordGame>
                             .styleFrom(
                           foregroundColor:
                           const Color(
-                            0xFF7653A8,
+                            0xFF23D83E,
                           ),
                           side:
                           const BorderSide(
                             color: Color(
-                              0xFFE1D3EF,
+                              0xFFC9F9CE,
                             ),
                           ),
                           shape:
@@ -1011,10 +1011,10 @@ class _WordGameState extends State<WordGame>
                 FontWeight.w900,
                 color: selected
                     ? const Color(
-                  0xFFA89BAF,
+                  0xFF64E675,
                 )
                     : const Color(
-                  0xFF5D3D7A,
+                  0xFF259242,
                 ),
               ),
             ),
@@ -1214,7 +1214,7 @@ class _WordGameState extends State<WordGame>
                 BoxDecoration(
                   color:
                   const Color(
-                    0xFFE4D5FF,
+                    0xFFD5FFD9,
                   ).withValues(alpha: 0.65),
                   shape:
                   BoxShape.circle,
@@ -1250,7 +1250,7 @@ class _WordGameState extends State<WordGame>
                 BoxDecoration(
                   color:
                   const Color(
-                    0xFFEADFFF,
+                    0xFFDFFFE2,
                   ).withValues(alpha: 0.65),
                   shape:
                   BoxShape.circle,
@@ -1312,7 +1312,7 @@ class _WordGameState extends State<WordGame>
                                       .arrow_back_ios_new_rounded,
                                   size: 17,
                                   color: Color(
-                                    0xFF55465D,
+                                    0xFF21823B,
                                   ),
                                 ),
                               ),
@@ -1338,7 +1338,7 @@ class _WordGameState extends State<WordGame>
                                       FontWeight
                                           .w900,
                                       color: Color(
-                                        0xFF5D3D7A,
+                                        0xFF259242,
                                       ),
                                     ),
                                   ),
@@ -1355,7 +1355,7 @@ class _WordGameState extends State<WordGame>
                                       FontWeight
                                           .w600,
                                       color: Color(
-                                        0xFF8A7598,
+                                        0xFF30DD4A,
                                       ),
                                     ),
                                   ),
@@ -1493,13 +1493,13 @@ class _WordGameState extends State<WordGame>
                                           8,
                                           backgroundColor:
                                           const Color(
-                                            0xFFEDE7F1,
+                                            0xFFDDFBE0,
                                           ),
                                           valueColor:
                                           const AlwaysStoppedAnimation<
                                               Color>(
                                             Color(
-                                              0xFF9A72C4,
+                                              0xFF53E366,
                                             ),
                                           ),
                                         ),
@@ -1519,7 +1519,7 @@ class _WordGameState extends State<WordGame>
                                             .w900,
                                         color:
                                         Color(
-                                          0xFF7653A8,
+                                          0xFF23D83E,
                                         ),
                                       ),
                                     ),
@@ -1580,7 +1580,7 @@ class _WordGameState extends State<WordGame>
                                         .bottomRight,
                                     colors: [
                                       Color(
-                                        0xFFE9D8FF,
+                                        0xFFD8FFDC,
                                       ),
                                       Color(
                                         0xFFDDF5FF,
@@ -1596,7 +1596,7 @@ class _WordGameState extends State<WordGame>
                                     BoxShadow(
                                       color:
                                       const Color(
-                                        0xFF8E69B4,
+                                        0xFF3EE053,
                                       ).withValues(
                                         alpha: 0.10,
                                       ),
@@ -1656,7 +1656,7 @@ class _WordGameState extends State<WordGame>
                                             .w900,
                                         color:
                                         Color(
-                                          0xFF51376A,
+                                          0xFF20813A,
                                         ),
                                       ),
                                     ),
