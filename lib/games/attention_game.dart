@@ -495,9 +495,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
       Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
-        title: const Text(
-          '👀 Dikkat Oyunu',
-        ),
+        title: GameAppBarTitle(game: game),
         centerTitle: true,
         actions: [
           GameHelpButton(game: game, levelLabel: levelTitle,),

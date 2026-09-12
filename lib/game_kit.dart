@@ -115,6 +115,22 @@ int levelForAge(int age) {
 /// Maps a game to its colours. Lives here rather than on [GameId] so the
 /// enum stays free of Flutter imports.
 extension GameIdPalette on GameId {
+  /// The game's icon.
+  ///
+  /// These replaced emoji: the emoji came from different design families, so
+  /// their visual weight never matched (🧠 solid and detailed next to a flat
+  /// grey 🔤 keycap). Material Symbols are one family at one weight, and
+  /// take the game's own colour.
+  IconData get icon => switch (this) {
+        GameId.memory => Icons.style_rounded,
+        GameId.shape => Icons.category_rounded,
+        GameId.attention => Icons.visibility_rounded,
+        GameId.letter => Icons.abc_rounded,
+        GameId.word => Icons.search_rounded,
+        GameId.math => Icons.calculate_rounded,
+        GameId.logic => Icons.extension_rounded,
+      };
+
   /// Vivid brand colour for the home screen card. Distinct per game so a
   /// child who cannot read still recognises the tile by its colour.
   Color get brandColor => switch (this) {
@@ -137,6 +153,30 @@ extension GameIdPalette on GameId {
         GameId.word => GamePalette.word,
         GameId.letter => GamePalette.letter,
       };
+}
+
+/// A game screen's app bar title: its icon next to its name.
+class GameAppBarTitle extends StatelessWidget {
+  final GameId game;
+
+  const GameAppBarTitle({super.key, required this.game});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(game.icon, size: 26, color: game.palette.value),
+        const SizedBox(width: 9),
+        Flexible(
+          child: Text(
+            game.title,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// The "?" button shown in a game's app bar.
@@ -198,10 +238,7 @@ Future<void> showGameHelpDialog({
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: Text(
-                    game.emoji,
-                    style: const TextStyle(fontSize: 44),
-                  ),
+                  child: Icon(game.icon, size: 46, color: palette.value),
                 ),
               ),
               const SizedBox(height: 16),

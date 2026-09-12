@@ -960,12 +960,10 @@ class _GameCardState extends State<GameCard> {
         ),
       ),
       child: Center(
-        child: Text(
-          widget.game.emoji,
-          style: TextStyle(
-            fontSize: 42,
-            color: Colors.black.withValues(alpha: quiet ? 0.45 : 1),
-          ),
+        child: Icon(
+          widget.game.icon,
+          size: 44,
+          color: quiet ? color.withValues(alpha: 0.40) : color,
         ),
       ),
     );

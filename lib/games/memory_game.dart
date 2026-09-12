@@ -389,9 +389,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
-        title: const Text(
-          '🧠 Hafıza Oyunu',
-        ),
+        title: GameAppBarTitle(game: game),
         centerTitle: true,
         actions: [
           GameHelpButton(game: game),

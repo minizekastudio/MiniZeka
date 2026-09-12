@@ -588,9 +588,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
       Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
-        title: const Text(
-          '🧩 Mantık Oyunu',
-        ),
+        title: GameAppBarTitle(game: game),
         centerTitle: true,
         actions: [
           GameHelpButton(game: game),

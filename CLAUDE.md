@@ -190,8 +190,19 @@ hedefleniyor. Tespit edilen sorunlar ve planlanan çözümler:
    doğru/yanlış çağrışımı olmasın diye kırmızı ve yeşil kullanılmadı.
    Izgara kaydırılamadığı için hücre oranı `LayoutBuilder` ile eldeki
    yüksekliğe göre hesaplanıyor — dört seçenek her ekranda tam sığıyor.
-6. **İkonlar** — şu an emoji kullanılıyor, görsel ağırlıkları tutarsız. Tek elden
-   çizilmiş ikon setiyle değiştirilmeli.
+6. ~~**İkonlar**~~ ✅ **bitti** — emojiler Material Symbols ile değiştirildi
+   (`GameId.icon`, `game_kit.dart`). Emojiler farklı tasarım ailelerinden
+   geldiği için görsel ağırlıkları tutmuyordu (dolgun 🧠'in yanında düz gri
+   🔤 tuş kapağı). Material Symbols tek aile, tek ağırlık ve her oyunun
+   kendi rengini alıyor.
+   Değişen yerler: ana sayfa kartı, "?" modalı, beş oyunun `AppBar` başlığı
+   (ortak `GameAppBarTitle`). Ebeveyn panelindeki liste emojili kaldı —
+   yetişkine bakıyor, sorun oradaki değildi.
+   Karar önce üç seçenek emülatörde yan yana gösterilerek verildi: mevcut
+   emoji / Material / elle `CustomPainter` çizimi. Çizim seti zayıf kaldı
+   (yapboz ikonu bozuk çıktı), Material açık farkla kazandı.
+   **Kaybedilen:** emojinin sıcaklığı. Renkli zemin ve büyük boyutla
+   dengelendi.
 
 ## Yayına kalanlar
 

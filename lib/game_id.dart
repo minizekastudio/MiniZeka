@@ -19,7 +19,7 @@ enum GameId {
     emoji: '🧠',
     difficulty: 1,
     defaultLimitMinutes: 10,
-    helpTitle: 'Kartların eşlerini bul! 🃏',
+    helpTitle: 'Kartların eşlerini bul!',
     helpBody: 'Aynı iki kartı bulmaya çalış.',
   ),
 
@@ -30,7 +30,7 @@ enum GameId {
     emoji: '🔷',
     difficulty: 1,
     defaultLimitMinutes: 10,
-    helpTitle: 'Şekilleri eşleştir! 🔷',
+    helpTitle: 'Şekilleri eşleştir!',
     helpBody: 'Hedef şeklin aynısını bul.',
   ),
 
@@ -41,7 +41,7 @@ enum GameId {
     emoji: '👀',
     difficulty: 2,
     defaultLimitMinutes: 15,
-    helpTitle: 'Farklı olanı bul! 👀',
+    helpTitle: 'Farklı olanı bul!',
     helpBody: 'Diğerlerinden farklı olanı seç.',
   ),
 
@@ -52,7 +52,7 @@ enum GameId {
     emoji: '🔤',
     difficulty: 1,
     defaultLimitMinutes: 15,
-    helpTitle: 'Harfleri sıraya koy! 🔤',
+    helpTitle: 'Harfleri sıraya koy!',
     helpBody: 'Karışık harflerden doğru kelimeyi oluştur.',
   ),
 
@@ -63,7 +63,7 @@ enum GameId {
     emoji: '🔎',
     difficulty: 2,
     defaultLimitMinutes: 15,
-    helpTitle: 'Kelimeyi bul! 🔎',
+    helpTitle: 'Kelimeyi bul!',
     helpBody: 'Harfleri seçerek gizli kelimeyi oluştur.',
   ),
 
@@ -74,7 +74,7 @@ enum GameId {
     emoji: '🔢',
     difficulty: 2,
     defaultLimitMinutes: 20,
-    helpTitle: 'Doğru sonucu seç! 🔢',
+    helpTitle: 'Doğru sonucu seç!',
     helpBody: 'İşlemi çöz ve doğru cevaba dokun.',
   ),
 
@@ -85,7 +85,7 @@ enum GameId {
     emoji: '🧩',
     difficulty: 3,
     defaultLimitMinutes: 15,
-    helpTitle: 'Mantığını kullan! 🧩',
+    helpTitle: 'Mantığını kullan!',
     helpBody: 'Soruyu dikkatlice düşün ve doğru cevabı bul.',
   );
 
