@@ -31,6 +31,13 @@ class _ParentPanelState extends State<ParentPanel> {
     for (final game in GameId.values) game: 0,
   };
 
+  /// Acik oyunlar. Hepsi acik gelir; ebeveyn istedigini kapatir.
+  /// Yas bir oyunu gizlemez — ayni yastaki cocuklar ayni gelisim
+  /// duzeyinde olmuyor, karar veliye birakildi.
+  final Map<GameId, bool> gameEnabled = {
+    for (final game in GameId.values) game: true,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +79,9 @@ class _ParentPanelState extends State<ParentPanel> {
         gameDurations[game] =
             prefs.getInt(StorageKeys.gameLimitMinutes(game)) ??
                 game.defaultLimitMinutes;
+
+        gameEnabled[game] =
+            prefs.getBool(StorageKeys.gameEnabled(game)) ?? true;
       }
     });
   }
@@ -98,6 +108,13 @@ class _ParentPanelState extends State<ParentPanel> {
   // =====================================================
   // SÜRE DEĞİŞTİR
   // =====================================================
+
+  Future<void> toggleGame(GameId game, bool enabled) async {
+    setState(() => gameEnabled[game] = enabled);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(StorageKeys.gameEnabled(game), enabled);
+  }
 
   void changeDuration(GameId game, int value) {
     setState(() {
@@ -993,6 +1010,62 @@ class _ParentPanelState extends State<ParentPanel> {
                     ),
                   ],
                 ),
+              ),
+            ),
+
+            // =================================================
+            // HANGİ OYUNLAR AÇIK
+            // =================================================
+
+            Container(
+              margin: const EdgeInsets.only(bottom: 18),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 5,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '🎮 Açık Oyunlar',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF1F7D38),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Kapattığın oyun çocuğun ekranında görünmez. '
+                    'Yaşa göre kısıtlama yok; kararı sen veriyorsun.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 6),
+                  ...GameId.values.map(
+                    (game) => SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      value: gameEnabled[game] ?? true,
+                      onChanged: (value) => toggleGame(game, value),
+                      activeThumbColor: const Color(0xFF23D83E),
+                      title: Text(
+                        game.labelWithEmoji,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1F7D38),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 

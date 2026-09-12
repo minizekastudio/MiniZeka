@@ -136,13 +136,47 @@ Oyun bazında:
 
 | Oyun | Yaş bandı neyi belirliyor | Seviye ile artar mı |
 |---|---|---|
-| Hafıza | Kart çifti: 4/5/6/8 | Evet — bir sonraki turda |
+| Hafıza | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Eşleştirme | Seçenek: 3/4/5/6 | Evet |
 | Dikkat | Sembol: 6/9/12/16 | Evet |
 | Matematik | Sayı aralığı: 5/10/15/20 | Evet |
 | Kelime Avı | Kelime zorluğu: 1/1/2/3 | Evet |
 | Harfler | Kelime zorluğu: 1/1/2/3 | Evet |
 | Mantık | Soru havuzu 0/1/2/3 | Evet — üst havuza kayar |
+
+### Hafıza oyununun bölüm merdiveni
+
+`memoryLadder` (`lib/difficulty.dart`): **4 → 6 → 8 → 12 → 16 → 20 kart.**
+İlk basamak 2, sonrakiler 3 temiz tur ister. İlerleme kalıcı
+(`StorageKeys.gameLevel` / `gameRoundsCleared`), yaş yalnızca *nereden*
+başlanacağını belirler ve seviye asla geri gitmez.
+
+Merdivenin şekli araştırmaya dayanıyor, yuvarlak sayılara değil:
+
+- Görsel çalışma belleği 5 yaşında ~1,5 öğe, 7'de ~3, 10'da yetişkin düzeyi
+  (Riggs 2006; Ross-Sheehy 2021). Eşleştirme tahtası span testinden kolaydır
+  — sıralı, kendi hızında ve tahta zaten dışsal bir hafıza — ama bu farkı
+  sınırsız kabul edemeyiz.
+- **En kritik bulgu:** Ross-Sheehy (2021), 4-7 yaş çocukların ölçülen
+  kapasitesinin büyük dizilerde *düştüğünü* buldu — kopup tahmin etmeye
+  başlıyorlar. Büyük tahta çocuğu yavaşlatmıyor, yanlış davranışı öğretiyor.
+  Merdivenin altının yumuşak olmasının sebebi bu.
+- **6 kart basamağı sonradan eklendi:** 4 → 8 merdivendeki en büyük oransal
+  sıçrama ve tam 4-5 yaş tavanına denk geliyordu.
+- **10 kart atlandı:** telefon ekranında yarım sıra bırakmayan bir düzeni yok.
+- **Seviye asla görünür şekilde düşmez:** çaresizlik tepkisi 4-7 yaşta zaten
+  mevcut (Burhans & Dweck 1995).
+- Bu yaşa **kronometre gösterilmiyor**; günlük süre çubuğu ebeveyn içindir.
+
+Dürüstlük notu: basamak sayıları (6/8/12/16/20) bir kalibrasyon, ölçülmüş
+sabit değil. Araştırmanın kesinleştirdiği şey eğrinin *şekli*: altta yavaş
+büyü. "3 tur" eşiği de zayıf temelli — ustalık ölçütü literatüründen
+uyarlandı, bu yaş grubu için doğrudan kanıt bulunamadı.
+
+Izgara `_fitGrid` ile eldeki kutuya göre hesaplanıyor: satırı tam dolduran
+sütun sayıları arasından kartın en büyük göründüğü seçilir, kaydırma yok.
+`test/memory_fit_test.dart` altı bölümü üç telefon boyutunda çizip taşma
+olmadığını doğruluyor.
 
 ### Öncesinde ne yanlıştı
 

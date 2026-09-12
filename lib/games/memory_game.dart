@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
 import '../game_id.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../storage_keys.dart';
+import '../app_theme.dart';
+import '../difficulty.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
 
@@ -34,12 +38,56 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   /// Oyun zaten bittiyse sure uyarisi gosterme.
   @override
   bool get canShowTimeUpDialog =>
-      cards.isNotEmpty &&
-      !matched.every((item) => item) &&
-      !finishDialogShown;
+      cards.isNotEmpty && !matched.every((item) => item) && !finishDialogShown;
+
+  /// Ladder position. Kept across sessions so the climb means something.
+  int levelIndex = 0;
+  int roundsCleared = 0;
+
+  GameLevel get level => memoryLadder[levelIndex];
 
   @override
-  void onChildAgeLoaded() => startGame();
+  void onChildAgeLoaded() {
+    // Yas yalnizca NEREDEN basladigini belirler; kayitli ilerleme varsa o
+    // kazanir ve seviye asla geri gitmez.
+    levelIndex = startingLevelFor(ageBand);
+    _loadProgress();
+  }
+
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final saved = prefs.getInt(StorageKeys.gameLevel(game));
+    final rounds = prefs.getInt(StorageKeys.gameRoundsCleared(game)) ?? 0;
+
+    if (!mounted) return;
+
+    setState(() {
+      if (saved != null && saved > levelIndex) levelIndex = saved;
+      levelIndex = levelIndex.clamp(0, memoryLadder.length - 1);
+      roundsCleared = rounds.clamp(0, level.roundsToAdvance);
+      startGame();
+    });
+  }
+
+  Future<void> _saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(StorageKeys.gameLevel(game), levelIndex);
+    await prefs.setInt(StorageKeys.gameRoundsCleared(game), roundsCleared);
+  }
+
+  /// Tur temiz bitti: bolum ilerler, dolduysa bir ust basamak acilir.
+  void _roundCleared() {
+    roundsCleared++;
+
+    if (roundsCleared >= level.roundsToAdvance &&
+        levelIndex < memoryLadder.length - 1) {
+      levelIndex++;
+      roundsCleared = 0;
+    }
+
+    _saveProgress();
+  }
 
   final List<String> symbols = [
     '🍎',
@@ -88,34 +136,76 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   // YENİ OYUN
   // =====================================================
 
+  static const double _cardGap = 12;
+
+  /// Kartlari ekrana tam sigdiran izgara.
+  ///
+  /// Once satiri tam dolduran sutun sayilari denenir (yarim sira kalmasin),
+  /// aralarindan kartin en buyuk gorundugu secilir. Hicbiri tam bolmuyorsa
+  /// en iyi gorunen kullanilir. En-boy orani kutuya birebir oturacak sekilde
+  /// hesaplandigi icin kaydirmaya gerek kalmiyor.
+  ({int columns, double aspectRatio}) _fitGrid(
+    int count,
+    Size box,
+    double gap,
+  ) {
+    if (count <= 0 || box.width <= 0 || box.height <= 0) {
+      return (columns: 2, aspectRatio: 1);
+    }
+
+    var bestColumns = 2;
+    var bestSide = -1.0;
+    var sawExact = false;
+
+    for (var columns = 2; columns <= 5; columns++) {
+      if (columns > count) break;
+
+      final rows = (count / columns).ceil();
+      final exact = count % columns == 0;
+
+      // Tam bolen bir secenek bulunduysa artik yalnizca onlar yarisir.
+      if (sawExact && !exact) continue;
+
+      final cardWidth = (box.width - gap * (columns - 1)) / columns;
+      final cardHeight = (box.height - gap * (rows - 1)) / rows;
+      final side = cardWidth < cardHeight ? cardWidth : cardHeight;
+
+      if (exact && !sawExact) {
+        sawExact = true;
+        bestSide = -1;
+      }
+
+      if (side > bestSide) {
+        bestSide = side;
+        bestColumns = columns;
+      }
+    }
+
+    final rows = (count / bestColumns).ceil();
+    final cardWidth = (box.width - gap * (bestColumns - 1)) / bestColumns;
+    final cardHeight = (box.height - gap * (rows - 1)) / rows;
+
+    final ratio = cardHeight > 0 ? cardWidth / cardHeight : 1.0;
+
+    return (columns: bestColumns, aspectRatio: ratio.clamp(0.5, 2.0));
+  }
+
   void startGame() {
-    // Kart sayisi yas bandindan baslar ve kazanilan seviyeyle artar.
-    // Acilmis tahta ortasinda degismesin diye yalnizca burada, yani yeni
-    // tur kurulurken okunuyor.
-    final pairCount = difficulty.scaled(const [4, 5, 6, 8], max: 10);
+    // Kart sayisi merdivenden; tahta ortasinda degismesin diye yalnizca
+    // yeni tur kurulurken okunuyor.
+    final pairCount = level.cards ~/ 2;
 
-    final selectedSymbols =
-    List<String>.from(symbols)..shuffle(Random());
+    final selectedSymbols = List<String>.from(symbols)..shuffle(Random());
 
-    final selectedPairs =
-    selectedSymbols.take(pairCount).toList();
+    final selectedPairs = selectedSymbols.take(pairCount).toList();
 
-    cards = [
-      ...selectedPairs,
-      ...selectedPairs,
-    ];
+    cards = [...selectedPairs, ...selectedPairs];
 
     cards.shuffle(Random());
 
-    revealed = List<bool>.filled(
-      cards.length,
-      false,
-    );
+    revealed = List<bool>.filled(cards.length, false);
 
-    matched = List<bool>.filled(
-      cards.length,
-      false,
-    );
+    matched = List<bool>.filled(cards.length, false);
 
     firstIndex = -1;
     secondIndex = -1;
@@ -137,10 +227,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   // =====================================================
 
   Future<void> selectCard(int index) async {
-    if (gameTimer.timeIsOver ||
-        checking ||
-        revealed[index] ||
-        matched[index]) {
+    if (gameTimer.timeIsOver || checking || revealed[index] || matched[index]) {
       return;
     }
 
@@ -159,9 +246,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
     moves++;
     checking = true;
 
-    await Future.delayed(
-      const Duration(milliseconds: 550),
-    );
+    await Future.delayed(const Duration(milliseconds: 550));
 
     if (!mounted) return;
 
@@ -172,11 +257,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
         matched[firstIndex] = true;
         matched[secondIndex] = true;
 
-        // Seri ilerler; seviye yukselirse acilmis tahta degismez, etkisi
-        // BIR SONRAKI turda gorulur (kart sayisi artar).
-        difficulty.correct();
-
-        score += difficulty.level * 10;
+        score += (levelIndex + 1) * 10;
         if (score >= 50) {
           AchievementManager.unlock('mind_master');
         }
@@ -189,18 +270,16 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
 
       // Bütün kartlar eşleşti
       if (matched.every((item) => item)) {
+        _roundCleared();
         AchievementManager.unlock('first_step');
         AchievementManager.markGamePlayed('memory');
         _showGameFinishedDialog();
       }
     }
-
     // Eşleşmedi
     else {
       SoundManager.playWrong();
       setState(() {
-        difficulty.wrong();
-
         revealed[firstIndex] = false;
         revealed[secondIndex] = false;
 
@@ -245,12 +324,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Text(
-                      '🎉',
-                      style: TextStyle(
-                        fontSize: 46,
-                      ),
-                    ),
+                    child: Text('🎉', style: TextStyle(fontSize: 46)),
                   ),
                 ),
 
@@ -271,10 +345,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                 const Text(
                   'Tüm kartların eşlerini buldun! 🧠✨',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 17,
-                    color: Color(0xFF21CA3A),
-                  ),
+                  style: TextStyle(fontSize: 17, color: Color(0xFF21CA3A)),
                 ),
 
                 const SizedBox(height: 20),
@@ -300,9 +371,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                       palette: GamePalette.memory,
                       emoji: '⏱️',
                       title: 'Süre',
-                      value: formatSeconds(
-                        usedTime,
-                      ),
+                      value: formatSeconds(usedTime),
                     ),
                   ],
                 ),
@@ -324,9 +393,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                         gameTimer.start();
                       }
                     },
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                    ),
+                    icon: const Icon(Icons.refresh_rounded),
                     label: const Text(
                       'Tekrar Oyna',
                       style: TextStyle(
@@ -334,19 +401,12 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    style:
-                    ElevatedButton.styleFrom(
-                      backgroundColor:
-                      const Color(0xFF23D83E),
-                      foregroundColor:
-                      Colors.white,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF23D83E),
+                      foregroundColor: Colors.white,
                       elevation: 0,
-                      shape:
-                      RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(
-                          17,
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(17),
                       ),
                     ),
                   ),
@@ -361,9 +421,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                   },
                   child: const Text(
                     'Oyundan Çık',
-                    style: TextStyle(
-                      color: Color(0xFF21CA3A),
-                    ),
+                    style: TextStyle(color: Color(0xFF21CA3A)),
                   ),
                 ),
               ],
@@ -386,9 +444,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
       appBar: AppBar(
         title: GameAppBarTitle(game: game),
         centerTitle: true,
-        actions: [
-          GameHelpButton(game: game),
-        ],
+        actions: [GameHelpButton(game: game)],
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
       ),
@@ -401,34 +457,21 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
             // =========================================
 
             Padding(
-              padding:
-              const EdgeInsets.symmetric(
-                horizontal: 18,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(
                 children: [
-                  InfoBox(
-                    emoji: '⭐',
-                    title: 'Puan',
-                    value: '$score',
-                  ),
+                  InfoBox(emoji: '⭐', title: 'Puan', value: '$score'),
 
                   const SizedBox(width: 8),
 
-                  InfoBox(
-                    emoji: '🎯',
-                    title: 'Hamle',
-                    value: '$moves',
-                  ),
+                  InfoBox(emoji: '🎯', title: 'Hamle', value: '$moves'),
 
                   const SizedBox(width: 8),
 
                   InfoBox(
                     emoji: '⏱️',
                     title: 'Kalan',
-                    value:
-                    gameTimer
-                        .formattedRemaining,
+                    value: gameTimer.formattedRemaining,
                   ),
                 ],
               ),
@@ -437,40 +480,87 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
             const SizedBox(height: 10),
 
             // =========================================
+            // BÖLÜM İLERLEMESİ
+            // =========================================
+            //
+            // Cocuk nerede oldugunu ve bir sonraki basamaga ne kadar
+            // kaldigini yaziyi okumadan gorsun diye: bolum numarasi ve
+            // her temiz tur icin bir nokta.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  children: [
+                    Text(
+                      '${levelIndex + 1}. Bölüm',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: game.palette.value,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ...List.generate(level.roundsToAdvance, (i) {
+                      final done = i < roundsCleared;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Icon(
+                          done
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          size: 22,
+                          color: done
+                              ? Brand.sun
+                              : game.palette.value.withValues(alpha: 0.35),
+                        ),
+                      );
+                    }),
+                    const SizedBox(width: 14),
+                    Text(
+                      '${cards.length} kart',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: game.palette.label,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // =========================================
             // SÜRE İLERLEME ÇUBUĞU
             // =========================================
-
             Padding(
-              padding:
-              const EdgeInsets.symmetric(
-                horizontal: 20,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment
-                        .spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        '⏱️ Günlük oyun süresi',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                          FontWeight.bold,
-                          color:
-                          Color(0xFF21CA3A),
+                      Flexible(
+                        child: const Text(
+                          '⏱️ Günlük oyun süresi',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF21CA3A),
+                          ),
                         ),
                       ),
                       Text(
-                        gameTimer
-                            .formattedRemaining,
+                        gameTimer.formattedRemaining,
                         style: const TextStyle(
                           fontSize: 11,
-                          fontWeight:
-                          FontWeight.bold,
-                          color:
-                          Color(0xFF2AA74B),
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2AA74B),
                         ),
                       ),
                     ],
@@ -479,28 +569,15 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                   const SizedBox(height: 5),
 
                   ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(
-                      10,
-                    ),
-                    child:
-                    LinearProgressIndicator(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
                       value: timeProgress,
                       minHeight: 7,
-                      backgroundColor:
-                      const Color(
-                        0xFFD1FAD5,
-                      ),
-                      valueColor:
-                      AlwaysStoppedAnimation<
-                          Color>(
+                      backgroundColor: const Color(0xFFD1FAD5),
+                      valueColor: AlwaysStoppedAnimation<Color>(
                         timeProgress < 0.2
-                            ? const Color(
-                          0xFFD47A7A,
-                        )
-                            : const Color(
-                          0xFF23D83E,
-                        ),
+                            ? const Color(0xFFD47A7A)
+                            : const Color(0xFF23D83E),
                       ),
                     ),
                   ),
@@ -513,193 +590,133 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
             // =========================================
             // KARTLAR
             // =========================================
-
             Expanded(
-              child: GridView.builder(
-                padding:
-                const EdgeInsets.fromLTRB(
-                  18,
-                  4,
-                  18,
-                  12,
-                ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Tahta her zaman ekrana tam sigar: sutun sayisi ve
+                    // en-boy orani eldeki kutuya gore hesaplanir, kaydirma
+                    // yok. Eskiden 3 sutun sabitti ve son sira tasiyordu.
+                    final grid = _fitGrid(
+                      cards.length,
+                      constraints.biggest,
+                      _cardGap,
+                    );
 
-                itemCount: cards.length,
+                    return GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
 
-                gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.95,
-                ),
+                      itemCount: cards.length,
 
-                itemBuilder: (_, index) {
-                  final show =
-                      revealed[index] ||
-                          matched[index];
-
-                  return GestureDetector(
-                    onTap: () =>
-                        selectCard(index),
-
-                    child:
-                    AnimatedScale(
-                      scale:
-                      matched[index]
-                          ? 0.94
-                          : 1.0,
-
-                      duration:
-                      const Duration(
-                        milliseconds: 180,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: grid.columns,
+                        crossAxisSpacing: _cardGap,
+                        mainAxisSpacing: _cardGap,
+                        childAspectRatio: grid.aspectRatio,
                       ),
 
-                      child:
-                      AnimatedContainer(
-                        duration:
-                        const Duration(
-                          milliseconds: 220,
-                        ),
+                      itemBuilder: (_, index) {
+                        final show = revealed[index] || matched[index];
 
-                        decoration:
-                        BoxDecoration(
-                          gradient:
-                          matched[index]
-                              ? const LinearGradient(
-                            colors: [
-                              Color(
-                                0xFFD8F3DC,
-                              ),
-                              Color(
-                                0xFFEAF9ED,
-                              ),
-                            ],
-                          )
-                              : show
-                              ? const LinearGradient(
-                            colors: [
-                              Colors.white,
-                              Color(
-                                0xFFF9F5FF,
-                              ),
-                            ],
-                          )
-                              : const LinearGradient(
-                            begin:
-                            Alignment.topLeft,
-                            end:
-                            Alignment.bottomRight,
-                            colors: [
-                              Color(
-                                0xFF50E263,
-                              ),
-                              Color(
-                                0xFF23D83E,
-                              ),
-                            ],
-                          ),
+                        return GestureDetector(
+                          onTap: () => selectCard(index),
 
-                          borderRadius:
-                          BorderRadius.circular(
-                            20,
-                          ),
+                          child: AnimatedScale(
+                            scale: matched[index] ? 0.94 : 1.0,
 
-                          border:
-                          Border.all(
-                            color: matched[index]
-                                ? const Color(
-                              0xFF9ED2A6,
-                            )
-                                : Colors.transparent,
-                            width: 2,
-                          ),
+                            duration: const Duration(milliseconds: 180),
 
-                          boxShadow:
-                          const [
-                            BoxShadow(
-                              color:
-                              Colors.black12,
-                              blurRadius: 6,
-                              offset:
-                              Offset(0, 3),
-                            ),
-                          ],
-                        ),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
 
-                        child: Center(
-                          child:
-                          AnimatedSwitcher(
-                            duration:
-                            const Duration(
-                              milliseconds: 180,
-                            ),
+                              decoration: BoxDecoration(
+                                gradient: matched[index]
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Color(0xFFD8F3DC),
+                                          Color(0xFFEAF9ED),
+                                        ],
+                                      )
+                                    : show
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Colors.white,
+                                          Color(0xFFF9F5FF),
+                                        ],
+                                      )
+                                    : const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Color(0xFF50E263),
+                                          Color(0xFF23D83E),
+                                        ],
+                                      ),
 
-                            transitionBuilder:
-                                (
-                                child,
-                                animation,
-                                ) {
-                              return ScaleTransition(
-                                scale: animation,
-                                child: child,
-                              );
-                            },
+                                borderRadius: BorderRadius.circular(20),
 
-                            child: Text(
-                              show
-                                  ? cards[index]
-                                  : '?',
+                                border: Border.all(
+                                  color: matched[index]
+                                      ? const Color(0xFF9ED2A6)
+                                      : Colors.transparent,
+                                  width: 2,
+                                ),
 
-                              key: ValueKey(
-                                show
-                                    ? cards[index]
-                                    : '?',
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 6,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
                               ),
 
-                              style:
-                              TextStyle(
-                                fontSize:
-                                show
-                                    ? 38
-                                    : 32,
-                                fontWeight:
-                                FontWeight
-                                    .bold,
-                                color: show
-                                    ? Colors.black
-                                    : Colors.white,
+                              child: Center(
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 180),
+
+                                  transitionBuilder: (child, animation) {
+                                    return ScaleTransition(
+                                      scale: animation,
+                                      child: child,
+                                    );
+                                  },
+
+                                  child: Text(
+                                    show ? cards[index] : '?',
+
+                                    key: ValueKey(show ? cards[index] : '?'),
+
+                                    style: TextStyle(
+                                      fontSize: show ? 38 : 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: show ? Colors.black : Colors.white,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
 
             // =========================================
             // YENİ OYUN
             // =========================================
-
             Padding(
-              padding:
-              const EdgeInsets.fromLTRB(
-                18,
-                0,
-                18,
-                16,
-              ),
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
               child: SizedBox(
                 width: double.infinity,
                 height: 52,
-                child:
-                OutlinedButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: () {
-                    if (gameTimer
-                        .timeIsOver) {
+                    if (gameTimer.timeIsOver) {
                       return;
                     }
 
@@ -708,37 +725,18 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                     });
                   },
 
-                  icon: const Icon(
-                    Icons.refresh_rounded,
-                  ),
+                  icon: const Icon(Icons.refresh_rounded),
 
                   label: const Text(
                     'Yeni Oyun',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight:
-                      FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
 
-                  style:
-                  OutlinedButton.styleFrom(
-                    foregroundColor:
-                    const Color(
-                      0xFF23D83E,
-                    ),
-                    side:
-                    const BorderSide(
-                      color: Color(
-                        0xFF23D83E,
-                      ),
-                    ),
-                    shape:
-                    RoundedRectangleBorder(
-                      borderRadius:
-                      BorderRadius.circular(
-                        17,
-                      ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF23D83E),
+                    side: const BorderSide(color: Color(0xFF23D83E)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(17),
                     ),
                   ),
                 ),

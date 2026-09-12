@@ -101,3 +101,57 @@ String levelLabel(int level) => switch (level) {
       2 => '🟡 Orta Seviye',
       _ => '🔴 Zor Seviye',
     };
+
+/// One rung of a game's level ladder.
+class GameLevel {
+  const GameLevel({required this.cards, required this.roundsToAdvance});
+
+  /// How many cards are on the board at this level.
+  final int cards;
+
+  /// Clean rounds needed here before the next rung opens.
+  final int roundsToAdvance;
+}
+
+/// The memory game's ladder.
+///
+/// Shaped from developmental evidence rather than round numbers:
+///
+///   * Visual working memory is roughly 1.5 items at age 5, 3 at 7 and
+///     adult-like (3-4) around 10 (Riggs et al. 2006; Ross-Sheehy et al.
+///     2021). A matching grid is easier than a span test — it is sequential,
+///     self-paced, and the board itself is an external memory aid — so grid
+///     size can exceed that span, but not by an unlimited factor.
+///   * Ross-Sheehy et al. (2021) found 4-7 year olds' measured capacity
+///     DROPS on larger arrays: they disengage and start guessing. An
+///     oversized board does not just slow a child down, it teaches the wrong
+///     behaviour. Hence the conservative bottom of this ladder.
+///   * 4 -> 8 would double the cards in one step, the largest proportional
+///     jump anywhere, landing exactly on the 4-5 year old ceiling. A 6-card
+///     rung sits in between.
+///   * 10 cards is skipped: it has no layout that fills a phone screen
+///     without a ragged last row.
+///
+/// The rung counts are a calibration, not a measured constant. What the
+/// evidence settles is the shape: start low, grow slowly at the bottom.
+const List<GameLevel> memoryLadder = [
+  // Teaches the rule without words; a non-reader cannot really fail it.
+  GameLevel(cards: 4, roundsToAdvance: 2),
+  GameLevel(cards: 6, roundsToAdvance: 3),
+  GameLevel(cards: 8, roundsToAdvance: 3),
+  GameLevel(cards: 12, roundsToAdvance: 3),
+  GameLevel(cards: 16, roundsToAdvance: 3),
+  GameLevel(cards: 20, roundsToAdvance: 3),
+];
+
+/// Where a child of this age starts the ladder.
+///
+/// Nobody is locked out of the lower rungs and nobody is dropped back down:
+/// helplessness responses are already present at 4-7 (Burhans & Dweck 1995),
+/// so the level never visibly goes backwards.
+int startingLevelFor(AgeBand band) => switch (band) {
+      AgeBand.preschool => 0,
+      AgeBand.early => 1,
+      AgeBand.mid => 2,
+      AgeBand.older => 3,
+    };

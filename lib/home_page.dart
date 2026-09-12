@@ -47,6 +47,9 @@ class _HomePageState extends State<HomePage>
   Map<GameId, int> _limitMinutes = {};
   Set<String> _playedGames = {};
 
+  /// Games the parent has left switched on. Everything ships on.
+  List<GameId> _visibleGames = GameId.values;
+
   late Animation<double> _titleAnimation;
 
   late Animation<double> _game1Animation;
@@ -179,12 +182,17 @@ class _HomePageState extends State<HomePage>
     final played =
         (prefs.getStringList(StorageKeys.playedGames) ?? <String>[]).toSet();
 
+    final visible = GameId.values
+        .where((g) => prefs.getBool(StorageKeys.gameEnabled(g)) ?? true)
+        .toList();
+
     if (!mounted) return;
 
     setState(() {
       _usedSeconds = used;
       _limitMinutes = limit;
       _playedGames = played;
+      _visibleGames = visible;
     });
   }
 
@@ -235,7 +243,37 @@ class _HomePageState extends State<HomePage>
       _game7Animation,
     ];
 
-    final games = GameId.values;
+    final games = _visibleGames;
+
+    // Ebeveyn hepsini kapattiysa cocuk bos ekranla karsilasmasin.
+    if (games.isEmpty) {
+      return [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 40),
+          child: Column(
+            children: [
+              const Text('🌙', style: TextStyle(fontSize: 54)),
+              const SizedBox(height: 14),
+              Text(
+                'Şimdilik oyun yok',
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
+                  color: Brand.leafDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Annen ya da baban oyunları açabilir.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 17, color: Colors.black54),
+              ),
+            ],
+          ),
+        ),
+      ];
+    }
+
     final rows = <Widget>[];
 
     for (var i = 0; i < games.length; i += 2) {
