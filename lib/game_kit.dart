@@ -3,6 +3,7 @@ import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_theme.dart';
+import 'difficulty.dart';
 import 'game_id.dart';
 import 'game_timer.dart';
 
@@ -100,16 +101,6 @@ class GamePalette {
     heading: Color(0xFFA12A57),
     button: Brand.gameLetter,
   );
-}
-
-/// Cocugun yasina gore zorluk seviyesi.
-///
-/// Dikkat, matematik ve eslestirme oyunlarinda birebir ayni sekilde
-/// kopyalanmisti.
-int levelForAge(int age) {
-  if (age <= 7) return 1;
-  if (age <= 9) return 2;
-  return 3;
 }
 
 /// Maps a game to its colours. Lives here rather than on [GameId] so the
@@ -493,6 +484,13 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
   /// `child_age` okunana kadarki varsayilan; load'daki geri dusus ile ayni.
   int childAge = 9;
 
+  /// Baseline from the child's age plus whatever they earn during play.
+  /// Rebuilt when the stored age arrives.
+  DifficultyTracker difficulty =
+      DifficultyTracker(band: AgeBand.forAge(9));
+
+  AgeBand get ageBand => difficulty.band;
+
   bool timeUpDialogShown = false;
 
   /// Which game this screen is. Storage keys, default limit, title and
@@ -531,6 +529,7 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
 
     setState(() {
       childAge = savedAge;
+      difficulty = DifficultyTracker(band: AgeBand.forAge(savedAge));
       onChildAgeLoaded();
     });
   }

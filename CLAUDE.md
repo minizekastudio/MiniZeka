@@ -114,6 +114,44 @@ Bu bölüm bağlayıcıdır. Yeni kod bunlara uyar; mevcut kod dokunuldukça uya
   commit edilmez.
 - Görsel iş emülatörde gözle doğrulanır; ekran görüntüsü almak yeterlidir.
 
+## Zorluk sistemi
+
+Tek kavram: **yaş bandı tabanı + oyun içinde kazanılan seviye**.
+Tanım `lib/difficulty.dart`'ta, başka hiçbir yerde yaş eşiği yazılmaz.
+
+- `AgeBand` — dört bant: 4-5, 6-7, 8-9, 10-12. Ebeveyn panelindeki etiket de
+  buradan (`AgeBand.label`).
+- `DifficultyTracker` — seviye 1'den başlar, **üst üste 3 doğru** cevapta
+  yükselir, en fazla 3. Yanlış cevap seriyi sıfırlar ama **seviyeyi
+  düşürmez**: hedef kitle 4-8 yaş, amaç ceza değil teşvik.
+- `scaled([a,b,c,d], max:)` — yaş bandına göre tabanı seçer, kazanılan
+  seviyeyi ekler, tavanı aşmaz.
+
+Oyun bazında:
+
+| Oyun | Yaş bandı neyi belirliyor | Seviye ile artar mı |
+|---|---|---|
+| Hafıza | Kart çifti: 4/5/6/8 | Hayır — soru-cevap döngüsü yok |
+| Eşleştirme | Seçenek: 3/4/5/6 | Evet |
+| Dikkat | Sembol: 6/9/12/16 | Evet |
+| Matematik | Sayı aralığı: 5/10/15/20 | Evet |
+| Kelime Avı | Kelime zorluğu: 1/1/2/3 | Evet |
+| Harfler | Kelime zorluğu: 1/1/2/3 | Evet |
+| Mantık | Soru havuzu 0/1/2/3 | Hayır — havuzlar sabit |
+
+### Öncesinde ne yanlıştı
+
+- "Zorluk" adı altında üç ilgisiz şey vardı: oyunlara kopyalanmış `childAge`
+  if-zincirleri (4 bant), `levelForAge` (**3 bant** — 4 ile 7 yaş aynı
+  sayılıyordu) ve bir `level` alanı.
+- Matematik ve Eşleştirme'de `level`, `updateLevel()` ile **soru
+  numarasından** hesaplanıyordu ve sorulara hiç dokunmuyordu: yalnızca puanı
+  çarpıyor, ekranda "Zor Seviye" yazdırıyordu. 5. sorudaki soru 1. soruyla
+  aynı zorluktaydı.
+- Kelime Avı ve Harfler `childAge`'i **hiç kullanmıyordu**; 4 yaşındaki çocuk
+  12 yaşındakiyle aynı kelimeleri alıyordu. Havuzlardaki `difficulty` alanı
+  duruyordu ama Harfler'de soru numarasına, Kelime Avı'nda hiçbir şeye bağlıydı.
+
 ## Tasarım kuralları
 
 Renkler ve ölçüler **daima** `Brand` sınıfından alınır (`lib/app_theme.dart`),

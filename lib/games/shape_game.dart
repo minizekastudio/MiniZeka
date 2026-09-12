@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
+import '../difficulty.dart';
 import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
@@ -37,7 +38,6 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
 
   @override
   void onChildAgeLoaded() {
-    level = levelForAge(childAge);
 
     createQuestion();
   }
@@ -46,7 +46,6 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
 
   int question = 1;
   int score = 0;
-  int level = 1;
 
   String targetName = '';
   String targetIcon = '';
@@ -77,21 +76,12 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
   // =====================================================
 
   void createQuestion() {
-    int optionCount;
-
-    if (childAge <= 5) {
-      // 4–5 yaş
-      optionCount = 3;
-    } else if (childAge <= 7) {
-      // 6–7 yaş
-      optionCount = 4;
-    } else if (childAge <= 9) {
-      // 8–9 yaş
-      optionCount = 5;
-    } else {
-      // 10–12 yaş
-      optionCount = 6;
-    }
+    // Yas tabani + oyun icinde kazanilan seviye. Artik etiket ile gercek
+    // zorluk ayni sey: seviye yukselince secenek sayisi da artiyor.
+    final optionCount = difficulty.scaled(
+      const [3, 4, 5, 6],
+      max: shapes.length,
+    );
 
     final available =
     List<Map<String, String>>.from(shapes);
@@ -129,19 +119,25 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
 
     final correct = name == targetName;
 
+    // Puan mevcut seviyeden hesaplanir, seviye SONRA guncellenir; boylece
+    // seviye atlatan cevap da eski carpanla puanlanir.
+    final earned = correct ? difficulty.level * 10 : 0;
+
     if (correct) {
-      score += level * 10;
+      score += earned;
+      difficulty.correct();
+    } else {
+      difficulty.wrong();
     }
 
-    _showAnswerDialog(correct);
+    _showAnswerDialog(correct, earned);
   }
 
   // =====================================================
   // CEVAP SONUCU
   // =====================================================
 
-  void _showAnswerDialog(bool correct) {
-    final earnedScore = correct ? level * 10 : 0;
+  void _showAnswerDialog(bool correct, int earnedScore) {
     if (correct) {
       SoundManager.playCorrect();
     } else {
@@ -247,7 +243,6 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                       } else {
                         setState(() {
                           question++;
-                          updateLevel();
                           createQuestion();
                         });
                       }
@@ -285,15 +280,6 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
   // SEVİYE
   // =====================================================
 
-  void updateLevel() {
-    if (question <= 2) {
-      level = 1;
-    } else if (question <= 4) {
-      level = 2;
-    } else {
-      level = 3;
-    }
-  }
 
   // =====================================================
   // OYUN TAMAMLANDI
@@ -412,7 +398,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
                       setState(() {
                         question = 1;
                         score = 0;
-                        level = 1;
+                        difficulty.reset();
                         finalDialogShown = false;
                         timeUpDialogShown = false;
                         createQuestion();
@@ -469,11 +455,7 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
 
   @override
   Widget build(BuildContext context) {
-    final levelTitle = level == 1
-        ? '🟢 Kolay Seviye'
-        : level == 2
-        ? '🟡 Orta Seviye'
-        : '🔴 Zor Seviye';
+    final levelTitle = levelLabel(difficulty.level);
 
     return Scaffold(
       backgroundColor:

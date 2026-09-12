@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
+import '../difficulty.dart';
 import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
@@ -37,12 +38,10 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
 
   @override
   void onChildAgeLoaded() {
-    level = levelForAge(childAge);
 
     createQuestion();
   }
 
-  int level = 1;
   int question = 1;
   int score = 0;
   int differentIndex = 0;
@@ -91,16 +90,8 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
   // =====================================================
 
   void createQuestion() {
-    int itemCount;
-
-    // Seviyeye göre kaç sembol gösterileceğini belirle
-    if (level == 1) {
-      itemCount = 9;
-    } else if (level == 2) {
-      itemCount = 12;
-    } else {
-      itemCount = 16;
-    }
+    // Sembol sayisi yas bandindan baslar, seviye yukseldikce artar.
+    final itemCount = difficulty.scaled(const [6, 9, 12, 16], max: 20);
 
     String normalSymbol;
     String differentSymbol;
@@ -125,7 +116,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
 
       // Sorunun benzersiz anahtarını oluştur
       questionKey =
-      '$level-$normalSymbol-$differentSymbol-$newDifferentIndex';
+      '${difficulty.level}-$normalSymbol-$differentSymbol-$newDifferentIndex';
 
     } while (usedQuestions.contains(questionKey));
 
@@ -166,19 +157,23 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
 
     final correct = index == differentIndex;
 
+    final earned = correct ? difficulty.level * 10 : 0;
+
     if (correct) {
-      score += level * 10;
+      score += earned;
+      difficulty.correct();
+    } else {
+      difficulty.wrong();
     }
 
-    _showAnswerDialog(correct);
+    _showAnswerDialog(correct, earned);
   }
 
   // =====================================================
   // DOĞRU / YANLIŞ SONUÇ
   // =====================================================
 
-  void _showAnswerDialog(bool correct) {
-    final earnedScore = correct ? level * 10 : 0;
+  void _showAnswerDialog(bool correct, int earnedScore) {
     if (correct) {
       SoundManager.playCorrect();
     } else {
@@ -283,7 +278,6 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                       } else {
                         setState(() {
                           question++;
-                          level++;
                           createQuestion();
                         });
                       }
@@ -426,7 +420,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                       }
 
                       setState(() {
-                        level = 1;
+                        difficulty.reset();
                         question = 1;
                         score = 0;
                         finalDialogShown = false;
@@ -484,11 +478,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
 
   @override
   Widget build(BuildContext context) {
-    final levelTitle = level == 1
-        ? '🟢 Kolay Seviye'
-        : level == 2
-        ? '🟡 Orta Seviye'
-        : '🔴 Zor Seviye';
+    final levelTitle = levelLabel(difficulty.level);
 
     return Scaffold(
       backgroundColor:
@@ -710,9 +700,9 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
                     const SizedBox(width: 9),
                     Expanded(
                       child: Text(
-                        level == 1
+                        difficulty.level == 1
                             ? 'İpucu: Farklı olan şekle dikkatlice bak!'
-                            : level == 2
+                            : difficulty.level == 2
                             ? 'Biraz daha dikkatli ol! 👀'
                             : 'Son seviye! Gözlerini dört aç! 🔍',
                         style: const TextStyle(

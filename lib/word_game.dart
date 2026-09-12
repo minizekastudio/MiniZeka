@@ -272,20 +272,23 @@ class _WordGameState extends State<WordGame>
       return;
     }
 
-    final availableWords = _wordPool
-        .where(
-          (item) =>
-      !_usedWords.contains(item.word),
-    )
+    // Zorluk yas bandindan baslar, oyun icinde kazanildikca acilir.
+    // Bu iki oyun daha once childAge'i hic kullanmiyordu: 4 yasindaki cocuk
+    // 12 yasindakiyle birebir ayni kelimeleri aliyordu.
+    final allowed = difficulty.scaled(const [1, 1, 2, 3], max: 3);
+
+    final byLevel =
+        _wordPool.where((item) => item.difficulty <= allowed).toList();
+
+    final availableWords = byLevel
+        .where((item) => !_usedWords.contains(item.word))
         .toList();
 
     if (availableWords.isEmpty) {
       _usedWords.clear();
     }
 
-    final pool = availableWords.isEmpty
-        ? _wordPool
-        : availableWords;
+    final pool = availableWords.isEmpty ? byLevel : availableWords;
 
     final word = pool[
     _random.nextInt(pool.length)];
@@ -445,6 +448,8 @@ class _WordGameState extends State<WordGame>
   Future<void> _correctAnswer() async {
     if (!mounted) return;
 
+    difficulty.correct();
+
     setState(() {
       _correctAnswers++;
       _score += _calculateQuestionScore();
@@ -470,6 +475,8 @@ class _WordGameState extends State<WordGame>
 
   Future<void> _wrongAnswer() async {
     if (!mounted) return;
+
+    difficulty.wrong();
 
     setState(() {
       _lives--;

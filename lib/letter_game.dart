@@ -338,21 +338,13 @@ class _LetterGameState extends State<LetterGame>
       available = List<LetterWord>.from(_wordPool);
     }
 
-    // Soru ilerledikçe zorluk artıyor.
-    int wantedDifficulty;
-
-    if (_questionIndex < 3) {
-      wantedDifficulty = 1;
-    } else if (_questionIndex < 7) {
-      wantedDifficulty = 2;
-    } else {
-      wantedDifficulty = 3;
-    }
+    // Zorluk soru numarasindan degil, yas bandindan ve oyun icinde
+    // kazanilan seviyeden geliyor. Bu oyun daha once childAge'i hic
+    // kullanmiyordu: her yastaki cocuga ayni siralama veriliyordu.
+    final allowed = difficulty.scaled(const [1, 1, 2, 3], max: 3);
 
     List<LetterWord> difficultyPool = available
-        .where(
-          (item) => item.difficulty == wantedDifficulty,
-    )
+        .where((item) => item.difficulty <= allowed)
         .toList();
 
     if (difficultyPool.isEmpty) {
@@ -567,6 +559,8 @@ class _LetterGameState extends State<LetterGame>
   Future<void> _correctAnswer() async {
     if (!mounted) return;
 
+    difficulty.correct();
+
     setState(() {
       _correctAnswers++;
       _score += _calculateScore();
@@ -594,6 +588,8 @@ class _LetterGameState extends State<LetterGame>
 
   Future<void> _wrongAnswer() async {
     if (!mounted) return;
+
+    difficulty.wrong();
 
     setState(() {
       _wrongAnswers++;

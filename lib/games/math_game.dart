@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
 import '../app_theme.dart';
+import '../difficulty.dart';
 import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
@@ -38,14 +39,12 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
 
   @override
   void onChildAgeLoaded() {
-    level = levelForAge(childAge);
 
     createQuestion();
   }
 
   final Random random = Random();
 
-  int level = 1;
   int question = 1;
   int score = 0;
 
@@ -90,23 +89,13 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
     String newQuestionKey = '';
 
     do {
-      if (childAge <= 5) {
-        // 4-5 yaş
-        newFirst = random.nextInt(5) + 1;
-        newSecond = random.nextInt(5) + 1;
-      } else if (childAge <= 7) {
-        // 6-7 yaş
-        newFirst = random.nextInt(10) + 1;
-        newSecond = random.nextInt(10) + 1;
-      } else if (childAge <= 9) {
-        // 8-9 yaş
-        newFirst = random.nextInt(15) + 1;
-        newSecond = random.nextInt(12) + 1;
-      } else {
-        // 10-12 yaş
-        newFirst = random.nextInt(20) + 5;
-        newSecond = random.nextInt(15) + 1;
-      }
+      // Sayi buyuklugu yas bandindan; seviye yukseldikce aralik da genisler.
+      // Eskiden seviye soru numarasindan hesaplaniyor ve sorulara hic
+      // dokunmuyordu, yalnizca puani carpiyordu.
+      final span = difficulty.scaled(const [5, 10, 15, 20], max: 30);
+
+      newFirst = random.nextInt(span) + 1;
+      newSecond = random.nextInt(span) + 1;
 
       newQuestionKey = _questionKey(newFirst, newSecond);
     } while (usedQuestions.contains(newQuestionKey));
@@ -151,19 +140,26 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
 
     final correct = value == correctAnswer;
 
+    // Puan mevcut seviyeden; seviye SONRA guncelleniyor. Kazanilan puan
+    // diyaloga parametre olarak gidiyor, yoksa seviye atlandiginda diyalog
+    // eklenen puandan baska bir sayi gosterirdi.
+    final earned = correct ? difficulty.level * 10 : 0;
+
     if (correct) {
-      score += level * 10;
+      score += earned;
+      difficulty.correct();
+    } else {
+      difficulty.wrong();
     }
 
-    _showAnswerDialog(correct, value);
+    _showAnswerDialog(correct, value, earned);
   }
 
   // =====================================================
   // DOĞRU / YANLIŞ EKRANI
   // =====================================================
 
-  void _showAnswerDialog(bool correct, int selectedAnswer) {
-    final earnedScore = correct ? level * 10 : 0;
+  void _showAnswerDialog(bool correct, int selectedAnswer, int earnedScore) {
 
     if (correct) {
       SoundManager.playCorrect();
@@ -262,7 +258,6 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                       } else {
                         setState(() {
                           question++;
-                          updateLevel();
                           createQuestion();
                         });
                       }
@@ -296,15 +291,6 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
   // SEVİYE GÜNCELLE
   // =====================================================
 
-  void updateLevel() {
-    if (question <= 2) {
-      level = 1;
-    } else if (question <= 4) {
-      level = 2;
-    } else {
-      level = 3;
-    }
-  }
 
   // =====================================================
   // OYUN TAMAMLANDI
@@ -424,7 +410,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                       }
 
                       setState(() {
-                        level = 1;
+                        difficulty.reset();
                         question = 1;
                         score = 0;
 
@@ -483,11 +469,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
 
   @override
   Widget build(BuildContext context) {
-    final levelTitle = level == 1
-        ? '🟢 Kolay Seviye'
-        : level == 2
-        ? '🟡 Orta Seviye'
-        : '🔴 Zor Seviye';
+    final levelTitle = levelLabel(difficulty.level);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

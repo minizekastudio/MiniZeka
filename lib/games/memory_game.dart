@@ -89,21 +89,9 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   // =====================================================
 
   void startGame() {
-    int pairCount;
-
-    if (childAge <= 5) {
-      // 4–5 yaş → 4 çift
-      pairCount = 4;
-    } else if (childAge <= 7) {
-      // 6–7 yaş → 5 çift
-      pairCount = 5;
-    } else if (childAge <= 9) {
-      // 8–9 yaş → 6 çift
-      pairCount = 6;
-    } else {
-      // 10–12 yaş → 8 çift
-      pairCount = 8;
-    }
+    // Kart sayisi yas bandindan. Hafizada soru-cevap dongusu olmadigi icin
+    // oyun ici seviye yukselmesi uygulanmiyor; zorluk oyun basinda belli.
+    final pairCount = const [4, 5, 6, 8][ageBand.step];
 
     final selectedSymbols =
     List<String>.from(symbols)..shuffle(Random());

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'child_manager.dart';
+import 'difficulty.dart';
 import 'game_id.dart';
 import 'storage_keys.dart';
 
@@ -897,13 +898,7 @@ class _ParentPanelState extends State<ParentPanel> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            childAge <= 5
-                                ? '4 – 5 Yaş'
-                                : childAge <= 7
-                                ? '6 – 7 Yaş'
-                                : childAge <= 9
-                                ? '8 – 9 Yaş'
-                                : '10 – 12 Yaş',
+                            AgeBand.forAge(childAge).label,
                             style: const TextStyle(
                               fontSize: 13,
                               color: Color(0xFF21CA3A),

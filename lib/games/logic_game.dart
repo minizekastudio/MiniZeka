@@ -38,17 +38,8 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
 
   /// Yasa uygun soru havuzunu secip karistirir.
   void _applyAgeQuestions() {
-    int poolIndex;
-
-    if (childAge <= 5) {
-      poolIndex = 0;
-    } else if (childAge <= 7) {
-      poolIndex = 1;
-    } else if (childAge <= 9) {
-      poolIndex = 2;
-    } else {
-      poolIndex = 3;
-    }
+    // Soru havuzu yas bandindan; band tanimi difficulty.dart'ta tek yerde.
+    final poolIndex = ageBand.step;
 
     questions = List<Map<String, dynamic>>.from(
       ageQuestionPools[poolIndex],
@@ -510,17 +501,8 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
                         finalDialogShown = false;
                         timeUpDialogShown = false;
 
-                        int poolIndex;
-
-                        if (childAge <= 5) {
-                          poolIndex = 0;
-                        } else if (childAge <= 7) {
-                          poolIndex = 1;
-                        } else if (childAge <= 9) {
-                          poolIndex = 2;
-                        } else {
-                          poolIndex = 3;
-                        }
+                        // Soru havuzu yas bandindan; band tanimi difficulty.dart'ta tek yerde.
+                        final poolIndex = ageBand.step;
 
                         questions =
                         List<Map<String, dynamic>>.from(
