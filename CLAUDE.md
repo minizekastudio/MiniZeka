@@ -153,7 +153,13 @@ hedefleniyor. Tespit edilen sorunlar ve planlanan çözümler:
    Ziyaretçiler emoji (renkli font boyanamadığı için saydamlık `saveLayer`
    ile), uzaktaki kuşlar çizim. Logoda zaten uğur böceği olduğu için
    cam ziyaretçisi sincap seçildi.
-3. **Oyun içi başlıklar** — aynı şeyi iki kez söyleyen cümleler tek satıra insin.
+3. ~~**Oyun içi başlıklar**~~ ✅ **bitti** — planlanan "cümleleri tek satıra
+   indirmek" yerine daha iyisi yapıldı: ekranın üst beşte birini kaplayan
+   talimat kartı tamamen kalktı, metin `AppBar`'daki **`?` düğmesinin**
+   arkasına taşındı (`GameHelpButton` + `showGameHelpDialog`, `game_kit.dart`).
+   Talimat metinleri `GameId.helpTitle` / `helpBody` içinde, tek kaynakta.
+   Seviye bilgisi (🟢/🟡/🔴) kaybolmasın diye modalda gösteriliyor.
+   Beş oyundan toplam 407 satır kalktı.
 3b. ~~**Oyun listesi ekranı**~~ ✅ **bitti** — kartlar artık `GameId.values`'tan
    üretiliyor, elle yazılı kart kalmadı; sıra enum'dan yönetiliyor.
    - Sıra 4-8 yaşa göre: önce okuma gerektirmeyen görsel oyunlar (Hafıza,

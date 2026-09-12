@@ -278,16 +278,95 @@ class _HomePageState extends State<HomePage>
 
   Widget _cardFor(GameId game, int index) {
     final remaining = _remainingFor(game);
+    final exhausted = remaining <= 0;
 
     return GameCard(
       game: game,
       color: game.brandColor,
       remaining: remaining,
-      exhausted: remaining <= 0,
+      exhausted: exhausted,
       played: _playedGames.contains(game.storageId),
       idle: _idle,
       phase: index * 0.17,
-      onTap: _openFor(game),
+      // Suresi dolan oyuna girilmiyor: eskiden cocuk oyuna girip 300 ms
+      // sonra disari atiliyordu ve nedenini anlamiyordu.
+      onTap: exhausted ? () => _showAsleep(game) : _openFor(game),
+    );
+  }
+
+  /// "Bu oyun bugunluk uyudu" — oyuna hic girmeden.
+  void _showAsleep(GameId game) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 86,
+                  height: 86,
+                  decoration: BoxDecoration(
+                    color: Color.lerp(game.brandColor, Colors.white, 0.86),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text('😴', style: TextStyle(fontSize: 44)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '${game.shortTitle} bugünlük uyudu',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                    color: Color.lerp(game.brandColor, Colors.black, 0.35),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Yarın yeniden oynayabilirsin.\nŞimdi başka bir oyun seç! 🌙',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 17,
+                    height: 1.4,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: game.brandColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                    ),
+                    child: const Text(
+                      'Tamam',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
   Future<void> _loadAvatar() async {

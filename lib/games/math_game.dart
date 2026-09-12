@@ -495,6 +495,9 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
       appBar: AppBar(
         title: const Text('🔢 Matematik Oyunu'),
         centerTitle: true,
+        actions: [
+          GameHelpButton(game: game, levelLabel: levelTitle,),
+        ],
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
       ),
@@ -502,73 +505,6 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
       body: SafeArea(
         child: Column(
           children: [
-            // =========================================
-            // BAŞLIK KARTI
-            // =========================================
-
-            Container(
-              margin: const EdgeInsets.fromLTRB(18, 8, 18, 12),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFD8ECFF), Color(0xFFEAF5FF)],
-                ),
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 62,
-                    height: 62,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text('🔢', style: TextStyle(fontSize: 35)),
-                    ),
-                  ),
-
-                  const SizedBox(width: 13),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          levelTitle,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF3F6383),
-                          ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        const Text(
-                          'Doğru sonucu seç ve puanını artır!',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Color(0xFF6F7C87),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             // =========================================
             // BİLGİ KUTULARI
             // =========================================

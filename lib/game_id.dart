@@ -19,6 +19,8 @@ enum GameId {
     emoji: '🧠',
     difficulty: 1,
     defaultLimitMinutes: 10,
+    helpTitle: 'Kartların eşlerini bul! 🃏',
+    helpBody: 'Aynı iki kartı bulmaya çalış.',
   ),
 
   shape(
@@ -28,6 +30,8 @@ enum GameId {
     emoji: '🔷',
     difficulty: 1,
     defaultLimitMinutes: 10,
+    helpTitle: 'Şekilleri eşleştir! 🔷',
+    helpBody: 'Hedef şeklin aynısını bul.',
   ),
 
   attention(
@@ -37,6 +41,8 @@ enum GameId {
     emoji: '👀',
     difficulty: 2,
     defaultLimitMinutes: 15,
+    helpTitle: 'Farklı olanı bul! 👀',
+    helpBody: 'Diğerlerinden farklı olanı seç.',
   ),
 
   letter(
@@ -46,6 +52,8 @@ enum GameId {
     emoji: '🔤',
     difficulty: 1,
     defaultLimitMinutes: 15,
+    helpTitle: 'Harfleri sıraya koy! 🔤',
+    helpBody: 'Karışık harflerden doğru kelimeyi oluştur.',
   ),
 
   word(
@@ -55,6 +63,8 @@ enum GameId {
     emoji: '🔎',
     difficulty: 2,
     defaultLimitMinutes: 15,
+    helpTitle: 'Kelimeyi bul! 🔎',
+    helpBody: 'Harfleri seçerek gizli kelimeyi oluştur.',
   ),
 
   math(
@@ -64,6 +74,8 @@ enum GameId {
     emoji: '🔢',
     difficulty: 2,
     defaultLimitMinutes: 20,
+    helpTitle: 'Doğru sonucu seç! 🔢',
+    helpBody: 'İşlemi çöz ve doğru cevaba dokun.',
   ),
 
   logic(
@@ -73,6 +85,8 @@ enum GameId {
     emoji: '🧩',
     difficulty: 3,
     defaultLimitMinutes: 15,
+    helpTitle: 'Mantığını kullan! 🧩',
+    helpBody: 'Soruyu dikkatlice düşün ve doğru cevabı bul.',
   );
 
   const GameId({
@@ -82,6 +96,8 @@ enum GameId {
     required this.emoji,
     required this.difficulty,
     required this.defaultLimitMinutes,
+    required this.helpTitle,
+    required this.helpBody,
   });
 
   /// Stable storage token. Never change these — they are inside saved keys.
@@ -100,6 +116,13 @@ enum GameId {
 
   /// Daily play limit used until a parent sets their own.
   final int defaultLimitMinutes;
+
+  /// Shown in the "?" dialog: what this game asks the child to do.
+  /// It used to sit in a card that took the top fifth of every game screen,
+  /// even though the target age cannot read it.
+  final String helpTitle;
+
+  final String helpBody;
 
   /// Parent-facing label: emoji plus full title.
   String get labelWithEmoji => '$emoji $title';

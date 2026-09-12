@@ -139,6 +139,143 @@ extension GameIdPalette on GameId {
       };
 }
 
+/// The "?" button shown in a game's app bar.
+///
+/// Each game used to explain itself in a card pinned to the top of the
+/// screen. The target age cannot read it, so it cost a fifth of the screen
+/// to serve a parent glancing over once. The text now lives here, on demand.
+class GameHelpButton extends StatelessWidget {
+  final GameId game;
+
+  /// Optional live status, e.g. "🟢 Kolay Seviye".
+  final String? levelLabel;
+
+  const GameHelpButton({super.key, required this.game, this.levelLabel});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: 'Nasıl oynanır?',
+      onPressed: () => showGameHelpDialog(
+        context: context,
+        game: game,
+        levelLabel: levelLabel,
+      ),
+      icon: Icon(
+        Icons.help_outline_rounded,
+        size: 30,
+        color: game.palette.value,
+      ),
+    );
+  }
+}
+
+/// Explains the game on demand.
+Future<void> showGameHelpDialog({
+  required BuildContext context,
+  required GameId game,
+  String? levelLabel,
+}) {
+  final palette = game.palette;
+
+  return showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 86,
+                height: 86,
+                decoration: BoxDecoration(
+                  color: palette.softBackground,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    game.emoji,
+                    style: const TextStyle(fontSize: 44),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                game.helpTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
+                  color: palette.heading,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                game.helpBody,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  height: 1.4,
+                  color: palette.label,
+                ),
+              ),
+              if (levelLabel != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.dialogChip,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    levelLabel,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: palette.value,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: palette.button,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(17),
+                    ),
+                  ),
+                  child: const Text(
+                    'Anladım',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
 /// Oyunlarin alt kismindaki kucuk istatistik kutusu.
 ///
 /// Bes oyunda birebir ayni sekilde kopyalanmisti; tek fark renklerdi.

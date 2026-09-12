@@ -484,7 +484,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
 
   @override
   Widget build(BuildContext context) {
-    final title = level == 1
+    final levelTitle = level == 1
         ? '🟢 Kolay Seviye'
         : level == 2
         ? '🟡 Orta Seviye'
@@ -499,6 +499,9 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
           '👀 Dikkat Oyunu',
         ),
         centerTitle: true,
+        actions: [
+          GameHelpButton(game: game, levelLabel: levelTitle,),
+        ],
         backgroundColor:
         Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
@@ -507,87 +510,6 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
       body: SafeArea(
         child: Column(
           children: [
-            // =========================================
-            // BAŞLIK KARTI
-            // =========================================
-
-            Container(
-              margin: const EdgeInsets.fromLTRB(
-                18,
-                8,
-                18,
-                12,
-              ),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFFFE1C4),
-                    Color(0xFFFFF0E0),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(25),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 62,
-                    height: 62,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '👀',
-                        style: TextStyle(
-                          fontSize: 35,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 13),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF754B2A),
-                          ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        const Text(
-                          'Diğerlerinden farklı olanı bul!',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Color(0xFF806D60),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             // =========================================
             // BİLGİ KUTULARI
             // =========================================

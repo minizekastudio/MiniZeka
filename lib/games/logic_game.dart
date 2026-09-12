@@ -592,6 +592,9 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
           '🧩 Mantık Oyunu',
         ),
         centerTitle: true,
+        actions: [
+          GameHelpButton(game: game),
+        ],
         backgroundColor:
         Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
@@ -600,92 +603,6 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
       body: SafeArea(
         child: Column(
           children: [
-            // =========================================
-            // BAŞLIK KARTI
-            // =========================================
-
-            Container(
-              margin: const EdgeInsets.fromLTRB(
-                18,
-                8,
-                18,
-                12,
-              ),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFE1F4D4),
-                    Color(0xFFF0F8EA),
-                  ],
-                ),
-                borderRadius:
-                BorderRadius.circular(25),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 62,
-                    height: 62,
-                    decoration:
-                    const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '🧩',
-                        style: TextStyle(
-                          fontSize: 35,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 13),
-
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Mantığını kullan! 🧠',
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight:
-                            FontWeight.w900,
-                            color:
-                            Color(0xFF506245),
-                          ),
-                        ),
-
-                        SizedBox(height: 5),
-
-                        Text(
-                          'Soruyu dikkatlice düşün ve doğru cevabı bul.',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color:
-                            Color(0xFF71806A),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             // =========================================
             // BİLGİ KUTULARI
             // =========================================

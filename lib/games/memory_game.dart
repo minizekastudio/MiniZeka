@@ -393,6 +393,9 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
           '🧠 Hafıza Oyunu',
         ),
         centerTitle: true,
+        actions: [
+          GameHelpButton(game: game),
+        ],
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
       ),
@@ -400,93 +403,6 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
       body: SafeArea(
         child: Column(
           children: [
-            // =========================================
-            // OYUN BAŞLIK KARTI
-            // =========================================
-
-            Container(
-              margin: const EdgeInsets.fromLTRB(
-                18,
-                8,
-                18,
-                12,
-              ),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient:
-                const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFD8FFDC),
-                    Color(0xFFE0FFE3),
-                  ],
-                ),
-                borderRadius:
-                BorderRadius.circular(25),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 62,
-                    height: 62,
-                    decoration:
-                    const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        '🧠',
-                        style: TextStyle(
-                          fontSize: 35,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 13),
-
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Kartların eşlerini bul! 🃏',
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight:
-                            FontWeight.w900,
-                            color:
-                            Color(0xFF20813A),
-                          ),
-                        ),
-
-                        SizedBox(height: 5),
-
-                        Text(
-                          'Aynı iki kartı bulmaya çalış.',
-                          style: TextStyle(
-                            fontSize: 17,
-                            color:
-                            Color(0xFF21CA3A),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             // =========================================
             // BİLGİ KUTULARI
             // =========================================
