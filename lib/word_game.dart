@@ -1343,23 +1343,6 @@ class _WordGameState extends State<WordGame>
                                       ),
                                     ),
                                   ),
-                                  SizedBox(
-                                    height: 2,
-                                  ),
-                                  Text(
-                                    'Kelimeleri keşfet! 🔎',
-                                    style:
-                                    TextStyle(
-                                      fontSize:
-                                      10.5,
-                                      fontWeight:
-                                      FontWeight
-                                          .w600,
-                                      color: Color(
-                                        0xFF30DD4A,
-                                      ),
-                                    ),
-                                  ),
                                 ],
                               ),
                             ),
@@ -1402,6 +1385,9 @@ class _WordGameState extends State<WordGame>
                                 },
                               ),
                             ),
+
+                            // Oyun nasil oynanir: talimat bu dugmenin arkasinda.
+                            GameHelpButton(game: game),
                           ],
                         ),
                       ),

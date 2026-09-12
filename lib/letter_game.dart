@@ -1573,24 +1573,6 @@ class _LetterGameState extends State<LetterGame>
                                   ),
                                 ),
                               ),
-                              SizedBox(
-                                height: 2,
-                              ),
-                              Text(
-                                'Harfleri doğru sıraya koy! 🔤',
-                                style:
-                                TextStyle(
-                                  fontSize:
-                                  10.5,
-                                  fontWeight:
-                                  FontWeight
-                                      .w600,
-                                  color:
-                                  Color(
-                                    0xFF30DD4A,
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -1632,6 +1614,9 @@ class _LetterGameState extends State<LetterGame>
                             },
                           ),
                         ),
+
+                        // Oyun nasil oynanir: talimat bu dugmenin arkasinda.
+                        GameHelpButton(game: game),
                       ],
                     ),
                   ),

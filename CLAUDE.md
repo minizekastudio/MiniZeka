@@ -160,6 +160,11 @@ hedefleniyor. Tespit edilen sorunlar ve planlanan çözümler:
    Talimat metinleri `GameId.helpTitle` / `helpBody` içinde, tek kaynakta.
    Seviye bilgisi (🟢/🟡/🔴) kaybolmasın diye modalda gösteriliyor.
    Beş oyundan toplam 407 satır kalktı.
+   Kelime Avı ve Harfleri Yerleştir'de `AppBar` yok, özel başlık var; onlarda
+   `?` başlık satırına (kalplerin sağına) eklendi ve 10,5 puntoluk statik alt
+   satır kaldırıldı. Kelime Avı'ndaki ipucu (kelimeye göre değişiyor) ve
+   "Harfleri seçerek kelimeyi oluştur" (boş durum metni) işlevsel oldukları
+   için korundu. Yedi oyunun tamamında `?` var.
 3b. ~~**Oyun listesi ekranı**~~ ✅ **bitti** — kartlar artık `GameId.values`'tan
    üretiliyor, elle yazılı kart kalmadı; sıra enum'dan yönetiliyor.
    - Sıra 4-8 yaşa göre: önce okuma gerektirmeyen görsel oyunlar (Hafıza,
