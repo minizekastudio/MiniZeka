@@ -77,16 +77,22 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   }
 
   /// Tur temiz bitti: bolum ilerler, dolduysa bir ust basamak acilir.
-  void _roundCleared() {
-    roundsCleared++;
+  ///
+  /// Donen deger bitis ekraninin ne soyleyecegini belirler; cocuk ayni
+  /// tahtayi tekrar oynamadigini gorsun diye.
+  RoundOutcome _roundCleared() {
+    final next = advanceLadder(
+      ladder: memoryLadder,
+      levelIndex: levelIndex,
+      roundsCleared: roundsCleared,
+    );
 
-    if (roundsCleared >= level.roundsToAdvance &&
-        levelIndex < memoryLadder.length - 1) {
-      levelIndex++;
-      roundsCleared = 0;
-    }
+    levelIndex = next.levelIndex;
+    roundsCleared = next.roundsCleared;
 
     _saveProgress();
+
+    return next.outcome;
   }
 
   final List<String> symbols = [
@@ -270,10 +276,10 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
 
       // Bütün kartlar eşleşti
       if (matched.every((item) => item)) {
-        _roundCleared();
+        final outcome = _roundCleared();
         AchievementManager.unlock('first_step');
         AchievementManager.markGamePlayed('memory');
-        _showGameFinishedDialog();
+        _showGameFinishedDialog(outcome);
       }
     }
     // Eşleşmedi
@@ -295,12 +301,113 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   // OYUN TAMAMLANDI
   // =====================================================
 
-  void _showGameFinishedDialog() {
+  /// Ayni bolumde kalindiysa bir sonraki basamaga ne kadar kaldigi.
+  String _roundsLeftMessage() {
+    final left = level.roundsToAdvance - roundsCleared;
+    if (left <= 0) return 'Tüm kartların eşlerini buldun! 🧠✨';
+    if (left == 1) return 'Yeni bölüme bir tur kaldı! 🧠✨';
+    return 'Yeni bölüme $left tur kaldı! 🧠✨';
+  }
+
+  /// Merdivendeki yeri yazidan once gosteren gorsel.
+  Widget _ladderVisual(RoundOutcome outcome) {
+    if (outcome == RoundOutcome.levelUp) {
+      // levelIndex zaten arttirildi: eski bolum = levelIndex.
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _levelChip('$levelIndex. Bölüm', passed: true),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              size: 24,
+              color: Color(0xFF21CA3A),
+            ),
+          ),
+          _levelChip('${levelIndex + 1}. Bölüm', passed: false),
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(level.roundsToAdvance, (i) {
+        final done = i < roundsCleared;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Icon(
+            done ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: 32,
+            color: done ? Brand.sun : const Color(0xFFBFE6C6),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _levelChip(String label, {required bool passed}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: passed ? const Color(0xFFEDF7EF) : const Color(0xFF23D83E),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w900,
+          color: passed ? const Color(0xFF8FBF9A) : Colors.white,
+        ),
+      ),
+    );
+  }
+
+  void _showGameFinishedDialog(RoundOutcome outcome) {
     if (finishDialogShown || timeUpDialogShown) return;
 
     finishDialogShown = true;
 
     final usedTime = gameTimer.usedSeconds;
+
+    // Cocuk okuyamiyor olabilir: durumu once emoji, renk ve yildizlar
+    // anlatir, metin yalnizca destekler. Bolum atlandiginda "Tekrar Oyna"
+    // yanlis olurdu, ayni tahta bir daha gelmiyor.
+    final (
+      String emoji,
+      Color ring,
+      String title,
+      String message,
+      String action,
+      IconData actionIcon,
+    ) shown = switch (outcome) {
+      RoundOutcome.levelUp => (
+          '🚀',
+          const Color(0xFFFFF1CC),
+          'Yeni Bölüm Açıldı!',
+          'Artık ${level.cards} kartla oynuyorsun! ✨',
+          'Sonraki Bölüm',
+          Icons.arrow_forward_rounded,
+        ),
+      RoundOutcome.mastered => (
+          '🏆',
+          const Color(0xFFFFF1CC),
+          'Tüm Bölümleri Bitirdin!',
+          'Son bölümdesin, hafızan çok güçlü 🧠',
+          'Yeni Tur',
+          Icons.refresh_rounded,
+        ),
+      RoundOutcome.progress => (
+          '🎉',
+          const Color(0xFFD8FFDC),
+          'Harika İş Çıkardın!',
+          _roundsLeftMessage(),
+          'Yeni Tur',
+          Icons.play_arrow_rounded,
+        ),
+    };
 
     showDialog(
       context: context,
@@ -319,33 +426,45 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                 Container(
                   width: 82,
                   height: 82,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD8FFDC),
+                  decoration: BoxDecoration(
+                    color: shown.$2,
                     shape: BoxShape.circle,
                   ),
-                  child: const Center(
-                    child: Text('🎉', style: TextStyle(fontSize: 46)),
+                  child: Center(
+                    child: Text(
+                      shown.$1,
+                      style: const TextStyle(fontSize: 46),
+                    ),
                   ),
                 ),
 
                 const SizedBox(height: 16),
 
-                const Text(
-                  'Harika İş Çıkardın!',
+                Text(
+                  shown.$3,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                     color: Color(0xFF20813A),
                   ),
                 ),
 
-                const SizedBox(height: 7),
+                const SizedBox(height: 14),
 
-                const Text(
-                  'Tüm kartların eşlerini buldun! 🧠✨',
+                // Merdivendeki yer: atlandiysa eski -> yeni bolum,
+                // atlanmadiysa dolan yildizlar.
+                _ladderVisual(outcome),
+
+                const SizedBox(height: 12),
+
+                Text(
+                  shown.$4,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 17, color: Color(0xFF21CA3A)),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    color: Color(0xFF21CA3A),
+                  ),
                 ),
 
                 const SizedBox(height: 20),
@@ -393,10 +512,10 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                         gameTimer.start();
                       }
                     },
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text(
-                      'Tekrar Oyna',
-                      style: TextStyle(
+                    icon: Icon(shown.$6),
+                    label: Text(
+                      shown.$5,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),

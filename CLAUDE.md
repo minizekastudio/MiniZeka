@@ -178,6 +178,23 @@ sütun sayıları arasından kartın en büyük göründüğü seçilir, kaydır
 `test/memory_fit_test.dart` altı bölümü üç telefon boyutunda çizip taşma
 olmadığını doğruluyor.
 
+**Merdiven kuralı tek yerde:** `advanceLadder()` (`lib/difficulty.dart`) bir
+temiz turun sonucunu söyler — `progress`, `levelUp` ya da `mastered`.
+Merdiven verilen bir oyun bu fonksiyonu çağırır, kendi `if` zincirini
+yazmaz. `test/ladder_test.dart` kuralı tek başına doğruluyor.
+
+**Tur bitişi ne olduğunu söylemek zorunda.** Çocuk aynı tahtayı tekrar
+oynamıyorsa ekranda "Tekrar Oyna" yazamaz:
+
+| Sonuç | Görsel | Buton |
+|---|---|---|
+| `progress` | 🎉 + dolan yıldızlar, "yeni bölüme N tur kaldı" | Yeni Tur |
+| `levelUp` | 🚀 + "2. Bölüm → 3. Bölüm" rozetleri, yeni kart sayısı | Sonraki Bölüm |
+| `mastered` | 🏆 + dolu yıldızlar | Yeni Tur |
+
+Sıra önemli: okuma bilmeyen çocuk için önce emoji ve renk, sonra yıldız
+rozetleri, en sonda metin gelir.
+
 ### Öncesinde ne yanlıştı
 
 - "Zorluk" adı altında üç ilgisiz şey vardı: oyunlara kopyalanmış `childAge`

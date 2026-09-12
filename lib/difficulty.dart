@@ -155,3 +155,55 @@ int startingLevelFor(AgeBand band) => switch (band) {
       AgeBand.mid => 2,
       AgeBand.older => 3,
     };
+
+/// Where a ladder stands after a clean round.
+///
+/// The rule lives here, not inside a game's State, so every game that gets a
+/// ladder climbs it the same way and the rule can be tested on its own.
+({int levelIndex, int roundsCleared, RoundOutcome outcome}) advanceLadder({
+  required List<GameLevel> ladder,
+  required int levelIndex,
+  required int roundsCleared,
+}) {
+  final index = levelIndex.clamp(0, ladder.length - 1);
+  final needed = ladder[index].roundsToAdvance;
+  final cleared = roundsCleared + 1;
+
+  if (cleared < needed) {
+    return (
+      levelIndex: index,
+      roundsCleared: cleared,
+      outcome: RoundOutcome.progress,
+    );
+  }
+
+  // Merdivenin sonu: yildizlar dolu kalir, geri sayim bastan baslamaz.
+  if (index >= ladder.length - 1) {
+    return (
+      levelIndex: index,
+      roundsCleared: needed,
+      outcome: RoundOutcome.mastered,
+    );
+  }
+
+  return (
+    levelIndex: index + 1,
+    roundsCleared: 0,
+    outcome: RoundOutcome.levelUp,
+  );
+}
+
+/// What finishing a clean round meant for the ladder.
+///
+/// The child is told this with an emoji, a colour and stars before any text,
+/// so "you moved up" reads for someone who cannot read yet.
+enum RoundOutcome {
+  /// Still on the same rung; one more star earned.
+  progress,
+
+  /// Enough clean rounds — the next rung just opened.
+  levelUp,
+
+  /// Already on the top rung and it is full.
+  mastered,
+}
