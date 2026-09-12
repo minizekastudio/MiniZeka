@@ -37,12 +37,20 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
   void onChildAgeLoaded() => _applyAgeQuestions();
 
   /// Yasa uygun soru havuzunu secip karistirir.
+  /// Su an hangi havuzdan soru geldigi. Yas bandi tabanidir, cocuk
+  /// seviye atladikca bir ust havuza kayar.
+  int _poolInUse = 0;
+
+  int get _wantedPool => difficulty.scaled(
+        const [0, 1, 2, 3],
+        max: ageQuestionPools.length - 1,
+      );
+
   void _applyAgeQuestions() {
-    // Soru havuzu yas bandindan; band tanimi difficulty.dart'ta tek yerde.
-    final poolIndex = ageBand.step;
+    _poolInUse = _wantedPool;
 
     questions = List<Map<String, dynamic>>.from(
-      ageQuestionPools[poolIndex],
+      ageQuestionPools[_poolInUse],
     );
 
     questions.shuffle();
@@ -50,6 +58,24 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
     question = 1;
     score = 0;
     answering = false;
+  }
+
+  /// Seviye yukseldiyse kalan sorulari bir ust havuzdan doldurur.
+  /// Soru sayaci korunur; yalnizca bundan sonraki sorular degisir.
+  void _refreshPoolIfLevelChanged() {
+    if (_wantedPool == _poolInUse) return;
+
+    _poolInUse = _wantedPool;
+
+    final fresh = List<Map<String, dynamic>>.from(
+      ageQuestionPools[_poolInUse],
+    )..shuffle();
+
+    // Cevaplanmis sorular yerinde kalsin, gerisi yeni havuzdan.
+    questions = [
+      ...questions.take(question),
+      ...fresh.where((q) => !questions.take(question).contains(q)),
+    ];
   }
 
   int question = 1;
@@ -225,9 +251,17 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
     final correct =
         selectedAnswer == correctAnswer;
 
+    final earned = correct ? difficulty.level * 10 : 0;
+
     if (correct) {
-      score += 10;
+      score += earned;
+      difficulty.correct();
+    } else {
+      difficulty.wrong();
     }
+
+    // Seviye yukseldiyse kalan sorular daha zor havuzdan gelsin.
+    _refreshPoolIfLevelChanged();
 
     _showAnswerDialog(correct);
   }

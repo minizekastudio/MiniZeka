@@ -127,17 +127,22 @@ Tanım `lib/difficulty.dart`'ta, başka hiçbir yerde yaş eşiği yazılmaz.
 - `scaled([a,b,c,d], max:)` — yaş bandına göre tabanı seçer, kazanılan
   seviyeyi ekler, tavanı aşmaz.
 
+Seviyenin ne zaman etki ettiği oyunun yapısına göre değişir: soru-cevap
+döngüsü olanlarda hemen bir sonraki soruda, Hafıza'da açılmış tahta
+bozulmasın diye bir sonraki turda, Mantık'ta kalan sorular bir üst
+havuzdan gelerek.
+
 Oyun bazında:
 
 | Oyun | Yaş bandı neyi belirliyor | Seviye ile artar mı |
 |---|---|---|
-| Hafıza | Kart çifti: 4/5/6/8 | Hayır — soru-cevap döngüsü yok |
+| Hafıza | Kart çifti: 4/5/6/8 | Evet — bir sonraki turda |
 | Eşleştirme | Seçenek: 3/4/5/6 | Evet |
 | Dikkat | Sembol: 6/9/12/16 | Evet |
 | Matematik | Sayı aralığı: 5/10/15/20 | Evet |
 | Kelime Avı | Kelime zorluğu: 1/1/2/3 | Evet |
 | Harfler | Kelime zorluğu: 1/1/2/3 | Evet |
-| Mantık | Soru havuzu 0/1/2/3 | Hayır — havuzlar sabit |
+| Mantık | Soru havuzu 0/1/2/3 | Evet — üst havuza kayar |
 
 ### Öncesinde ne yanlıştı
 

@@ -89,9 +89,10 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   // =====================================================
 
   void startGame() {
-    // Kart sayisi yas bandindan. Hafizada soru-cevap dongusu olmadigi icin
-    // oyun ici seviye yukselmesi uygulanmiyor; zorluk oyun basinda belli.
-    final pairCount = const [4, 5, 6, 8][ageBand.step];
+    // Kart sayisi yas bandindan baslar ve kazanilan seviyeyle artar.
+    // Acilmis tahta ortasinda degismesin diye yalnizca burada, yani yeni
+    // tur kurulurken okunuyor.
+    final pairCount = difficulty.scaled(const [4, 5, 6, 8], max: 10);
 
     final selectedSymbols =
     List<String>.from(symbols)..shuffle(Random());
@@ -171,7 +172,11 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
         matched[firstIndex] = true;
         matched[secondIndex] = true;
 
-        score += 10;
+        // Seri ilerler; seviye yukselirse acilmis tahta degismez, etkisi
+        // BIR SONRAKI turda gorulur (kart sayisi artar).
+        difficulty.correct();
+
+        score += difficulty.level * 10;
         if (score >= 50) {
           AchievementManager.unlock('mind_master');
         }
@@ -194,6 +199,8 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
     else {
       SoundManager.playWrong();
       setState(() {
+        difficulty.wrong();
+
         revealed[firstIndex] = false;
         revealed[secondIndex] = false;
 
