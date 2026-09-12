@@ -48,7 +48,6 @@ class _HomePageState extends State<HomePage>
   Set<String> _playedGames = {};
 
   late Animation<double> _titleAnimation;
-  late Animation<double> _infoAnimation;
 
   late Animation<double> _game1Animation;
   late Animation<double> _game2Animation;
@@ -77,14 +76,6 @@ class _HomePageState extends State<HomePage>
     );
 
 
-    _infoAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.25,
-        0.48,
-        curve: Curves.easeOutCubic,
-      ),
-    );
 
     _game1Animation = CurvedAnimation(
       parent: _controller,
@@ -732,41 +723,6 @@ class _HomePageState extends State<HomePage>
                 ),
 
                 const SizedBox(height: 22),
-
-                // =================================================
-                // OYUNLAR BAŞLIĞI
-                // =================================================
-
-                _animatedSection(
-                  animation: _infoAnimation,
-                  slideBegin: 0.10,
-                  child: const Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            '🎮',
-                            style:
-                            TextStyle(fontSize: 24),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Bir oyun seç!',
-                            style: TextStyle(
-                              fontSize: 21,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF1E7936),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: 15),
-                    ],
-                  ),
-                ),
 
                 // =================================================
                 // OYUN IZGARASI
