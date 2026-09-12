@@ -20,6 +20,10 @@ import 'storage_migration.dart';
 import 'theme_manager.dart';
 import 'welcome_screen.dart';
 
+/// HomePage, bir oyundan geri donuldugunde kartlarini tazeleyebilsin diye.
+final RouteObserver<PageRoute<void>> routeObserver =
+    RouteObserver<PageRoute<void>>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -50,6 +54,7 @@ class MiniZekaApp extends StatelessWidget {
       builder: (context, themeMode, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
+          navigatorObservers: [routeObserver],
           builder: (context, child) => SplashOverlay(
             child: child ?? const SizedBox.shrink(),
           ),

@@ -1,5 +1,11 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'app_theme.dart';
+import 'game_id.dart';
+import 'main.dart';
+import 'game_kit.dart';
+import 'storage_keys.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'settings_page.dart';
 import 'avatar_manager.dart';
 import 'avatar_selection_page.dart';
@@ -30,8 +36,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin, RouteAware {
   late AnimationController _controller;
+
+  /// Slow shared ticker: every card icon breathes off this one.
+  late AnimationController _idle;
+
+  /// Today's usage and limit per game, read once and after each game.
+  Map<GameId, int> _usedSeconds = {};
+  Map<GameId, int> _limitMinutes = {};
+  Set<String> _playedGames = {};
 
   late Animation<double> _titleAnimation;
   late Animation<double> _infoAnimation;
@@ -134,9 +148,147 @@ class _HomePageState extends State<HomePage>
       ),
     );
 
+    _idle = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3600),
+    )..repeat();
+
     _controller.forward();
 
     _loadAvatar();
+    _loadGameState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) routeObserver.subscribe(this, route);
+  }
+
+  /// Bir oyundan geri donuldu: kalan sure ve oynanmislik degismis olabilir.
+  @override
+  void didPopNext() => _loadGameState();
+
+  Future<void> _loadGameState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = StorageKeys.isoDate(DateTime.now());
+
+    final used = <GameId, int>{};
+    final limit = <GameId, int>{};
+
+    for (final game in GameId.values) {
+      used[game] =
+          prefs.getInt(StorageKeys.gamePlayedSeconds(game, today)) ?? 0;
+      limit[game] = prefs.getInt(StorageKeys.gameLimitMinutes(game)) ??
+          game.defaultLimitMinutes;
+    }
+
+    final played =
+        (prefs.getStringList(StorageKeys.playedGames) ?? <String>[]).toSet();
+
+    if (!mounted) return;
+
+    setState(() {
+      _usedSeconds = used;
+      _limitMinutes = limit;
+      _playedGames = played;
+    });
+  }
+
+  /// Bugun bu oyundan geriye kalan oran, 0..1.
+  double _remainingFor(GameId game) {
+    final allowed = (_limitMinutes[game] ?? game.defaultLimitMinutes) * 60;
+    if (allowed <= 0) return 0;
+
+    final left = allowed - (_usedSeconds[game] ?? 0);
+    return (left / allowed).clamp(0.0, 1.0);
+  }
+
+  /// Oyun ekranlarini acan geri cagirmalar; sira GameId ile ayni.
+  VoidCallback _openFor(GameId game) {
+    switch (game) {
+      case GameId.memory:
+        return widget.onMemoryTap;
+      case GameId.attention:
+        return widget.onAttentionTap;
+      case GameId.math:
+        return widget.onMathTap;
+      case GameId.shape:
+        return widget.onShapeTap;
+      case GameId.logic:
+        return widget.onLogicTap;
+      case GameId.word:
+        return () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WordGame()),
+            );
+      case GameId.letter:
+        return () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const LetterGame()),
+            );
+    }
+  }
+
+  /// Iki sutunlu izgara; son satir tek kalirsa sag hucre bos birakilir.
+  List<Widget> _gameRows() {
+    final entrance = <Animation<double>>[
+      _game1Animation,
+      _game2Animation,
+      _game3Animation,
+      _game4Animation,
+      _game5Animation,
+      _game6Animation,
+      _game7Animation,
+    ];
+
+    final games = GameId.values;
+    final rows = <Widget>[];
+
+    for (var i = 0; i < games.length; i += 2) {
+      final pair = games.skip(i).take(2).toList();
+
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 13),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var slot = 0; slot < 2; slot++) ...[
+                if (slot > 0) const SizedBox(width: 13),
+                Expanded(
+                  child: slot < pair.length
+                      ? _animatedSection(
+                          animation: entrance[i + slot],
+                          child: _cardFor(pair[slot], i + slot),
+                        )
+                      : const SizedBox(),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return rows;
+  }
+
+  Widget _cardFor(GameId game, int index) {
+    final remaining = _remainingFor(game);
+
+    return GameCard(
+      game: game,
+      color: game.brandColor,
+      remaining: remaining,
+      exhausted: remaining <= 0,
+      played: _playedGames.contains(game.storageId),
+      idle: _idle,
+      phase: index * 0.17,
+      onTap: _openFor(game),
+    );
   }
   Future<void> _loadAvatar() async {
     await AvatarManager.loadAvatar();
@@ -148,6 +300,8 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
+    _idle.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -536,164 +690,14 @@ class _HomePageState extends State<HomePage>
                 ),
 
                 // =================================================
-                // HAFIZA
+                // OYUN IZGARASI
                 // =================================================
+                //
+                // Kartlar GameId.values'tan uretiliyor: sira, isim, emoji ve
+                // varsayilan sure hep oradan geliyor. Yeni oyun eklemek icin
+                // burada hicbir sey degismiyor.
 
-                // ÖRNEK: yeni kare kart tasarimi (2 sutun, labelColor yok,
-                // zorluk yildizla, kartin tamami tiklanabilir)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 13),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _animatedSection(
-                          animation: _game1Animation,
-                          child: GameCard(
-                            emoji: '🧠',
-                            label: 'Hafıza',
-                            difficulty: 1,
-                            color: Brand.gameMemory,
-                            onTap: widget.onMemoryTap,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 13),
-                      Expanded(
-                        child: _animatedSection(
-                          animation: _game2Animation,
-                          child: GameCard(
-                            emoji: '👀',
-                            label: 'Dikkat',
-                            difficulty: 2,
-                            color: Brand.gameAttention,
-                            onTap: widget.onAttentionTap,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // =================================================
-                // MATEMATİK  ·  EŞLEŞTİRME
-                // =================================================
-
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 13),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _animatedSection(
-                          animation: _game3Animation,
-                          child: GameCard(
-                            emoji: '🔢',
-                            label: 'Matematik',
-                            difficulty: 2,
-                            color: Brand.gameMath,
-                            onTap: widget.onMathTap,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 13),
-                      Expanded(
-                        child: _animatedSection(
-                          animation: _game4Animation,
-                          child: GameCard(
-                            emoji: '🔷',
-                            label: 'Eşleştirme',
-                            difficulty: 1,
-                            color: Brand.gameShape,
-                            onTap: widget.onShapeTap,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // =================================================
-                // MANTIK  ·  KELİME AVI
-                // =================================================
-
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 13),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _animatedSection(
-                          animation: _game5Animation,
-                          child: GameCard(
-                            emoji: '🧩',
-                            label: 'Mantık',
-                            difficulty: 3,
-                            color: Brand.gameLogic,
-                            onTap: widget.onLogicTap,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 13),
-                      Expanded(
-                        child: _animatedSection(
-                          animation: _game6Animation,
-                          slideBegin: 0.10,
-                          child: GameCard(
-                            emoji: '🔎',
-                            label: 'Kelime Avı',
-                            difficulty: 2,
-                            color: Brand.gameWord,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const WordGame(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // =================================================
-                // HARFLER  (tek kalan — yarim genislik)
-                // =================================================
-
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 13),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _animatedSection(
-                          animation: _game7Animation,
-                          slideBegin: 0.10,
-                          child: GameCard(
-                            emoji: '🔤',
-                            label: 'Harfler',
-                            difficulty: 1,
-                            color: Brand.gameLetter,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const LetterGame(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 13),
-                      // Yedinci oyun tek kaldi; sag hucre bos birakiliyor.
-                      const Expanded(child: SizedBox()),
-                    ],
-                  ),
-                ),
+                ..._gameRows(),
 
               ],
             ),
@@ -705,30 +709,69 @@ class _HomePageState extends State<HomePage>
 }
 
 // =============================================================
-// SQUARE GAME CARD
+// PARILTI
+// =============================================================
+
+class _Sparkle extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _Sparkle({
+    required this.size,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.auto_awesome_rounded,
+      size: size,
+      color: color,
+    );
+  }
+}
+
+// =============================================================
+// GAME CARD
 // =============================================================
 //
-// Two-column square card: icon and game name only, difficulty as 1-3
-// stars, the whole card tappable. Colours come from Brand.
+// One square tile per game. A child who cannot read yet has to understand
+// three things at a glance: which game this is, whether they have played it,
+// and whether there is still time left today. Nothing here is written in
+// words except the game's own name.
 
 class GameCard extends StatefulWidget {
-  final String emoji;
-  final String label;
+  final GameId game;
 
-  /// 1 = easy, 2 = medium, 3 = hard
-  final int difficulty;
-
-  /// Brand.gameMemory gibi, oyuna ait sabit color.
+  /// The game's fixed colour, e.g. Brand.gameMemory.
   final Color color;
+
+  /// Fraction of today's allowance still unused, 0..1.
+  final double remaining;
+
+  /// True once today's limit is spent; the tile goes quiet.
+  final bool exhausted;
+
+  /// True when the child has finished this game at least once.
+  final bool played;
+
+  /// Shared idle animation so every icon breathes off the same ticker.
+  final Animation<double> idle;
+
+  /// Per-card offset so the icons do not bob in lockstep.
+  final double phase;
 
   final VoidCallback onTap;
 
   const GameCard({
     super.key,
-    required this.emoji,
-    required this.label,
-    required this.difficulty,
+    required this.game,
     required this.color,
+    required this.remaining,
+    required this.exhausted,
+    required this.played,
+    required this.idle,
+    required this.phase,
     required this.onTap,
   });
 
@@ -755,12 +798,18 @@ class _GameCardState extends State<GameCard> {
 
   @override
   Widget build(BuildContext context) {
-    final background = Color.lerp(widget.color, Colors.white, 0.86)!;
-    final labelColor = Color.lerp(widget.color, Colors.black, 0.35)!;
-    final dimStar = Color.lerp(widget.color, Colors.white, 0.62)!;
+    final color = widget.color;
+    final quiet = widget.exhausted;
+
+    // Sure dolunca kart susar: renk cekilir, ikon solar.
+    final background = quiet
+        ? Color.lerp(color, Colors.white, 0.94)!
+        : Color.lerp(color, Colors.white, 0.86)!;
+    final labelColor = quiet
+        ? Color.lerp(color, Colors.black, 0.10)!.withValues(alpha: 0.45)
+        : Color.lerp(color, Colors.black, 0.35)!;
 
     return GestureDetector(
-      // The whole card is tappable; it used to be only the small play button.
       onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedScale(
@@ -768,9 +817,9 @@ class _GameCardState extends State<GameCard> {
         duration: const Duration(milliseconds: 110),
         curve: Curves.easeOut,
         child: AspectRatio(
-          aspectRatio: 1,
+          aspectRatio: 1.12,
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -787,7 +836,7 @@ class _GameCardState extends State<GameCard> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: widget.color.withValues(alpha: 0.18),
+                  color: color.withValues(alpha: quiet ? 0.06 : 0.18),
                   blurRadius: 14,
                   offset: const Offset(0, 6),
                 ),
@@ -796,31 +845,10 @@ class _GameCardState extends State<GameCard> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // ICON
-                Container(
-                  width: Brand.minTouchTarget,
-                  height: Brand.minTouchTarget,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.82),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      widget.emoji,
-                      style: const TextStyle(fontSize: 34),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // GAME NAME - one word, no description sentence
+                Expanded(child: _icon(color, quiet)),
+                const SizedBox(height: 6),
                 Text(
-                  widget.label,
+                  widget.game.shortTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -829,23 +857,8 @@ class _GameCardState extends State<GameCard> {
                     color: labelColor,
                   ),
                 ),
-
-                const SizedBox(height: 6),
-
-                // ZORLUK — "Kolay/Orta/Zor" yerine difficulty
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(3, (i) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 1.5),
-                      child: Icon(
-                        Icons.star_rounded,
-                        size: 17,
-                        color: i < widget.difficulty ? widget.color : dimStar,
-                      ),
-                    );
-                  }),
-                ),
+                const SizedBox(height: 7),
+                _timeBar(color, quiet),
               ],
             ),
           ),
@@ -853,27 +866,95 @@ class _GameCardState extends State<GameCard> {
       ),
     );
   }
-}
 
-// =============================================================
-// PARILTI
-// =============================================================
+  /// Breathing icon plus the "already played" star.
+  Widget _icon(Color color, bool quiet) {
+    final tile = Container(
+      width: 78,
+      height: 78,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: quiet ? 0.55 : 0.82),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.9),
+          width: 1.5,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          widget.game.emoji,
+          style: TextStyle(
+            fontSize: 42,
+            color: Colors.black.withValues(alpha: quiet ? 0.45 : 1),
+          ),
+        ),
+      ),
+    );
 
-class _Sparkle extends StatelessWidget {
-  final double size;
-  final Color color;
+    return Center(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Suresi dolan oyun hareket etmiyor: "su an uyuyor" hissi.
+          if (quiet)
+            tile
+          else
+            AnimatedBuilder(
+              animation: widget.idle,
+              builder: (context, child) {
+                final t = (widget.idle.value + widget.phase) * 2 * math.pi;
 
-  const _Sparkle({
-    required this.size,
-    required this.color,
-  });
+                return Transform.translate(
+                  offset: Offset(0, math.sin(t) * 3.5),
+                  child: Transform.rotate(
+                    angle: math.sin(t) * 0.045,
+                    child: child,
+                  ),
+                );
+              },
+              child: tile,
+            ),
 
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      Icons.auto_awesome_rounded,
-      size: size,
-      color: color,
+          if (quiet)
+            const Positioned(
+              right: -4,
+              bottom: -2,
+              child: Text('😴', style: TextStyle(fontSize: 22)),
+            )
+          else if (widget.played)
+            Positioned(
+              right: -6,
+              top: -6,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.star_rounded,
+                  size: 20,
+                  color: Brand.sun,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// How much of today's playtime is left. No numbers, just a bar.
+  Widget _timeBar(Color color, bool quiet) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: LinearProgressIndicator(
+        value: quiet ? 1 : widget.remaining.clamp(0.0, 1.0),
+        minHeight: 6,
+        backgroundColor: Colors.white.withValues(alpha: 0.75),
+        valueColor: AlwaysStoppedAnimation<Color>(
+          quiet ? Colors.white.withValues(alpha: 0.75) : color,
+        ),
+      ),
     );
   }
 }

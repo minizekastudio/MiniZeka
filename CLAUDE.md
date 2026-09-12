@@ -154,6 +154,21 @@ hedefleniyor. Tespit edilen sorunlar ve planlanan çözümler:
    ile), uzaktaki kuşlar çizim. Logoda zaten uğur böceği olduğu için
    cam ziyaretçisi sincap seçildi.
 3. **Oyun içi başlıklar** — aynı şeyi iki kez söyleyen cümleler tek satıra insin.
+3b. ~~**Oyun listesi ekranı**~~ ✅ **bitti** — kartlar artık `GameId.values`'tan
+   üretiliyor, elle yazılı kart kalmadı; sıra enum'dan yönetiliyor.
+   - Sıra 4-8 yaşa göre: önce okuma gerektirmeyen görsel oyunlar (Hafıza,
+     Eşleştirme, Dikkat), sonra harf/kelime, en sonda matematik ve mantık
+   - Kartta **kalan günlük süre şeridi**: süresi dolan kart soluklaşıyor,
+     ikon donuyor ve köşesinde 😴 çıkıyor. Öncesinde çocuk oyuna girip
+     300 ms sonra "süren doldu" diyaloğuyla dışarı atılıyordu, nedenini
+     anlamadan
+   - Daha önce oynanmış oyunun ikonunda ⭐ rozeti (`played_games`'ten)
+   - Zorluk yıldızları kaldırıldı: statikti, çocuk oyunu zorluğa göre
+     seçmiyor, o bilgi ebeveyn paneline ait
+   - İkonlar büyüdü (64→78 kutu, 34→42 emoji) ve tek bir paylaşılan
+     `AnimationController` ile nefes alıyor; her kartın fazı farklı,
+     böylece hepsi aynı anda zıplamıyor
+   - Oyundan dönünce kartlar `RouteObserver`/`didPopNext` ile tazeleniyor
 4. ~~**Skor çubuğu**~~ ✅ **bitti** — `InfoBox` (`game_kit.dart`): "Puan /
    Hamle / Kalan" kelimeleri kalktı, emoji ve değer yan yana (`⭐ 0`,
    `🎯 1/5`, `⏱️ 16:53`). Kelime Avı ve Harf oyunundaki rozetlerle aynı

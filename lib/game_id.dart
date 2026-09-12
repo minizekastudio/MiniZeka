@@ -6,6 +6,11 @@
 ///
 /// [storageId] is a stable ASCII token that must NEVER change: it is part of
 /// the SharedPreferences keys. Display text may be edited freely.
+///
+/// Declaration order IS the order shown on the home screen and in the parent
+/// panel, arranged for a 4-8 year old who cannot read yet: the purely visual
+/// games come first, then letters and words, then numbers and reasoning.
+/// Reordering is safe — nothing persists the enum index.
 enum GameId {
   memory(
     storageId: 'memory',
@@ -15,22 +20,7 @@ enum GameId {
     difficulty: 1,
     defaultLimitMinutes: 10,
   ),
-  attention(
-    storageId: 'attention',
-    title: 'Dikkat Oyunu',
-    shortTitle: 'Dikkat',
-    emoji: '👀',
-    difficulty: 2,
-    defaultLimitMinutes: 15,
-  ),
-  math(
-    storageId: 'math',
-    title: 'Matematik Oyunu',
-    shortTitle: 'Matematik',
-    emoji: '🔢',
-    difficulty: 2,
-    defaultLimitMinutes: 20,
-  ),
+
   shape(
     storageId: 'shape',
     title: 'Eşleştirme Oyunu',
@@ -39,14 +29,25 @@ enum GameId {
     difficulty: 1,
     defaultLimitMinutes: 10,
   ),
-  logic(
-    storageId: 'logic',
-    title: 'Mantık Oyunu',
-    shortTitle: 'Mantık',
-    emoji: '🧩',
-    difficulty: 3,
+
+  attention(
+    storageId: 'attention',
+    title: 'Dikkat Oyunu',
+    shortTitle: 'Dikkat',
+    emoji: '👀',
+    difficulty: 2,
     defaultLimitMinutes: 15,
   ),
+
+  letter(
+    storageId: 'letter',
+    title: 'Harfleri Yerleştir',
+    shortTitle: 'Harfler',
+    emoji: '🔤',
+    difficulty: 1,
+    defaultLimitMinutes: 15,
+  ),
+
   word(
     storageId: 'word',
     title: 'Kelime Avı',
@@ -55,12 +56,22 @@ enum GameId {
     difficulty: 2,
     defaultLimitMinutes: 15,
   ),
-  letter(
-    storageId: 'letter',
-    title: 'Harfleri Yerleştir',
-    shortTitle: 'Harfler',
-    emoji: '🔤',
-    difficulty: 1,
+
+  math(
+    storageId: 'math',
+    title: 'Matematik Oyunu',
+    shortTitle: 'Matematik',
+    emoji: '🔢',
+    difficulty: 2,
+    defaultLimitMinutes: 20,
+  ),
+
+  logic(
+    storageId: 'logic',
+    title: 'Mantık Oyunu',
+    shortTitle: 'Mantık',
+    emoji: '🧩',
+    difficulty: 3,
     defaultLimitMinutes: 15,
   );
 

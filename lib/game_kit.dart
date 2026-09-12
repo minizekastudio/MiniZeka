@@ -115,6 +115,19 @@ int levelForAge(int age) {
 /// Maps a game to its colours. Lives here rather than on [GameId] so the
 /// enum stays free of Flutter imports.
 extension GameIdPalette on GameId {
+  /// Vivid brand colour for the home screen card. Distinct per game so a
+  /// child who cannot read still recognises the tile by its colour.
+  Color get brandColor => switch (this) {
+        GameId.memory => Brand.gameMemory,
+        GameId.attention => Brand.gameAttention,
+        GameId.math => Brand.gameMath,
+        GameId.shape => Brand.gameShape,
+        GameId.logic => Brand.gameLogic,
+        GameId.word => Brand.gameWord,
+        GameId.letter => Brand.gameLetter,
+      };
+
+  /// Muted palette used inside the game screen and its dialogs.
   GamePalette get palette => switch (this) {
         GameId.memory => GamePalette.memory,
         GameId.attention => GamePalette.attention,
