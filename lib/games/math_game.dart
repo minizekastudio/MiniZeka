@@ -721,18 +721,28 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     const spacing = 12.0;
-                    final rowCount = (options.length / 2).ceil();
+
+                    // options ilk build'de bos olabilir: yas bilgisi asenkron
+                    // geliyor. rowCount 0 olursa sifira bolme orani 0 yapiyor
+                    // ve GridView'in childAspectRatio > 0 kontrolu patliyor.
+                    final rowCount = (options.length / 2).ceil().clamp(1, 4);
                     final cellWidth = (constraints.maxWidth - spacing) / 2;
                     final cellHeight =
                         (constraints.maxHeight - spacing * (rowCount - 1)) /
                         rowCount;
 
+                    final fits =
+                        cellWidth.isFinite &&
+                        cellHeight.isFinite &&
+                        cellWidth > 0 &&
+                        cellHeight > 0;
+
                     return GridView.count(
                       crossAxisCount: 2,
                       crossAxisSpacing: spacing,
                       mainAxisSpacing: spacing,
-                      childAspectRatio: cellHeight > 0
-                          ? cellWidth / cellHeight
+                      childAspectRatio: fits
+                          ? (cellWidth / cellHeight).clamp(0.6, 4.0)
                           : 1.6,
                       physics: const NeverScrollableScrollPhysics(),
                       children: List.generate(options.length, (index) {
