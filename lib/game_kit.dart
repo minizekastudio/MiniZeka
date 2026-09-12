@@ -430,7 +430,7 @@ class InfoBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(17),
@@ -442,25 +442,36 @@ class InfoBox extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          children: [
-            Text(
-              '$emoji $title',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF21CB3B),
+        // Kelime yerine ikon + deger yan yana: hedef kitle okuma bilmiyor.
+        // Kelime Avi ve Harf oyunundaki rozetlerle de ayni dizilim.
+        // [title] gorsel olarak cizilmiyor ama Semantics etiketinde kaliyor,
+        // boylece ekran okuyucu neyin ne oldugunu soyleyebiliyor.
+        child: Semantics(
+          label: '$title: $value',
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 21),
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF2AA74B),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 3),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF2AA74B),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

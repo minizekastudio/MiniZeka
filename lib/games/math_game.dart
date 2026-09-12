@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
+import '../app_theme.dart';
 import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
@@ -107,10 +108,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
         newSecond = random.nextInt(15) + 1;
       }
 
-      newQuestionKey = _questionKey(
-        newFirst,
-        newSecond,
-      );
+      newQuestionKey = _questionKey(newFirst, newSecond);
     } while (usedQuestions.contains(newQuestionKey));
 
     first = newFirst;
@@ -128,8 +126,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
     }.toList();
 
     while (options.length < 4) {
-      final value =
-          correctAnswer + random.nextInt(7) - 3;
+      final value = correctAnswer + random.nextInt(7) - 3;
 
       if (value >= 0 && !options.contains(value)) {
         options.add(value);
@@ -146,9 +143,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
   // =====================================================
 
   void answer(int value) {
-    if (gameTimer.timeIsOver ||
-        answering ||
-        finalDialogShown) {
+    if (gameTimer.timeIsOver || answering || finalDialogShown) {
       return;
     }
 
@@ -160,22 +155,15 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
       score += level * 10;
     }
 
-    _showAnswerDialog(
-      correct,
-      value,
-    );
+    _showAnswerDialog(correct, value);
   }
 
   // =====================================================
   // DOĞRU / YANLIŞ EKRANI
   // =====================================================
 
-  void _showAnswerDialog(
-      bool correct,
-      int selectedAnswer,
-      ) {
-    final earnedScore =
-    correct ? level * 10 : 0;
+  void _showAnswerDialog(bool correct, int selectedAnswer) {
+    final earnedScore = correct ? level * 10 : 0;
 
     if (correct) {
       SoundManager.playCorrect();
@@ -208,9 +196,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                   child: Center(
                     child: Text(
                       correct ? '🎉' : '💭',
-                      style: const TextStyle(
-                        fontSize: 42,
-                      ),
+                      style: const TextStyle(fontSize: 42),
                     ),
                   ),
                 ),
@@ -218,9 +204,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                 const SizedBox(height: 15),
 
                 Text(
-                  correct
-                      ? 'Harika! 🔢'
-                      : 'Tekrar Dene! 💪',
+                  correct ? 'Harika! 🔢' : 'Tekrar Dene! 💪',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 23,
@@ -248,13 +232,10 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                 if (correct)
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 13,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEAF5FF),
-                      borderRadius:
-                      BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(15),
                     ),
                     child: Text(
                       '⭐ +$earnedScore Puan',
@@ -267,8 +248,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                     ),
                   ),
 
-                if (correct)
-                  const SizedBox(height: 18),
+                if (correct) const SizedBox(height: 18),
 
                 SizedBox(
                   width: double.infinity,
@@ -288,19 +268,15 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      const Color(0xFF4D91D0),
+                      backgroundColor: const Color(0xFF4D91D0),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(17),
+                        borderRadius: BorderRadius.circular(17),
                       ),
                     ),
                     child: Text(
-                      question == 5
-                          ? 'Sonucu Gör'
-                          : 'Sonraki Soru',
+                      question == 5 ? 'Sonucu Gör' : 'Sonraki Soru',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -347,14 +323,11 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
     final String message;
 
     if (score >= 40) {
-      message =
-      'Muhteşem bir matematik performansı! 🌟';
+      message = 'Muhteşem bir matematik performansı! 🌟';
     } else if (score >= 20) {
-      message =
-      'Çok güzel! Matematikte ilerliyorsun. 😊';
+      message = 'Çok güzel! Matematikte ilerliyorsun. 😊';
     } else {
-      message =
-      'Harika denedin! Biraz daha pratik yapabilirsin. 💪';
+      message = 'Harika denedin! Biraz daha pratik yapabilirsin. 💪';
     }
 
     showDialog(
@@ -378,12 +351,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                     shape: BoxShape.circle,
                   ),
                   child: const Center(
-                    child: Text(
-                      '🎉',
-                      style: TextStyle(
-                        fontSize: 45,
-                      ),
-                    ),
+                    child: Text('🎉', style: TextStyle(fontSize: 45)),
                   ),
                 ),
 
@@ -436,9 +404,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                       palette: GamePalette.math,
                       emoji: '⏱️',
                       title: 'Süre',
-                      value: formatSeconds(
-                        gameTimer.usedSeconds,
-                      ),
+                      value: formatSeconds(gameTimer.usedSeconds),
                     ),
                   ],
                 ),
@@ -472,9 +438,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                         createQuestion();
                       });
                     },
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                    ),
+                    icon: const Icon(Icons.refresh_rounded),
                     label: const Text(
                       'Tekrar Oyna',
                       style: TextStyle(
@@ -483,13 +447,11 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      const Color(0xFF4D91D0),
+                      backgroundColor: const Color(0xFF4D91D0),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(17),
+                        borderRadius: BorderRadius.circular(17),
                       ),
                     ),
                   ),
@@ -504,9 +466,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                   },
                   child: const Text(
                     'Oyundan Çık',
-                    style: TextStyle(
-                      color: Color(0xFF6F7C87),
-                    ),
+                    style: TextStyle(color: Color(0xFF6F7C87)),
                   ),
                 ),
               ],
@@ -530,16 +490,12 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
         : '🔴 Zor Seviye';
 
     return Scaffold(
-      backgroundColor:
-      Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       appBar: AppBar(
-        title: const Text(
-          '🔢 Matematik Oyunu',
-        ),
+        title: const Text('🔢 Matematik Oyunu'),
         centerTitle: true,
-        backgroundColor:
-        Theme.of(context).appBarTheme.backgroundColor,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
       ),
 
@@ -551,26 +507,15 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
             // =========================================
 
             Container(
-              margin: const EdgeInsets.fromLTRB(
-                18,
-                8,
-                18,
-                12,
-              ),
-              padding:
-              const EdgeInsets.all(20),
+              margin: const EdgeInsets.fromLTRB(18, 8, 18, 12),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient:
-                const LinearGradient(
+                gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFD8ECFF),
-                    Color(0xFFEAF5FF),
-                  ],
+                  colors: [Color(0xFFD8ECFF), Color(0xFFEAF5FF)],
                 ),
-                borderRadius:
-                BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(25),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
@@ -584,18 +529,12 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                   Container(
                     width: 62,
                     height: 62,
-                    decoration:
-                    const BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
-                      child: Text(
-                        '🔢',
-                        style: TextStyle(
-                          fontSize: 35,
-                        ),
-                      ),
+                      child: Text('🔢', style: TextStyle(fontSize: 35)),
                     ),
                   ),
 
@@ -603,17 +542,14 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
 
                   Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           levelTitle,
                           style: const TextStyle(
                             fontSize: 18,
-                            fontWeight:
-                            FontWeight.w900,
-                            color:
-                            Color(0xFF3F6383),
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF3F6383),
                           ),
                         ),
 
@@ -623,8 +559,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                           'Doğru sonucu seç ve puanını artır!',
                           style: TextStyle(
                             fontSize: 17,
-                            color:
-                            Color(0xFF6F7C87),
+                            color: Color(0xFF6F7C87),
                           ),
                         ),
                       ],
@@ -637,35 +572,22 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
             // =========================================
             // BİLGİ KUTULARI
             // =========================================
-
             Padding(
-              padding:
-              const EdgeInsets.symmetric(
-                horizontal: 18,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(
                 children: [
-                  InfoBox(
-                    emoji: '⭐',
-                    title: 'Puan',
-                    value: '$score',
-                  ),
+                  InfoBox(emoji: '⭐', title: 'Puan', value: '$score'),
 
                   const SizedBox(width: 8),
 
-                  InfoBox(
-                    emoji: '🎯',
-                    title: 'Soru',
-                    value: '$question / 5',
-                  ),
+                  InfoBox(emoji: '🎯', title: 'Soru', value: '$question / 5'),
 
                   const SizedBox(width: 8),
 
                   InfoBox(
                     emoji: '⏱️',
                     title: 'Kalan',
-                    value: gameTimer
-                        .formattedRemaining,
+                    value: gameTimer.formattedRemaining,
                   ),
                 ],
               ),
@@ -676,39 +598,28 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
             // =========================================
             // SÜRE ÇUBUĞU
             // =========================================
-
             Padding(
-              padding:
-              const EdgeInsets.symmetric(
-                horizontal: 20,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment
-                        .spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         '⏱️ Günlük oyun süresi',
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight:
-                          FontWeight.bold,
-                          color:
-                          Color(0xFF6F7C87),
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6F7C87),
                         ),
                       ),
 
                       Text(
-                        gameTimer
-                            .formattedRemaining,
+                        gameTimer.formattedRemaining,
                         style: const TextStyle(
                           fontSize: 11,
-                          fontWeight:
-                          FontWeight.bold,
-                          color:
-                          Color(0xFF4D91D0),
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4D91D0),
                         ),
                       ),
                     ],
@@ -717,24 +628,15 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                   const SizedBox(height: 5),
 
                   ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(10),
-                    child:
-                    LinearProgressIndicator(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
                       value: timeProgress,
                       minHeight: 7,
-                      backgroundColor:
-                      const Color(0xFFDDEAF5),
-                      valueColor:
-                      AlwaysStoppedAnimation<
-                          Color>(
+                      backgroundColor: const Color(0xFFDDEAF5),
+                      valueColor: AlwaysStoppedAnimation<Color>(
                         timeProgress < 0.2
-                            ? const Color(
-                          0xFFD47A7A,
-                        )
-                            : const Color(
-                          0xFF4D91D0,
-                        ),
+                            ? const Color(0xFFD47A7A)
+                            : const Color(0xFF4D91D0),
                       ),
                     ),
                   ),
@@ -747,22 +649,13 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
             // =========================================
             // MATEMATİK SORUSU
             // =========================================
-
             Container(
-              margin:
-              const EdgeInsets.symmetric(
-                horizontal: 18,
-              ),
-              padding:
-              const EdgeInsets.symmetric(
-                vertical: 30,
-                horizontal: 20,
-              ),
+              margin: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius:
-                BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(28),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
@@ -774,27 +667,20 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
               child: Column(
                 children: [
                   Container(
-                    padding:
-                    const EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 13,
                       vertical: 6,
                     ),
-                    decoration:
-                    BoxDecoration(
-                      color:
-                      const Color(0xFFEAF5FF),
-                      borderRadius:
-                      BorderRadius.circular(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF5FF),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Soru $question / 5',
-                      style:
-                      const TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
-                        fontWeight:
-                        FontWeight.bold,
-                        color:
-                        Color(0xFF4D91D0),
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4D91D0),
                       ),
                     ),
                   ),
@@ -803,14 +689,11 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
 
                   Text(
                     '$first + $second = ?',
-                    textAlign:
-                    TextAlign.center,
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 42,
-                      fontWeight:
-                      FontWeight.w900,
-                      color:
-                      Color(0xFF4D91D0),
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF4D91D0),
                     ),
                   ),
 
@@ -818,11 +701,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
 
                   const Text(
                     'Doğru cevabı seç! 🧠',
-                    style: TextStyle(
-                      fontSize: 17,
-                      color:
-                      Color(0xFF7C8993),
-                    ),
+                    style: TextStyle(fontSize: 17, color: Color(0xFF7C8993)),
                   ),
                 ],
               ),
@@ -833,127 +712,78 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
             // =========================================
             // CEVAPLAR
             // =========================================
-
             Expanded(
-              child: ListView.builder(
-                padding:
-                const EdgeInsets.fromLTRB(
-                  18,
-                  0,
-                  18,
-                  15,
-                ),
-                itemCount: options.length,
-                itemBuilder: (_, index) {
-                  final option =
-                  options[index];
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 15),
+                // Izgara kaydirilamiyor, o yuzden dort secenek eldeki
+                // yuksekliğe her ekranda tam sigmali: oran olculerden
+                // hesaplaniyor, sabit verilmiyor.
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = 12.0;
+                    final rowCount = (options.length / 2).ceil();
+                    final cellWidth = (constraints.maxWidth - spacing) / 2;
+                    final cellHeight =
+                        (constraints.maxHeight - spacing * (rowCount - 1)) /
+                        rowCount;
 
-                  return Padding(
-                    padding:
-                    const EdgeInsets.only(
-                      bottom: 10,
-                    ),
-                    child: SizedBox(
-                      height: 55,
-                      child:
-                      ElevatedButton(
-                        onPressed:
-                            () => answer(
-                          option,
-                        ),
-                        style:
-                        ElevatedButton
-                            .styleFrom(
-                          backgroundColor:
-                          Colors.white,
-                          foregroundColor:
-                          const Color(
-                            0xFF4D91D0,
-                          ),
-                          elevation: 2,
-                          shadowColor:
-                          Colors.black12,
-                          shape:
-                          RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius
-                                .circular(
-                              17,
+                    return GridView.count(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: spacing,
+                      mainAxisSpacing: spacing,
+                      childAspectRatio: cellHeight > 0
+                          ? cellWidth / cellHeight
+                          : 1.6,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: List.generate(options.length, (index) {
+                        final option = options[index];
+
+                        // Dogru/yanlis cagrisimi olmasin diye kirmizi ve yesil
+                        // kullanilmiyor; renkler yalnizca secenekleri ayirt
+                        // etmeye yariyor.
+                        const colors = [
+                          Brand.gameAttention,
+                          Brand.gameMemory,
+                          Brand.gameWord,
+                          Brand.gameLetter,
+                        ];
+                        final color = colors[index % colors.length];
+
+                        return Material(
+                          color: color,
+                          borderRadius: BorderRadius.circular(Brand.cardRadius),
+                          elevation: 3,
+                          shadowColor: color.withValues(alpha: 0.45),
+                          child: InkWell(
+                            onTap: () => answer(option),
+                            borderRadius: BorderRadius.circular(
+                              Brand.cardRadius,
                             ),
-                            side:
-                            const BorderSide(
-                              color: Color(
-                                0xFFD8ECFF,
-                              ),
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 31,
-                              height: 31,
-                              decoration:
-                              const BoxDecoration(
-                                color: Color(
-                                  0xFFEAF5FF,
-                                ),
-                                shape:
-                                BoxShape
-                                    .circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  String
-                                      .fromCharCode(
-                                    65 + index,
+                            child: Center(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
                                   ),
-                                  style:
-                                  const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight:
-                                    FontWeight
-                                        .bold,
-                                    color: Color(
-                                      0xFF4D91D0,
+                                  child: Text(
+                                    '$option',
+                                    style: const TextStyle(
+                                      fontSize: 46,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: -1,
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-
-                            const SizedBox(
-                              width: 12,
-                            ),
-
-                            Expanded(
-                              child: Text(
-                                '$option',
-                                textAlign:
-                                TextAlign
-                                    .center,
-                                style:
-                                const TextStyle(
-                                  fontSize: 21,
-                                  fontWeight:
-                                  FontWeight
-                                      .w900,
-                                ),
-                              ),
-                            ),
-
-                            const Icon(
-                              Icons
-                                  .arrow_forward_ios_rounded,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
+                          ),
+                        );
+                      }),
+                    );
+                  },
+                ),
               ),
             ),
           ],

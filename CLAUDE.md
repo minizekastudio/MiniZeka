@@ -154,9 +154,16 @@ hedefleniyor. Tespit edilen sorunlar ve planlanan çözümler:
    ile), uzaktaki kuşlar çizim. Logoda zaten uğur böceği olduğu için
    cam ziyaretçisi sincap seçildi.
 3. **Oyun içi başlıklar** — aynı şeyi iki kez söyleyen cümleler tek satıra insin.
-4. **Skor çubuğu** — "Puan / Hamle / Kalan" kelimeleri yerine yıldız, el, saat ikonu.
-5. **Matematik cevapları** (`games/math_game.dart`) — A/B/C liste satırları yerine
-   2×2 büyük renkli düğme, içinde sadece rakam.
+4. ~~**Skor çubuğu**~~ ✅ **bitti** — `InfoBox` (`game_kit.dart`): "Puan /
+   Hamle / Kalan" kelimeleri kalktı, emoji ve değer yan yana (`⭐ 0`,
+   `🎯 1/5`, `⏱️ 16:53`). Kelime Avı ve Harf oyunundaki rozetlerle aynı
+   dizilim oldu. Kelime silinmedi, `Semantics` etiketinde duruyor — ekran
+   okuyucu "Puan: 0" diyebiliyor. Kutu alçaldığı için oyun alanına yer açıldı.
+5. ~~**Matematik cevapları**~~ ✅ **bitti** — A/B/C liste satırları yerine 2×2
+   büyük renkli düğme, içinde yalnızca rakam. Renkler `Brand.game*`'den;
+   doğru/yanlış çağrışımı olmasın diye kırmızı ve yeşil kullanılmadı.
+   Izgara kaydırılamadığı için hücre oranı `LayoutBuilder` ile eldeki
+   yüksekliğe göre hesaplanıyor — dört seçenek her ekranda tam sığıyor.
 6. **İkonlar** — şu an emoji kullanılıyor, görsel ağırlıkları tutarsız. Tek elden
    çizilmiş ikon setiyle değiştirilmeli.
 
