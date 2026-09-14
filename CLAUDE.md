@@ -90,6 +90,22 @@ Bu bölüm bağlayıcıdır. Yeni kod bunlara uyar; mevcut kod dokunuldukça uya
 - **Oyun ekranları `GameSessionMixin` kullanır.** Günlük süre sayacı, çocuğun
   yaşı ve süre dolunca çıkan uyarı oradan gelir; hiçbir oyun bunları tekrar
   yazmaz. Sözleşme tek satırdır: `GameId get game`.
+- **Günlük saat yalnızca oynanırken işler.** Oyun ekranının üstünde bir route
+  (sonuç/cevap diyaloğu, `?` modalı) açıkken ya da uygulama arka plandayken
+  durur. Bu `GameSessionMixin` içinde `ModalRoute.isCurrentOf` ve
+  `AppLifecycleListener` ile yapılır; **oyunlar `gameTimer.start()`/`stop()`
+  çağırmaz**, yeni diyaloglar kendiliğinden kapsanır. Eskiden hiçbir yerde
+  `stop()` yoktu: sonuç diyaloğu açık kalınca ya da telefon kilitlenince
+  çocuğun hakkı eriyordu.
+- **Süre bitmişken hiçbir dokunuş sessizce yutulmaz.** "Tekrar oyna" gibi
+  düğmeler ve oyun alanı dokunuşları `ensurePlayTimeLeft()` ile başlar; süre
+  bittiyse uyarı geri gelir. "Süren Doldu" diyaloğundan tek çıkış oyundan
+  çıkmaktır (geri tuşu dahil, `PopScope`) ve aynı anda iki tane açılamaz.
+- **`await` sonrasında alanlar yeniden okunmaz.** Bekleme sırasında tahta
+  değişebilir; ihtiyaç duyulan değerler `await`'ten önce yerel değişkene
+  alınır, tahta yenilendiyse devam eden iş bırakılır (`_boardGeneration`).
+  Bu kural bir gerçek çökmeden geldi: kartlar dönmeyi beklerken "Yeni Oyun"a
+  basmak `cards[-1]` ile uygulamayı düşürüyordu.
 - **Statik manager sınıfları yenisi eklenmez.** Mevcut beşi
   (`ThemeManager`, `SoundManager`, `AvatarManager`, `AchievementManager`,
   `ChildManager`) yerinde kalır ama kalıp büyütülmez: global statik durum
@@ -172,6 +188,22 @@ Dürüstlük notu: basamak sayıları (6/8/12/16/20) bir kalibrasyon, ölçülm�
 sabit değil. Araştırmanın kesinleştirdiği şey eğrinin *şekli*: altta yavaş
 büyü. "3 tur" eşiği de zayıf temelli — ustalık ölçütü literatüründen
 uyarlandı, bu yaş grubu için doğrudan kanıt bulunamadı.
+
+**Kartların açık kalma süresi yaşa göre** (`mismatchHoldFor`,
+`lib/difficulty.dart`). Eskiden herkese 550 ms'ydi; 4-5 yaş ikinci karta
+bakamadan kart kapanıyor, oyun tahmine dönüyordu.
+
+| Yaş | Eşleşmeyen çift açık kalır |
+|---|---|
+| 4-5 | 1100 ms |
+| 6-7 | 900 ms |
+| 8-9 | 700 ms |
+| 10-12 | 550 ms |
+
+Eşleşen çift yalnızca 350 ms bekler (`matchHold`) — kartlar zaten açık
+kalıyor, doğru bulan çocuğu yanlış bulandan uzun bekletmek anlamsız.
+Yön kaynaklı (işlem hızı çocuklukta hızla artar, Kail 1991), milisaniyeler
+kalibrasyon.
 
 Izgara `_fitGrid` ile eldeki kutuya göre hesaplanıyor: satırı tam dolduran
 sütun sayıları arasından kartın en büyük göründüğü seçilir, kaydırma yok.
@@ -324,8 +356,11 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     25 test: oyun duman testleri, süre sayacı,
-                          veri taşıma, iyelik eki, giriş ekranı
+test/                     75 test: oyun duman testleri, süre sayacı,
+                          veri taşıma, iyelik eki, giriş ekranı, zorluk,
+                          hafıza merdiveni ve ızgarası, günlük saat
+                          (game_clock_test: diyalog/arka plan duraklatma,
+                          süre bitişi, bekleme sırasında çökme)
 assets/icon/         app_icon.png (tam dolgu) + app_icon_foreground.png (adaptive)
 assets/splash/       splash_full.png (tam ekran), splash_logo.png, splash_android12.png
 assets/fonts/        Baloo2 (Medium/Bold/ExtraBold, Türkçe'ye budanmış)

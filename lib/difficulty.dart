@@ -156,6 +156,27 @@ int startingLevelFor(AgeBand band) => switch (band) {
       AgeBand.older => 3,
     };
 
+/// How long a mismatched pair stays face up before turning back over.
+///
+/// It used to be 550 ms for every age. Processing speed rises steeply through
+/// childhood (Kail 1991), so for a 4-5 year old the pair closed before the
+/// second card had really been looked at, and the game drifted into guessing
+/// — the behaviour the ladder is shaped to avoid.
+///
+/// The values are a calibration, not a measured constant: the evidence
+/// settles the direction (younger means longer), not the milliseconds.
+Duration mismatchHoldFor(AgeBand band) => switch (band) {
+      AgeBand.preschool => const Duration(milliseconds: 1100),
+      AgeBand.early => const Duration(milliseconds: 900),
+      AgeBand.mid => const Duration(milliseconds: 700),
+      AgeBand.older => const Duration(milliseconds: 550),
+    };
+
+/// A matched pair stays on the board anyway, so this only needs to be long
+/// enough to see the second card land. Waiting the full mismatch hold here
+/// would make a correct guess feel slower than a wrong one.
+const Duration matchHold = Duration(milliseconds: 350);
+
 /// Where a ladder stands after a clean round.
 ///
 /// The rule lives here, not inside a game's State, so every game that gets a

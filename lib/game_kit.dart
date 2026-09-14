@@ -375,11 +375,16 @@ Future<void> showTimeUpDialog({
   required String message,
   required int score,
 }) {
+  void leaveGame(BuildContext dialogContext) {
+    Navigator.pop(dialogContext);
+    Navigator.pop(context);
+  }
+
   return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) {
-      return Dialog(
+      final dialog = Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
@@ -445,10 +450,7 @@ Future<void> showTimeUpDialog({
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => leaveGame(dialogContext),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: palette.button,
                     foregroundColor: Colors.white,
@@ -469,6 +471,17 @@ Future<void> showTimeUpDialog({
             ],
           ),
         ),
+      );
+
+      // The only way out of this dialog is out of the game. Backing out of
+      // just the dialog used to leave the child on a board that ignored every
+      // tap, with nothing on screen saying why.
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) leaveGame(dialogContext);
+        },
+        child: dialog,
       );
     },
   );
@@ -511,13 +524,73 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
   /// `child_age` okunduktan sonra cagrilir (setState icinde).
   void onChildAgeLoaded() {}
 
+  /// The daily clock counts only play. These are the two ways a child can be
+  /// on this screen without playing: something is open on top of it (a result
+  /// or answer dialog, the help sheet) or the app is not in front. Before
+  /// this, neither stopped the clock and the allowance drained while a result
+  /// dialog sat open or the phone was locked.
+  bool _isCoveredByAnotherRoute = false;
+  bool _isAppInBackground = false;
+
+  bool _hasSession = false;
+  bool _isTimeUpDialogOpen = false;
+  AppLifecycleListener? _lifecycleListener;
+
   void startGameSession() {
     gameTimer = GameTimerController(game: game);
+    _hasSession = true;
 
     gameTimer.addListener(_handleTimerTick);
 
+    _lifecycleListener = AppLifecycleListener(
+      onStateChange: _handleAppLifecycleChange,
+    );
+
     _loadChildAge();
     _initializeTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Registers a dependency, so this runs again whenever a dialog is pushed
+    // over this screen or popped off it. Null outside a route (bare widget
+    // tests), which counts as uncovered.
+    _isCoveredByAnotherRoute = !(ModalRoute.isCurrentOf(context) ?? true);
+    _syncClock();
+  }
+
+  void _handleAppLifecycleChange(AppLifecycleState state) {
+    _isAppInBackground = state != AppLifecycleState.resumed;
+    _syncClock();
+  }
+
+  /// Starts or stops the clock to match whether the child can play right now.
+  void _syncClock() {
+    if (!_hasSession || !mounted || gameTimer.isLoading) return;
+
+    final shouldRun = !_isCoveredByAnotherRoute &&
+        !_isAppInBackground &&
+        !gameTimer.timeIsOver;
+
+    if (shouldRun && !gameTimer.isRunning) {
+      gameTimer.start();
+    } else if (!shouldRun && gameTimer.isRunning) {
+      gameTimer.stop();
+    }
+  }
+
+  /// Whether the child may keep playing.
+  ///
+  /// When today's allowance is gone this also puts the time-up dialog on
+  /// screen, so a tap or a "play again" button is never silently ignored.
+  bool ensurePlayTimeLeft() {
+    if (!gameTimer.timeIsOver) return true;
+
+    timeUpDialogShown = true;
+    showGameTimeUpDialog();
+    return false;
   }
 
   Future<void> _loadChildAge() async {
@@ -555,7 +628,7 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
     setState(() {});
 
     if (!gameTimer.timeIsOver) {
-      gameTimer.start();
+      _syncClock();
     } else {
       timeUpDialogShown = true;
 
@@ -569,12 +642,16 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
   }
 
   void showGameTimeUpDialog() {
+    if (_isTimeUpDialogOpen) return;
+
+    _isTimeUpDialogOpen = true;
+
     showTimeUpDialog(
       context: context,
       palette: palette,
       message: timeUpMessage,
       score: currentScore,
-    );
+    ).whenComplete(() => _isTimeUpDialogOpen = false);
   }
 
   String formatSeconds(int seconds) {
@@ -593,8 +670,13 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
 
   @override
   void dispose() {
-    gameTimer.removeListener(_handleTimerTick);
-    gameTimer.dispose();
+    _lifecycleListener?.dispose();
+
+    if (_hasSession) {
+      gameTimer.removeListener(_handleTimerTick);
+      gameTimer.dispose();
+    }
+
     super.dispose();
   }
 }

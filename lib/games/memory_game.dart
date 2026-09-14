@@ -127,6 +127,10 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   bool checking = false;
   bool finishDialogShown = false;
 
+  /// Bumped every time a board is dealt, so a pair still waiting to turn
+  /// over can tell that the board it belongs to has been replaced.
+  int _boardGeneration = 0;
+
   @override
   void initState() {
     super.initState();
@@ -197,6 +201,8 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   }
 
   void startGame() {
+    _boardGeneration++;
+
     // Kart sayisi merdivenden; tahta ortasinda degismesin diye yalnizca
     // yeni tur kurulurken okunuyor.
     final pairCount = level.cards ~/ 2;
@@ -233,9 +239,9 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   // =====================================================
 
   Future<void> selectCard(int index) async {
-    if (gameTimer.timeIsOver || checking || revealed[index] || matched[index]) {
-      return;
-    }
+    if (!ensurePlayTimeLeft()) return;
+
+    if (checking || revealed[index] || matched[index]) return;
 
     setState(() {
       revealed[index] = true;
@@ -248,20 +254,31 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
     }
 
     // İkinci kart
-    secondIndex = index;
+    //
+    // Everything the wait below needs is captured first. "Yeni Oyun" stays
+    // tappable during the wait and resets firstIndex to -1, so reading the
+    // fields afterwards used to crash on cards[-1].
+    final first = firstIndex;
+    final second = index;
+    final board = _boardGeneration;
+    final isMatch = cards[first] == cards[second];
+
+    secondIndex = second;
     moves++;
     checking = true;
 
-    await Future.delayed(const Duration(milliseconds: 550));
+    await Future.delayed(isMatch ? matchHold : mismatchHoldFor(ageBand));
 
-    if (!mounted) return;
+    // The board was rebuilt while this pair was on show: these indices
+    // belong to a board that no longer exists.
+    if (!mounted || board != _boardGeneration) return;
 
     // Eşleşti
-    if (cards[firstIndex] == cards[secondIndex]) {
+    if (isMatch) {
       SoundManager.playCorrect();
       setState(() {
-        matched[firstIndex] = true;
-        matched[secondIndex] = true;
+        matched[first] = true;
+        matched[second] = true;
 
         score += (levelIndex + 1) * 10;
         if (score >= 50) {
@@ -286,8 +303,8 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
     else {
       SoundManager.playWrong();
       setState(() {
-        revealed[firstIndex] = false;
-        revealed[secondIndex] = false;
+        revealed[first] = false;
+        revealed[second] = false;
 
         firstIndex = -1;
         secondIndex = -1;
@@ -504,13 +521,12 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                     onPressed: () {
                       Navigator.pop(dialogContext);
 
-                      setState(() {
-                        startGame();
-                      });
+                      // The clock resumes by itself once this dialog is
+                      // gone. If the day is already used up, say so instead
+                      // of dealing a board that cannot be played.
+                      if (!ensurePlayTimeLeft()) return;
 
-                      if (!gameTimer.timeIsOver) {
-                        gameTimer.start();
-                      }
+                      setState(startGame);
                     },
                     icon: Icon(shown.$6),
                     label: Text(
@@ -835,13 +851,9 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                 height: 52,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    if (gameTimer.timeIsOver) {
-                      return;
-                    }
+                    if (!ensurePlayTimeLeft()) return;
 
-                    setState(() {
-                      startGame();
-                    });
+                    setState(startGame);
                   },
 
                   icon: const Icon(Icons.refresh_rounded),

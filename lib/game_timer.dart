@@ -47,6 +47,9 @@ class GameTimerController extends ChangeNotifier {
 
   bool get timeIsOver => remainingSeconds <= 0;
 
+  /// Whether seconds are being counted right now.
+  bool get isRunning => _timer != null;
+
   String get formattedRemaining {
     final minutes = remainingSeconds ~/ 60;
     final seconds = remainingSeconds % 60;
