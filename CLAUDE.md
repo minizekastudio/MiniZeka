@@ -14,6 +14,7 @@ Bu dosya, projenin bugünkü durumunu ve alınmış kararları özetler.
 | Yayıncı | ParsKOD |
 | Sürüm | `1.0.0+1` (pubspec) |
 | Platform | Şu an sadece Android. `ios/` klasörü henüz yok. |
+| Ekran yönü | **Yalnızca dik** (`supportedOrientations`, `main.dart`). Oyun tahtaları kaydırmadan eldeki alana sığdığı için yatayda 12 kartlık tahtanın 8 kartı görünmez oluyordu. Tablet/yatay destek ayrı bir tasarım işi. |
 
 ## Yapılmış olanlar
 
@@ -215,6 +216,14 @@ temiz turun sonucunu söyler — `progress`, `levelUp` ya da `mastered`.
 Merdiven verilen bir oyun bu fonksiyonu çağırır, kendi `if` zincirini
 yazmaz. `test/ladder_test.dart` kuralı tek başına doğruluyor.
 
+Açılışta nereden devam edileceği de aynı yerde: `resumeLadder()`. Yaş taban,
+kayıt yalnızca yukarı çeker. **Yıldızlar kazanıldıkları basamağa aittir:**
+çocuk başka bir basamaktan devam ediyorsa sıfırdan başlar. Eskiden ebeveyn
+yaşı yükseltince çocuk 4 kartlık bölümün yıldızlarıyla 8 kartlık bölüme
+geçiyor, tek turda bir basamak daha atlıyordu. Yaştan gelen basamak bilerek
+diske yazılmaz: ebeveyn yanlış girilmiş yaşı aşağı düzeltirse çocuk doğru
+tahtaya dönebilmeli.
+
 **Tur bitişi ne olduğunu söylemek zorunda.** Çocuk aynı tahtayı tekrar
 oynamıyorsa ekranda "Tekrar Oyna" yazamaz:
 
@@ -356,7 +365,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     75 test: oyun duman testleri, süre sayacı,
+test/                     83 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test: diyalog/arka plan duraklatma,

@@ -57,15 +57,18 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   Future<void> _loadProgress() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final saved = prefs.getInt(StorageKeys.gameLevel(game));
-    final rounds = prefs.getInt(StorageKeys.gameRoundsCleared(game)) ?? 0;
+    final resumed = resumeLadder(
+      ladder: memoryLadder,
+      startingLevel: levelIndex,
+      savedLevel: prefs.getInt(StorageKeys.gameLevel(game)),
+      savedRounds: prefs.getInt(StorageKeys.gameRoundsCleared(game)) ?? 0,
+    );
 
     if (!mounted) return;
 
     setState(() {
-      if (saved != null && saved > levelIndex) levelIndex = saved;
-      levelIndex = levelIndex.clamp(0, memoryLadder.length - 1);
-      roundsCleared = rounds.clamp(0, level.roundsToAdvance);
+      levelIndex = resumed.levelIndex;
+      roundsCleared = resumed.roundsCleared;
       startGame();
     });
   }

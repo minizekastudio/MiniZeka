@@ -177,6 +177,36 @@ Duration mismatchHoldFor(AgeBand band) => switch (band) {
 /// would make a correct guess feel slower than a wrong one.
 const Duration matchHold = Duration(milliseconds: 350);
 
+/// Where a child resumes the ladder when a game opens.
+///
+/// Age sets the floor and saved progress can only lift it, so the level never
+/// visibly goes backwards. Stars belong to the rung they were earned on: they
+/// carry over only when the child resumes on that same rung. Before, a parent
+/// raising the age moved the child up to a bigger board with the stars from
+/// the smaller one, and a single round then skipped another rung.
+///
+/// The age-derived rung is deliberately not saved here. If a parent corrects
+/// a mistyped age downwards, the child should go back to the right board.
+({int levelIndex, int roundsCleared}) resumeLadder({
+  required List<GameLevel> ladder,
+  required int startingLevel,
+  required int? savedLevel,
+  required int savedRounds,
+}) {
+  final top = ladder.length - 1;
+  final floor = startingLevel.clamp(0, top);
+  final saved = savedLevel?.clamp(0, top);
+
+  if (saved == null || saved < floor) {
+    return (levelIndex: floor, roundsCleared: 0);
+  }
+
+  return (
+    levelIndex: saved,
+    roundsCleared: savedRounds.clamp(0, ladder[saved].roundsToAdvance),
+  );
+}
+
 /// Where a ladder stands after a clean round.
 ///
 /// The rule lives here, not inside a game's State, so every game that gets a

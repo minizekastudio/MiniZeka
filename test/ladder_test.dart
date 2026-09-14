@@ -89,4 +89,58 @@ void main() {
       expect(seen, [4, 6, 8, 12, 16, 20]);
     });
   });
+
+  group('resumeLadder', () {
+    ({int levelIndex, int roundsCleared}) resume({
+      required int startingLevel,
+      int? savedLevel,
+      int savedRounds = 0,
+    }) =>
+        resumeLadder(
+          ladder: memoryLadder,
+          startingLevel: startingLevel,
+          savedLevel: savedLevel,
+          savedRounds: savedRounds,
+        );
+
+    test('kayıt yoksa yaşın basamağından sıfır yıldızla başlar', () {
+      final r = resume(startingLevel: 2);
+
+      expect(r.levelIndex, 2);
+      expect(r.roundsCleared, 0);
+    });
+
+    test('seviye asla geri gitmez: kayıt yaştan yüksekse kayıt kazanır', () {
+      final r = resume(startingLevel: 0, savedLevel: 3, savedRounds: 2);
+
+      expect(r.levelIndex, 3);
+      expect(r.roundsCleared, 2);
+    });
+
+    test('yaş kayıttan yüksekse eski basamağın yıldızları taşınmaz', () {
+      final r = resume(startingLevel: 2, savedLevel: 0, savedRounds: 1);
+
+      expect(r.levelIndex, 2);
+      expect(r.roundsCleared, 0);
+    });
+
+    test('aynı basamakta devam edince yıldızlar korunur', () {
+      final r = resume(startingLevel: 2, savedLevel: 2, savedRounds: 2);
+
+      expect(r.levelIndex, 2);
+      expect(r.roundsCleared, 2);
+    });
+
+    test('bozuk kayıt merdivene ve basamağın yıldız sayısına sığdırılır', () {
+      final top = memoryLadder.length - 1;
+      final r = resume(startingLevel: 0, savedLevel: 99, savedRounds: 50);
+
+      expect(r.levelIndex, top);
+      expect(r.roundsCleared, memoryLadder[top].roundsToAdvance);
+
+      final negative = resume(startingLevel: 1, savedLevel: -4, savedRounds: -1);
+      expect(negative.levelIndex, 1);
+      expect(negative.roundsCleared, 0);
+    });
+  });
 }

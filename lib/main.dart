@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,8 +25,18 @@ import 'welcome_screen.dart';
 final RouteObserver<PageRoute<void>> routeObserver =
     RouteObserver<PageRoute<void>>();
 
+/// Every screen is laid out for a phone held upright. Game boards fit
+/// themselves to the space they get and never scroll, so in landscape a
+/// 12-card memory board showed one row of four and hid the other eight.
+const List<DeviceOrientation> supportedOrientations = [
+  DeviceOrientation.portraitUp,
+  DeviceOrientation.portraitDown,
+];
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await SystemChrome.setPreferredOrientations(supportedOrientations);
 
   // Depolanan veriyi once guncel semaya tasi, sonra oku.
   await StorageMigration.run();
