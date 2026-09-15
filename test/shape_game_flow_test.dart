@@ -244,6 +244,88 @@ void main() {
     semantics.dispose();
   });
 
+  group('son doğru cevaptan sonraki kısa beklemede', () {
+    /// Answers four questions, then finds the fifth and stops right inside
+    /// the pause before the round ends.
+    Future<void> reachLastPause(WidgetTester tester) async {
+      for (var i = 0; i < 4; i++) {
+        await _answerRight(tester);
+      }
+      await tester.tap(_correctCard(tester));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    testWidgets('oyundan çıkılsa da kazanılan yıldız kaydedilir',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      await _open(tester);
+      await _settle(tester);
+
+      await reachLastPause(tester);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ShapeGame), findsNothing);
+      expect(
+        (await _prefs()).getInt(StorageKeys.gameRoundsCleared(GameId.shape)),
+        1,
+      );
+
+      semantics.dispose();
+    });
+
+    testWidgets('süre dolarsa tur sonu süre uyarısının üstüne açılmaz',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      await _open(tester);
+      await _settle(tester);
+
+      await reachLastPause(tester);
+
+      // What the clock's tick does when the allowance runs out right now.
+      final dynamic state = tester.state(find.byType(ShapeGame));
+      state.gameTimer.usedSeconds = state.gameTimer.allowedSeconds;
+      state.timeUpDialogShown = true;
+      state.showGameTimeUpDialog();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bugünkü Süren Doldu'), findsOneWidget);
+      expect(find.text('🎉'), findsNothing);
+      expect(
+        (await _prefs()).getInt(StorageKeys.gameRoundsCleared(GameId.shape)),
+        1,
+      );
+
+      await tester.tap(find.text('Tamam'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ShapeGame), findsNothing);
+
+      semantics.dispose();
+    });
+
+    testWidgets('"?" açılmışsa tur sonundan çıkış yine oyundan çıkarır',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      await _open(tester);
+      await _settle(tester);
+
+      await reachLastPause(tester);
+      await tester.tap(find.byTooltip('Nasıl oynanır?'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('🎉'), findsOneWidget);
+
+      await tester.tap(find.text('Oyundan Çık'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ShapeGame), findsNothing);
+      expect(find.text('open'), findsOneWidget);
+
+      semantics.dispose();
+    });
+  });
+
   testWidgets('ilk soruda boş beklenince el gösterilir, sonra gösterilmez',
       (tester) async {
     final semantics = tester.ensureSemantics();

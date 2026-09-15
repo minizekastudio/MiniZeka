@@ -366,6 +366,28 @@ class GameResultBox extends StatelessWidget {
   }
 }
 
+/// Closes everything stacked on the game screen — this dialog, and anything
+/// opened just before it such as the help sheet — and then the game screen.
+///
+/// It used to pop "this dialog, then one more route". With the help sheet
+/// underneath, that one more route was the help sheet, and the child was
+/// left on a finished board with nothing to tap.
+void _leaveGameScreen(
+  BuildContext context,
+  BuildContext dialogContext,
+  ModalRoute<Object?>? gameRoute,
+) {
+  if (gameRoute == null || !gameRoute.isActive) {
+    Navigator.pop(dialogContext);
+    Navigator.pop(context);
+    return;
+  }
+
+  final navigator = Navigator.of(context);
+  navigator.popUntil((route) => route == gameRoute);
+  navigator.pop();
+}
+
 /// Gunluk sure dolunca gosterilen ortak diyalog.
 ///
 /// Kapatildiginda hem diyalogu hem oyun ekranini kapatir.
@@ -375,10 +397,10 @@ Future<void> showTimeUpDialog({
   required String message,
   required int score,
 }) {
-  void leaveGame(BuildContext dialogContext) {
-    Navigator.pop(dialogContext);
-    Navigator.pop(context);
-  }
+  final gameRoute = ModalRoute.of(context);
+
+  void leaveGame(BuildContext dialogContext) =>
+      _leaveGameScreen(context, dialogContext, gameRoute);
 
   return showDialog(
     context: context,
@@ -860,10 +882,10 @@ Future<void> showLadderRoundDialog({
     ),
   };
 
-  void leaveGame(BuildContext dialogContext) {
-    Navigator.pop(dialogContext);
-    Navigator.pop(context);
-  }
+  final gameRoute = ModalRoute.of(context);
+
+  void leaveGame(BuildContext dialogContext) =>
+      _leaveGameScreen(context, dialogContext, gameRoute);
 
   return showDialog(
     context: context,

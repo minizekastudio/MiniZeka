@@ -13,15 +13,16 @@ class AchievementManager {
     if (!unlocked.contains(achievementKey)) {
       unlocked.add(achievementKey);
       await prefs.setStringList(StorageKeys.unlockedAchievements, unlocked);
-      await prefs.reload();
     }
   }
 
   static Future<Set<String>> getUnlocked() async {
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.reload();
-
+    // No reload(): it swaps the whole in-memory cache for a copy read a
+    // moment earlier, which silently dropped values other code wrote in
+    // between — a round's saved level was lost that way. Everything here
+    // runs in one isolate, so the cache is already current.
     final unlocked =
         prefs.getStringList(StorageKeys.unlockedAchievements) ?? <String>[];
 

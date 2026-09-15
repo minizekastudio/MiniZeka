@@ -31,6 +31,12 @@ class ShapeGame extends StatefulWidget {
   State<ShapeGame> createState() => _ShapeGameState();
 }
 
+typedef _SettledRound = ({
+  int levelIndex,
+  int roundsCleared,
+  RoundOutcome outcome,
+});
+
 class _ShapeGameState extends State<ShapeGame>
     with TickerProviderStateMixin, GameSessionMixin {
   @override
@@ -95,10 +101,10 @@ class _ShapeGameState extends State<ShapeGame>
     });
   }
 
-  Future<void> _saveProgress() async {
+  Future<void> _saveProgress(int level, int rounds) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(StorageKeys.gameLevel(game), levelIndex);
-    await prefs.setInt(StorageKeys.gameRoundsCleared(game), roundsCleared);
+    await prefs.setInt(StorageKeys.gameLevel(game), level);
+    await prefs.setInt(StorageKeys.gameRoundsCleared(game), rounds);
   }
 
   // ---- round state --------------------------------------------------------
@@ -148,6 +154,8 @@ class _ShapeGameState extends State<ShapeGame>
   Timer? _demoTimer;
   bool _isShowingDemo = false;
 
+  Timer? _holdTimer;
+
   @override
   void initState() {
     super.initState();
@@ -157,6 +165,7 @@ class _ShapeGameState extends State<ShapeGame>
   @override
   void dispose() {
     _demoTimer?.cancel();
+    _holdTimer?.cancel();
     _morph.dispose();
     _shake.dispose();
     _pulse.dispose();
@@ -250,7 +259,7 @@ class _ShapeGameState extends State<ShapeGame>
     }
   }
 
-  Future<void> _resolveCorrect(int index) async {
+  void _resolveCorrect(int index) {
     final generation = _roundGeneration;
     final isFirstTry = _wrongTapsThisQuestion == 0;
 
@@ -266,55 +275,75 @@ class _ShapeGameState extends State<ShapeGame>
       if (isFirstTry) score += (levelIndex + 1) * 10;
     });
 
+    // A finished round is settled and saved before the pause, not after it:
+    // a child who leaves during the pause keeps what they earned.
+    final isLastQuestion = _questionIndex + 1 >= _round.length;
+    final settled = isLastQuestion ? _settleRound() : null;
+
     // The target turns into the picked card: same shape, new clothes.
     _morph.forward(from: 0);
 
-    await Future.delayed(_correctHold);
+    // A cancellable timer rather than a delayed future, so a screen that is
+    // closed during the pause leaves nothing running behind it.
+    _holdTimer?.cancel();
+    _holdTimer = Timer(_correctHold, () {
+      if (!mounted || generation != _roundGeneration) return;
 
-    if (!mounted || generation != _roundGeneration) return;
-
-    if (_questionIndex + 1 < _round.length) {
-      setState(() {
-        _questionIndex++;
-        _beginQuestion();
-      });
-    } else {
-      _finishRound();
-    }
+      if (settled == null) {
+        setState(() {
+          _questionIndex++;
+          _beginQuestion();
+        });
+      } else {
+        _finishRound(settled);
+      }
+    });
   }
 
-  void _finishRound() {
-    final isClean = isCleanShapeRound(_firstTryMistakes);
-    final top = shapeLadder.length - 1;
+  /// What the round just finished earned, saved straight away.
+  _SettledRound _settleRound() {
+    AchievementManager.unlock('shape_master');
+    AchievementManager.unlock('first_step');
+    AchievementManager.markGamePlayed(game);
 
-    RoundOutcome outcome;
-
-    if (isClean) {
+    if (isCleanShapeRound(_firstTryMistakes)) {
       final next = advanceLadder(
         ladder: shapeLadder,
         levelIndex: levelIndex,
         roundsCleared: roundsCleared,
       );
 
-      levelIndex = next.levelIndex;
-      roundsCleared = next.roundsCleared;
-      outcome = next.outcome;
+      _saveProgress(next.levelIndex, next.roundsCleared);
 
-      _saveProgress();
-    } else {
-      // Not clean: nothing earned, nothing lost. At the top with every star
-      // already earned there is nothing left to count down to.
-      outcome = levelIndex == top && roundsCleared >= level.roundsToAdvance
-          ? RoundOutcome.mastered
-          : RoundOutcome.progress;
+      return next;
     }
 
-    setState(() => _isRoundOver = true);
+    // Not clean: nothing earned, nothing lost. At the top with every star
+    // already earned there is nothing left to count down to.
+    final top = shapeLadder.length - 1;
+    final isMastered =
+        levelIndex == top && roundsCleared >= level.roundsToAdvance;
 
-    AchievementManager.unlock('shape_master');
-    AchievementManager.unlock('first_step');
-    AchievementManager.markGamePlayed(game);
+    return (
+      levelIndex: levelIndex,
+      roundsCleared: roundsCleared,
+      outcome: isMastered ? RoundOutcome.mastered : RoundOutcome.progress,
+    );
+  }
 
+  void _finishRound(_SettledRound settled) {
+    setState(() {
+      levelIndex = settled.levelIndex;
+      roundsCleared = settled.roundsCleared;
+      _isRoundOver = true;
+    });
+
+    // The allowance ran out during the pause and its warning is already up.
+    // That warning leads out of the game and the round is saved, so a round
+    // dialog on top of it would only trap the child between the two.
+    if (timeUpDialogShown) return;
+
+    final outcome = settled.outcome;
     final firstTryRight = _round.length - _firstTryMistakes;
 
     showLadderRoundDialog(

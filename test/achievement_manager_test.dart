@@ -17,6 +17,25 @@ void main() {
     expect(prefs.getStringList(StorageKeys.playedGames), ['memory']);
   });
 
+  test('rozet açılırken aynı anda yazılan başka kayıt kaybolmaz', () async {
+    // A round saves its level while its badge unlocks. Whatever point of the
+    // unlock the other write lands on, it must survive.
+    for (var step = 0; step <= 30; step++) {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      final unlocking = AchievementManager.unlock('first_step');
+      for (var i = 0; i < step; i++) {
+        await Future<void>.value();
+      }
+      await prefs.setInt(StorageKeys.gameRoundsCleared(GameId.shape), 1);
+      await unlocking;
+
+      expect(prefs.getInt(StorageKeys.gameRoundsCleared(GameId.shape)), 1,
+          reason: 'yazma, unlock\'un $step. adımına denk geldi');
+    }
+  });
+
   test('kaşif rozeti beşinci farklı oyunda açılır, dördüncüde açılmaz',
       () async {
     final games = GameId.values.take(5).toList();
