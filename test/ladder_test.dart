@@ -90,6 +90,36 @@ void main() {
     });
   });
 
+  test('şekil merdiveni baştan sona tırmanılır, kart sayısı hiç azalmaz', () {
+    var levelIndex = 0;
+    var roundsCleared = 0;
+    final seen = <int>[shapeLadder[0].cards];
+    RoundOutcome? last;
+
+    for (var round = 0; round < 40; round++) {
+      final next = advanceLadder(
+        ladder: shapeLadder,
+        levelIndex: levelIndex,
+        roundsCleared: roundsCleared,
+      );
+
+      levelIndex = next.levelIndex;
+      roundsCleared = next.roundsCleared;
+      last = next.outcome;
+
+      if (next.outcome == RoundOutcome.levelUp) {
+        seen.add(shapeLadder[levelIndex].cards);
+      }
+    }
+
+    expect(levelIndex, shapeLadder.length - 1);
+    expect(last, RoundOutcome.mastered);
+    expect(seen, hasLength(shapeLadder.length));
+    for (var i = 1; i < seen.length; i++) {
+      expect(seen[i], greaterThanOrEqualTo(seen[i - 1]));
+    }
+  });
+
   group('resumeLadder', () {
     ({int levelIndex, int roundsCleared}) resume({
       required int startingLevel,

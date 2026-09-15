@@ -144,6 +144,31 @@ const List<GameLevel> memoryLadder = [
   GameLevel(cards: 20, roundsToAdvance: 3),
 ];
 
+/// The shape matching game's ladder.
+///
+/// Each rung changes one more thing about the card that matches, while its
+/// shape stays the same: nothing at first, then colour, size, orientation,
+/// proportion, and finally a look-alike shape placed next to it
+/// (see `ShapeVariation` in lib/games/shape_round.dart).
+///
+/// The order follows how young children's shape concepts develop. They
+/// accept upright, textbook examples and reject turned or skinny ones —
+/// a turned square is "not a square" and a thin triangle "not a triangle"
+/// (Clements, Swaminathan, Hannibal & Sarama 1999). Ignoring colour while
+/// sorting by shape is its own step: switching which dimension counts is
+/// what the Dimensional Change Card Sort measures (Zelazo 2006).
+///
+/// Card counts, round counts and what makes a round clean are calibration,
+/// not measured constants. The evidence settles the order of the steps.
+const List<GameLevel> shapeLadder = [
+  GameLevel(cards: 3, roundsToAdvance: 2),
+  GameLevel(cards: 3, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 6, roundsToAdvance: 3),
+  GameLevel(cards: 6, roundsToAdvance: 3),
+];
+
 /// Where a child of this age starts the ladder.
 ///
 /// Nobody is locked out of the lower rungs and nobody is dropped back down:
