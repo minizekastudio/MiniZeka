@@ -167,11 +167,26 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
       SoundManager.playWrong();
     }
 
+    // Back continues like the button. Closing only the dialog left the
+    // question answered and every option ignoring taps.
+    Future<void> continueAfterAnswer(BuildContext dialogContext) async {
+      Navigator.pop(dialogContext);
+
+      if (question == 5) {
+        await _showFinalResult();
+      } else {
+        setState(() {
+          question++;
+          createQuestion();
+        });
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return Dialog(
+        final dialog = Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -250,18 +265,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(dialogContext);
-
-                      if (question == 5) {
-                        await _showFinalResult();
-                      } else {
-                        setState(() {
-                          question++;
-                          createQuestion();
-                        });
-                      }
-                    },
+                    onPressed: () => continueAfterAnswer(dialogContext),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4D91D0),
                       foregroundColor: Colors.white,
@@ -282,6 +286,14 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
               ],
             ),
           ),
+        );
+
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) continueAfterAnswer(dialogContext);
+          },
+          child: dialog,
         );
       },
     );
@@ -320,7 +332,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return Dialog(
+        final dialog = Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -458,6 +470,18 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
               ],
             ),
           ),
+        );
+
+        // Back leaves the game, like "Oyundan Çık". Closing only the
+        // dialog left a finished game that ignored every tap.
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            Navigator.pop(dialogContext);
+            Navigator.pop(context);
+          },
+          child: dialog,
         );
       },
     );

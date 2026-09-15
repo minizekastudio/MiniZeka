@@ -276,11 +276,26 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
     } else {
       SoundManager.playWrong();
     }
+    // Back continues like the button. Closing only the dialog left the
+    // question answered and every option ignoring taps.
+    void continueAfterAnswer(BuildContext dialogContext) {
+      Navigator.pop(dialogContext);
+
+      if (question == 5) {
+        _showFinalResult();
+      } else {
+        setState(() {
+          question++;
+          answering = false;
+        });
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return Dialog(
+        final dialog = Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -367,18 +382,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-
-                      if (question == 5) {
-                        _showFinalResult();
-                      } else {
-                        setState(() {
-                          question++;
-                          answering = false;
-                        });
-                      }
-                    },
+                    onPressed: () => continueAfterAnswer(dialogContext),
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
                       const Color(0xFF587047),
@@ -403,6 +407,14 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
               ],
             ),
           ),
+        );
+
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) continueAfterAnswer(dialogContext);
+          },
+          child: dialog,
         );
       },
     );
@@ -431,7 +443,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return Dialog(
+        final dialog = Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -586,6 +598,18 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
               ],
             ),
           ),
+        );
+
+        // Back leaves the game, like "Oyundan Çık". Closing only the
+        // dialog left a finished game that ignored every tap.
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            Navigator.pop(dialogContext);
+            Navigator.pop(context);
+          },
+          child: dialog,
         );
       },
     );
