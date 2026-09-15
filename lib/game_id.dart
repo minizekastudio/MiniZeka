@@ -30,8 +30,8 @@ enum GameId {
     emoji: '🔷',
     difficulty: 1,
     defaultLimitMinutes: 10,
-    helpTitle: 'Şekilleri eşleştir!',
-    helpBody: 'Hedef şeklin aynısını bul.',
+    helpTitle: 'Aynı şekli bul!',
+    helpBody: 'Rengi, boyu ya da yönü değişse de şekil aynı kalır.',
   ),
 
   attention(

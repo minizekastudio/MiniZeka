@@ -1,27 +1,38 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../achievement_manager.dart';
+import '../app_theme.dart';
 import '../difficulty.dart';
 import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
+import '../storage_keys.dart';
+import 'shape_figure.dart';
+import 'shape_round.dart';
 
-// =====================================================
-// 4 - EŞLEŞTİRME OYUNU
-// =====================================================
-
+/// Find the card that is the same kind of shape as the target, however it is
+/// dressed up.
+///
+/// It used to show the target emoji and an identical emoji among the
+/// options, which trains matching pictures, not recognising shapes. Now each
+/// rung of [shapeLadder] disguises the matching card a little more
+/// ([ShapeVariation]), and nothing on the board needs reading.
 class ShapeGame extends StatefulWidget {
-  const ShapeGame({super.key});
+  const ShapeGame({super.key, this.random});
+
+  /// Injected by tests so a round can be reproduced.
+  final Random? random;
 
   @override
   State<ShapeGame> createState() => _ShapeGameState();
 }
 
-class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
-  // ---- GameSessionMixin sozlesmesi ----
-
+class _ShapeGameState extends State<ShapeGame>
+    with TickerProviderStateMixin, GameSessionMixin {
   @override
   GameId get game => GameId.shape;
 
@@ -32,747 +43,599 @@ class _ShapeGameState extends State<ShapeGame> with GameSessionMixin {
   @override
   int get currentScore => score;
 
-  /// Oyun bittiyse sure uyarisi gosterme.
   @override
-  bool get canShowTimeUpDialog => !finalDialogShown;
+  bool get canShowTimeUpDialog => !_isRoundOver;
+
+  static const double _cardGap = 12;
+
+  /// Tallest a card may be, as a multiple of its width.
+  static const double _maxCardTallness = 1.15;
+
+  /// Time for the target to turn into the picked card and be seen.
+  static const Duration _correctHold = Duration(milliseconds: 900);
+
+  static const Duration _idleBeforeDemo = Duration(seconds: 5);
+
+  /// After this many wrong taps on one question the matching card pulses.
+  static const int _hintAfterWrongTaps = 2;
+
+  late final Random _random = widget.random ?? Random();
+
+  // ---- ladder -------------------------------------------------------------
+
+  int levelIndex = 0;
+  int roundsCleared = 0;
+
+  GameLevel get level => shapeLadder[levelIndex];
 
   @override
   void onChildAgeLoaded() {
-
-    createQuestion();
+    // Age only sets where the climb starts; saved progress can lift it and
+    // the level never goes back down.
+    levelIndex = startingLevelFor(ageBand);
+    _loadProgress();
   }
 
-  final Random random = Random();
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
 
-  int question = 1;
+    final resumed = resumeLadder(
+      ladder: shapeLadder,
+      startingLevel: levelIndex,
+      savedLevel: prefs.getInt(StorageKeys.gameLevel(game)),
+      savedRounds: prefs.getInt(StorageKeys.gameRoundsCleared(game)) ?? 0,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      levelIndex = resumed.levelIndex;
+      roundsCleared = resumed.roundsCleared;
+      _startRound();
+    });
+  }
+
+  Future<void> _saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(StorageKeys.gameLevel(game), levelIndex);
+    await prefs.setInt(StorageKeys.gameRoundsCleared(game), roundsCleared);
+  }
+
+  // ---- round state --------------------------------------------------------
+
+  List<ShapeQuestion> _round = const [];
+  int _questionIndex = 0;
   int score = 0;
 
-  String targetName = '';
-  String targetIcon = '';
+  /// Questions whose first tap was wrong; decides whether the round is clean.
+  int _firstTryMistakes = 0;
 
-  List<Map<String, String>> options = [];
+  int _wrongTapsThisQuestion = 0;
+  final Set<int> _lockedOptions = {};
 
-  bool answering = false;
-  bool finalDialogShown = false;
+  /// The matching card once it has been found, while the target turns into it.
+  int? _answeredIndex;
 
-  final List<Map<String, String>> shapes = [
-    {'name': 'Daire', 'icon': '🔵'},
-    {'name': 'Kare', 'icon': '🟦'},
-    {'name': 'Üçgen', 'icon': '🔺'},
-    {'name': 'Yıldız', 'icon': '⭐'},
-    {'name': 'Kalp', 'icon': '❤️'},
-    {'name': 'Elmas', 'icon': '🔷'},
-  ];
+  bool _isResolving = false;
+  bool _isRoundOver = false;
+
+  /// Bumped for every new round, so a delayed step from the previous round
+  /// can tell it is stale.
+  int _roundGeneration = 0;
+
+  ShapeQuestion? get _question =>
+      _round.isEmpty ? null : _round[_questionIndex];
+
+  // ---- animation ----------------------------------------------------------
+
+  late final AnimationController _morph = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
+  );
+
+  late final AnimationController _shake = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
+  );
+
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+  );
+
+  int? _shakingIndex;
+
+  Timer? _demoTimer;
+  bool _isShowingDemo = false;
 
   @override
   void initState() {
     super.initState();
-
     startGameSession();
   }
 
-  // =====================================================
-  // SORU OLUŞTUR
-  // =====================================================
-
-  void createQuestion() {
-    // Yas tabani + oyun icinde kazanilan seviye. Artik etiket ile gercek
-    // zorluk ayni sey: seviye yukselince secenek sayisi da artiyor.
-    final optionCount = difficulty.scaled(
-      const [3, 4, 5, 6],
-      max: shapes.length,
-    );
-
-    final available =
-    List<Map<String, String>>.from(shapes);
-
-    available.shuffle(random);
-
-    options = List<Map<String, String>>.from(
-      available.take(optionCount),
-    );
-
-    final target = options.first;
-
-    targetName = target['name']!;
-    targetIcon = target['icon']!;
-
-    options.shuffle(random);
-
-    answering = false;
+  @override
+  void dispose() {
+    _demoTimer?.cancel();
+    _morph.dispose();
+    _shake.dispose();
+    _pulse.dispose();
+    super.dispose();
   }
 
-  // =====================================================
-  // ŞEKİL SEÇ
-  // =====================================================
+  // ---- flow ---------------------------------------------------------------
 
-  void selectShape(String name) {
-    if (gameTimer.timeIsOver ||
-        answering ||
-        finalDialogShown) {
-      return;
+  void _startRound() {
+    _roundGeneration++;
+
+    _round = buildShapeRound(rung: levelIndex, random: _random);
+    _questionIndex = 0;
+    score = 0;
+    _firstTryMistakes = 0;
+    _isRoundOver = false;
+
+    _beginQuestion();
+  }
+
+  void _beginQuestion() {
+    _wrongTapsThisQuestion = 0;
+    _lockedOptions.clear();
+    _answeredIndex = null;
+    _shakingIndex = null;
+    _isResolving = false;
+
+    _morph.value = 0;
+    _stopPulse();
+    _scheduleDemo();
+  }
+
+  /// On the very first rung, a hand shows where to tap if the first question
+  /// sits untouched for a while. Nowhere else: it would give answers away.
+  void _scheduleDemo() {
+    _demoTimer?.cancel();
+    _isShowingDemo = false;
+
+    if (levelIndex != 0 || _questionIndex != 0) return;
+
+    final generation = _roundGeneration;
+
+    _demoTimer = Timer(_idleBeforeDemo, () {
+      if (!mounted || generation != _roundGeneration || _isResolving) return;
+
+      setState(() => _isShowingDemo = true);
+      _pulse.repeat(reverse: true);
+    });
+  }
+
+  void _stopPulse() {
+    _pulse
+      ..stop()
+      ..value = 0;
+  }
+
+  void _handleOptionTap(int index) {
+    if (!ensurePlayTimeLeft()) return;
+
+    final question = _question;
+    if (question == null || _isResolving || _isRoundOver) return;
+    if (_lockedOptions.contains(index)) return;
+
+    _demoTimer?.cancel();
+
+    if (index == question.correctIndex) {
+      _resolveCorrect(index);
+    } else {
+      _handleWrong(index);
     }
+  }
+
+  void _handleWrong(int index) {
+    SoundManager.playWrong();
+
+    if (_wrongTapsThisQuestion == 0) _firstTryMistakes++;
+    _wrongTapsThisQuestion++;
 
     setState(() {
-      answering = true;
+      _lockedOptions.add(index);
+      _shakingIndex = index;
+      _isShowingDemo = false;
     });
 
-    final correct = name == targetName;
+    _shake.forward(from: 0);
 
-    // Puan mevcut seviyeden hesaplanir, seviye SONRA guncellenir; boylece
-    // seviye atlatan cevap da eski carpanla puanlanir.
-    final earned = correct ? difficulty.level * 10 : 0;
-
-    if (correct) {
-      score += earned;
-      difficulty.correct();
+    if (_wrongTapsThisQuestion >= _hintAfterWrongTaps) {
+      _pulse.repeat(reverse: true);
     } else {
-      difficulty.wrong();
+      _stopPulse();
     }
-
-    _showAnswerDialog(correct, earned);
   }
 
-  // =====================================================
-  // CEVAP SONUCU
-  // =====================================================
+  Future<void> _resolveCorrect(int index) async {
+    final generation = _roundGeneration;
+    final isFirstTry = _wrongTapsThisQuestion == 0;
 
-  void _showAnswerDialog(bool correct, int earnedScore) {
-    if (correct) {
-      SoundManager.playCorrect();
+    SoundManager.playCorrect();
+    _stopPulse();
+
+    setState(() {
+      _isResolving = true;
+      _answeredIndex = index;
+      _isShowingDemo = false;
+
+      // A found-after-mistakes answer still moves on, but scores nothing.
+      if (isFirstTry) score += (levelIndex + 1) * 10;
+    });
+
+    // The target turns into the picked card: same shape, new clothes.
+    _morph.forward(from: 0);
+
+    await Future.delayed(_correctHold);
+
+    if (!mounted || generation != _roundGeneration) return;
+
+    if (_questionIndex + 1 < _round.length) {
+      setState(() {
+        _questionIndex++;
+        _beginQuestion();
+      });
     } else {
-      SoundManager.playWrong();
+      _finishRound();
     }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 78,
-                  height: 78,
-                  decoration: BoxDecoration(
-                    color: correct
-                        ? const Color(0xFFE1F7F3)
-                        : const Color(0xFFFFE7E7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      correct ? '🎉' : '💭',
-                      style: const TextStyle(
-                        fontSize: 42,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                Text(
-                  correct
-                      ? 'Harika! 🔷'
-                      : 'Bu sefer olmadı!',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF39766F),
-                  ),
-                ),
-
-                const SizedBox(height: 7),
-
-                Text(
-                  correct
-                      ? 'Hedef şekli doğru eşleştirdin!'
-                      : 'Doğru cevap: $targetName',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    height: 1.4,
-                    color: Color(0xFF21CA3A),
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                if (correct)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 13,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F8F5),
-                      borderRadius:
-                      BorderRadius.circular(15),
-                    ),
-                    child: Text(
-                      '⭐ +$earnedScore Puan',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF3C8179),
-                      ),
-                    ),
-                  ),
-
-                if (correct)
-                  const SizedBox(height: 18),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-
-                      if (question == 5) {
-                        _showFinalResult();
-                      } else {
-                        setState(() {
-                          question++;
-                          createQuestion();
-                        });
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      const Color(0xFF3C8179),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(17),
-                      ),
-                    ),
-                    child: Text(
-                      question == 5
-                          ? 'Sonucu Gör'
-                          : 'Devam Et',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
-  // =====================================================
-  // SEVİYE
-  // =====================================================
+  void _finishRound() {
+    final isClean = isCleanShapeRound(_firstTryMistakes);
+    final top = shapeLadder.length - 1;
 
+    RoundOutcome outcome;
 
-  // =====================================================
-  // OYUN TAMAMLANDI
-  // =====================================================
+    if (isClean) {
+      final next = advanceLadder(
+        ladder: shapeLadder,
+        levelIndex: levelIndex,
+        roundsCleared: roundsCleared,
+      );
 
-  void _showFinalResult() {
-    if (finalDialogShown) return;
+      levelIndex = next.levelIndex;
+      roundsCleared = next.roundsCleared;
+      outcome = next.outcome;
 
-    finalDialogShown = true;
+      _saveProgress();
+    } else {
+      // Not clean: nothing earned, nothing lost. At the top with every star
+      // already earned there is nothing left to count down to.
+      outcome = levelIndex == top && roundsCleared >= level.roundsToAdvance
+          ? RoundOutcome.mastered
+          : RoundOutcome.progress;
+    }
+
+    setState(() => _isRoundOver = true);
 
     AchievementManager.unlock('shape_master');
     AchievementManager.unlock('first_step');
-    AchievementManager.markGamePlayed('shape');
+    AchievementManager.markGamePlayed(game.storageId);
 
+    final firstTryRight = _round.length - _firstTryMistakes;
 
-    showDialog(
+    showLadderRoundDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 82,
-                  height: 82,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD6F6F1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '🎉',
-                      style: TextStyle(
-                        fontSize: 45,
-                      ),
-                    ),
-                  ),
-                ),
+      palette: palette,
+      outcome: outcome,
+      ladder: shapeLadder,
+      levelIndex: levelIndex,
+      roundsCleared: roundsCleared,
+      levelUpMessage: _newRungMessage(ShapeVariation.forRung(levelIndex)),
+      masteredMessage: 'Şekilleri her kılıkta tanıyorsun! ✨',
+      flair: '✨',
+      results: [
+        GameResultBox(
+          palette: palette,
+          emoji: '⭐',
+          title: 'Puan',
+          value: '$score',
+        ),
+        GameResultBox(
+          palette: palette,
+          emoji: '🎯',
+          title: 'İlk seferde',
+          value: '$firstTryRight/${_round.length}',
+        ),
+        GameResultBox(
+          palette: palette,
+          emoji: '⏱️',
+          title: 'Süre',
+          value: formatSeconds(gameTimer.usedSeconds),
+        ),
+      ],
+      onNextRound: () {
+        if (!ensurePlayTimeLeft()) return;
 
-                const SizedBox(height: 16),
-
-                const Text(
-                  'Harika İş Çıkardın!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF39766F),
-                  ),
-                ),
-
-                const SizedBox(height: 7),
-
-                const Text(
-                  'Eşleştirme oyununu tamamladın! 🔷✨',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 17,
-                    color: Color(0xFF21CA3A),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    GameResultBox(
-                      palette: GamePalette.shape,
-                      emoji: '⭐',
-                      title: 'Puan',
-                      value: '$score',
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    GameResultBox(
-                      palette: GamePalette.shape,
-                      emoji: '🎯',
-                      title: 'Soru',
-                      value: '5 / 5',
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    GameResultBox(
-                      palette: GamePalette.shape,
-                      emoji: '⏱️',
-                      title: 'Süre',
-                      value: formatSeconds(
-                        gameTimer.usedSeconds,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 22),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-
-                      if (gameTimer.timeIsOver) {
-                        Navigator.pop(context);
-                        return;
-                      }
-
-                      setState(() {
-                        question = 1;
-                        score = 0;
-                        difficulty.reset();
-                        finalDialogShown = false;
-                        timeUpDialogShown = false;
-                        createQuestion();
-                      });
-                    },
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                    ),
-                    label: const Text(
-                      'Tekrar Oyna',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      const Color(0xFF3C8179),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(17),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 7),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Oyundan Çık',
-                    style: TextStyle(
-                      color: Color(0xFF21CA3A),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        setState(_startRound);
       },
     );
   }
 
-  // =====================================================
-  // BUILD
-  // =====================================================
+  static String _newRungMessage(ShapeVariation variation) =>
+      switch (variation) {
+        ShapeVariation.identical => 'Hadi başlayalım! ✨',
+        ShapeVariation.color => 'Artık renkler değişiyor! 🎨',
+        ShapeVariation.size => 'Artık boylar da değişiyor! 🔍',
+        ShapeVariation.orientation => 'Artık şekiller dönebiliyor! 🔄',
+        ShapeVariation.proportion => 'Artık şekiller uzayıp basıklaşıyor! ✨',
+        ShapeVariation.nearMiss => 'Artık benzer şekillere dikkat! 👀',
+      };
+
+  // ---- build --------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
-    final levelTitle = levelLabel(difficulty.level);
+    final question = _question;
 
     return Scaffold(
-      backgroundColor:
-      Theme.of(context).scaffoldBackgroundColor,
-
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: GameAppBarTitle(game: game),
         centerTitle: true,
-        actions: [
-          GameHelpButton(game: game, levelLabel: levelTitle,),
-        ],
-        backgroundColor:
-        Theme.of(context).appBarTheme.backgroundColor,
+        actions: [GameHelpButton(game: game)],
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
       ),
-
       body: SafeArea(
         child: Column(
           children: [
-            // =========================================
-            // BİLGİ KUTULARI
-            // =========================================
-
             Padding(
-              padding:
-              const EdgeInsets.symmetric(
-                horizontal: 18,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(
                 children: [
-                  InfoBox(
-                    emoji: '⭐',
-                    title: 'Puan',
-                    value: '$score',
-                  ),
-
+                  InfoBox(emoji: '⭐', title: 'Puan', value: '$score'),
                   const SizedBox(width: 8),
-
                   InfoBox(
                     emoji: '🎯',
                     title: 'Soru',
-                    value: '$question / 5',
+                    value: '${_questionIndex + 1} / $shapeQuestionsPerRound',
                   ),
-
                   const SizedBox(width: 8),
-
                   InfoBox(
                     emoji: '⏱️',
                     title: 'Kalan',
-                    value:
-                    gameTimer
-                        .formattedRemaining,
+                    value: gameTimer.formattedRemaining,
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
+            _buildLevelStrip(),
+            const SizedBox(height: 8),
+            _buildTimeBar(),
+            const SizedBox(height: 12),
+            Expanded(flex: 3, child: _buildTarget(question)),
+            const SizedBox(height: 12),
+            Expanded(flex: 7, child: _buildOptions(question)),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // =========================================
-            // SÜRE ÇUBUĞU
-            // =========================================
-
-            Padding(
-              padding:
-              const EdgeInsets.symmetric(
-                horizontal: 20,
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment
-                        .spaceBetween,
-                    children: [
-                      const Text(
-                        '⏱️ Günlük oyun süresi',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                          FontWeight.bold,
-                          color:
-                          Color(0xFF6F827F),
-                        ),
-                      ),
-
-                      Text(
-                        gameTimer
-                            .formattedRemaining,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                          FontWeight.bold,
-                          color:
-                          Color(0xFF3C8179),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(
-                      10,
-                    ),
-                    child:
-                    LinearProgressIndicator(
-                      value: timeProgress,
-                      minHeight: 7,
-                      backgroundColor:
-                      const Color(
-                        0xFFDCEEEB,
-                      ),
-                      valueColor:
-                      AlwaysStoppedAnimation<
-                          Color>(
-                        timeProgress < 0.2
-                            ? const Color(
-                          0xFFD47A7A,
-                        )
-                            : const Color(
-                          0xFF3C8179,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+  Widget _buildLevelStrip() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          children: [
+            Text(
+              '${levelIndex + 1}. Bölüm',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                color: palette.value,
               ),
             ),
+            const SizedBox(width: 10),
+            ...List.generate(level.roundsToAdvance, (i) {
+              final isEarned = i < roundsCleared;
 
-            const SizedBox(height: 12),
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Icon(
+                  isEarned ? Icons.star_rounded : Icons.star_outline_rounded,
+                  size: 22,
+                  color: isEarned
+                      ? Brand.sun
+                      : palette.value.withValues(alpha: 0.35),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // =========================================
-            // HEDEF ŞEKİL
-            // =========================================
-
-            Container(
-              margin:
-              const EdgeInsets.symmetric(
-                horizontal: 18,
-              ),
-              padding:
-              const EdgeInsets.symmetric(
-                vertical: 17,
-              ),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius:
-                BorderRadius.circular(27),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 7,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                      const Color(0xFFE8F8F5),
-                      borderRadius:
-                      BorderRadius.circular(
-                        12,
-                      ),
-                    ),
-                    child: const Text(
-                      '🎯 Hedef şekli bul',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight:
-                        FontWeight.bold,
-                        color:
-                        Color(0xFF3C8179),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 7),
-
-                  Text(
-                    targetIcon,
-                    style: const TextStyle(
-                      fontSize: 55,
-                    ),
-                  ),
-
-                  const SizedBox(height: 3),
-
-                  Text(
-                    targetName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight:
-                      FontWeight.bold,
-                      color:
-                      Color(0xFF6F827F),
-                    ),
-                  ),
-                ],
-              ),
+  /// The allowance, as a bar only: the same time is already written in the
+  /// ⏱️ box above.
+  Widget _buildTimeBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Semantics(
+        label: 'Kalan günlük süre: ${gameTimer.formattedRemaining}',
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: LinearProgressIndicator(
+            value: timeProgress,
+            minHeight: 7,
+            backgroundColor: palette.softBackground,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              timeProgress < 0.2 ? Brand.ladybug : palette.button,
             ),
+          ),
+        ),
+      ),
+    );
+  }
 
-            const SizedBox(height: 12),
+  Widget _buildTarget(ShapeQuestion? question) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: palette.softBackground,
+        borderRadius: BorderRadius.circular(Brand.cardRadius),
+      ),
+      child: question == null
+          ? const SizedBox.shrink()
+          : Semantics(
+              label: 'Hedef şekil: ${question.target.kind.label}',
+              child: AnimatedBuilder(
+                animation: _morph,
+                builder: (context, _) {
+                  final answered = _answeredIndex;
 
-            // =========================================
-            // SEÇENEKLER
-            // =========================================
-
-            Expanded(
-              child: GridView.builder(
-                padding:
-                const EdgeInsets.fromLTRB(
-                  18,
-                  0,
-                  18,
-                  15,
-                ),
-                itemCount: options.length,
-                gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.28,
-                ),
-                itemBuilder: (_, index) {
-                  final option =
-                  options[index];
-
-                  return ElevatedButton(
-                    onPressed: () {
-                      selectShape(
-                        option['name']!,
-                      );
-                    },
-                    style:
-                    ElevatedButton.styleFrom(
-                      backgroundColor:
-                      Colors.white,
-                      foregroundColor:
-                      const Color(
-                        0xFF3C8179,
-                      ),
-                      elevation: 2,
-                      shadowColor:
-                      Colors.black12,
-                      shape:
-                      RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(
-                          22,
-                        ),
-                        side:
-                        const BorderSide(
-                          color: Color(
-                            0xFFD6F0EC,
-                          ),
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment:
-                      MainAxisAlignment
-                          .center,
-                      children: [
-                        Text(
-                          option['icon']!,
-                          style:
-                          const TextStyle(
-                            fontSize: 40,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 6,
-                        ),
-
-                        Text(
-                          option['name']!,
-                          style:
-                          const TextStyle(
-                            fontSize: 17,
-                            fontWeight:
-                            FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 3,
-                        ),
-
-                        const Icon(
-                          Icons
-                              .touch_app_rounded,
-                          size: 15,
-                          color:
-                          Color(0xFF91BDB8),
-                        ),
-                      ],
+                  return CustomPaint(
+                    size: Size.infinite,
+                    painter: ShapePainter(
+                      figure: question.target,
+                      morphTarget:
+                          answered == null ? null : question.options[answered],
+                      morph: Curves.easeInOut.transform(_morph.value),
                     ),
                   );
                 },
               ),
             ),
-          ],
+    );
+  }
+
+  Widget _buildOptions(ShapeQuestion? question) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+      child: question == null
+          ? const SizedBox.shrink()
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final count = question.options.length;
+                final box = constraints.biggest;
+                final grid = fitGrid(count, box, _cardGap);
+
+                final rows = (count / grid.columns).ceil();
+                final cardWidth =
+                    (box.width - _cardGap * (grid.columns - 1)) / grid.columns;
+
+                // Three cards in a row on a tall phone came out twice as tall
+                // as wide: the card read as a rectangle itself and the shape
+                // drawn in it stayed small. Cap the height and keep the board
+                // right under the target, where the eye compares the two.
+                final cardHeight = min(
+                  (box.height - _cardGap * (rows - 1)) / rows,
+                  cardWidth * _maxCardTallness,
+                );
+                final boardHeight = cardHeight * rows + _cardGap * (rows - 1);
+
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    height: boardHeight,
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([_shake, _pulse, _morph]),
+                      builder: (context, _) => GridView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        itemCount: count,
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: grid.columns,
+                          crossAxisSpacing: _cardGap,
+                          mainAxisSpacing: _cardGap,
+                          childAspectRatio: cardWidth / cardHeight,
+                        ),
+                        itemBuilder: (context, index) =>
+                            _buildOption(question, index),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildOption(ShapeQuestion question, int index) {
+    final figure = question.options[index];
+    final isCorrect = index == question.correctIndex;
+    final isLocked = _lockedOptions.contains(index);
+    final isAnswered = _answeredIndex == index;
+    final isHinted = isCorrect &&
+        !_isResolving &&
+        (_isShowingDemo || _wrongTapsThisQuestion >= _hintAfterWrongTaps);
+
+    var scale = 1.0;
+    if (isHinted) scale += 0.07 * _pulse.value;
+    if (isAnswered) scale += 0.08 * sin(pi * _morph.value);
+
+    var shift = 0.0;
+    if (_shakingIndex == index && _shake.isAnimating) {
+      shift = sin(_shake.value * pi * 6) * 8 * (1 - _shake.value);
+    }
+
+    return Semantics(
+      button: true,
+      label: figure.kind.label,
+      // The demo hand is decoration; the card is just its shape's name.
+      excludeSemantics: true,
+      onTap: () => _handleOptionTap(index),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _handleOptionTap(index),
+        child: Transform.translate(
+          offset: Offset(shift, 0),
+          child: Transform.scale(
+            scale: scale,
+            child: AnimatedOpacity(
+              opacity: isLocked ? 0.35 : 1,
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Brand.cardLight,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isAnswered ? Brand.leaf : Colors.transparent,
+                    width: 4,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: CustomPaint(
+                        painter: ShapePainter(figure: figure),
+                      ),
+                    ),
+                    if (isCorrect && _isShowingDemo)
+                      Align(
+                        alignment: const Alignment(0.55, 0.75),
+                        child: Transform.translate(
+                          offset: Offset(0, -8 * _pulse.value),
+                          child: const Text(
+                            '👆',
+                            style: TextStyle(fontSize: 34),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

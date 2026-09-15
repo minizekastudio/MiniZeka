@@ -147,14 +147,16 @@ Tanım `lib/difficulty.dart`'ta, başka hiçbir yerde yaş eşiği yazılmaz.
 Seviyenin ne zaman etki ettiği oyunun yapısına göre değişir: soru-cevap
 döngüsü olanlarda hemen bir sonraki soruda, Hafıza'da açılmış tahta
 bozulmasın diye bir sonraki turda, Mantık'ta kalan sorular bir üst
-havuzdan gelerek.
+havuzdan gelerek. Eşleştirme de Hafıza gibi bölüm merdiveninde; ilerleme
+kalıcı. `DifficultyTracker` kalıcı değildir (yaş her yüklendiğinde yeniden
+kurulur), merdivenli oyunlarda kullanılmaz.
 
 Oyun bazında:
 
 | Oyun | Yaş bandı neyi belirliyor | Seviye ile artar mı |
 |---|---|---|
 | Hafıza | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Eşleştirme | Seçenek: 3/4/5/6 | Evet |
+| Eşleştirme | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Dikkat | Sembol: 6/9/12/16 | Evet |
 | Matematik | Sayı aralığı: 5/10/15/20 | Evet |
 | Kelime Avı | Kelime zorluğu: 1/1/2/3 | Evet |
@@ -235,6 +237,54 @@ oynamıyorsa ekranda "Tekrar Oyna" yazamaz:
 
 Sıra önemli: okuma bilmeyen çocuk için önce emoji ve renk, sonra yıldız
 rozetleri, en sonda metin gelir.
+
+Diyalog `showLadderRoundDialog` (`game_kit.dart`), ızgara `fitGrid` ortak;
+merdivenli her oyun bunları kullanır. **Geri tuşu bu diyalogda oyundan
+çıkarır** ("Oyundan Çık" ile aynı): yalnızca diyaloğu kapatmak çocuğu
+dokunacak hiçbir şeyi olmayan bitmiş tahtada bırakıyordu.
+
+### Eşleştirme oyununun bölüm merdiveni
+
+Eskiden hedef ile doğru seçenek **birebir aynı emojiydi**: çocuk şekli değil
+resmi eşliyordu. Şimdi doğru kart hedefle aynı *tür* şekil ama "kılık
+değiştirmiş"; her bölüm bir özellik daha değiştirir (`ShapeVariation`,
+`lib/games/shape_round.dart`; `shapeLadder`, `lib/difficulty.dart`):
+
+| Bölüm | Değişen | Kart | Kural |
+|---|---|---|---|
+| 1 | hiçbiri | 3 | her şey aynı renk, yalnız şekle bakılır; dikdörtgen yok |
+| 2 | renk | 3 | bir tuzak hedefin renginde |
+| 3 | boy | 4 | bir tuzak hedefin boyunda ve renginde |
+| 4 | yön | 4 | döndürülmüş kare de karedir; daire hedef olmaz |
+| 5 | oran | 6 | ince/basık/eğik üçgen, uzun dikdörtgen |
+| 6 | yakın çeldirici | 6 | daireye oval, kareye dikdörtgen eşlik eder |
+
+- Şekil türleri: daire, kare, üçgen, dikdörtgen; oval yalnızca çeldirici.
+  **"Elmas" yok** — döndürülmüş kare ayrı şekil sayılınca çocukların bilinen
+  yanılgısı pekişiyordu (Clements ve ark. 1999). Yıldız ve kalp geometri
+  değil, çıkarıldı.
+- **Değişen özellik tek başına cevabı ele vermez:** en az bir çeldirici
+  hedefin, en az biri doğru kartın özelliğini taşır. Aksi halde çocuk şekle
+  bakmadan "küçük olanı / dönmüş olanı" seçerdi.
+- Kare hiçbir zaman dikdörtgen hedefinin çeldiricisi değildir (kare de bir
+  dikdörtgendir); dikdörtgen oranı her zaman ≥ 1,5.
+- Soru arası diyalog yok. Doğru: ses, yeşil çerçeve, hedef seçilen kartın
+  kılığına dönüşür (kuralı sözsüz gösterir), sonraki soru kendiliğinden
+  gelir. Yanlış: kart sallanır, soluklaşır, kilitlenir; çocuk doğruyu bulana
+  kadar dener. 2 yanlıştan sonra doğru kart atar. İlk bölümün ilk sorusunda
+  5 sn dokunulmazsa el gösterilir.
+- **Temiz tur:** 5 sorudan en fazla 1'inde ilk dokunuş yanlış. Gerekli,
+  çünkü yanlış dokunuş soruyu bitirmiyor; eşik olmasa rastgele dokunarak
+  bölüm atlanırdı. Temiz olmayan tur hiçbir şey düşürmez.
+- Şekiller emoji değil `CustomPainter` (`shape_figure.dart`): emoji
+  boyanamıyor, döndürülemiyor, uzatılamıyor. Dolgu renklerinde yeşil ve
+  kırmızı yok (doğru/yanlış çağrışımı).
+- Rastgelelik enjekte edilir (`ShapeGame(random:)`, `buildShapeRound`);
+  `test/shape_round_test.dart` her bölümü 300 tohumla sınar.
+
+Dürüstlük notu: kart sayıları, "≤1 hata" eşiği ve süreler kalibrasyon.
+Kaynakların belirlediği şey eksen sırası (özdeş → renk → boy → yön → oran →
+yakın çeldirici).
 
 ### Öncesinde ne yanlıştı
 
@@ -358,6 +408,8 @@ lib/storage_keys.dart     TEK DOĞRU KAYNAK: bütün SharedPreferences anahtarla
 lib/storage_migration.dart  açılışta çalışan sürümlü veri taşıma
 lib/game_timer.dart       günlük süre sayacı (saat enjekte edilebilir)
 lib/games/                beş oyun (hafıza, dikkat, matematik, eşleştirme, mantık)
+lib/games/shape_figure.dart  şekil türleri, bir örneğin görünümü, çizimi
+lib/games/shape_round.dart   eşleştirme bölüm kuralları ve soru üretici
 lib/word_game.dart        Kelime Avı — henüz lib/games/ altına taşınmadı
 lib/letter_game.dart      Harfleri Yerleştir — aynı şekilde
 lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
@@ -365,11 +417,12 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     83 test: oyun duman testleri, süre sayacı,
+test/                     161 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
-                          (game_clock_test: diyalog/arka plan duraklatma,
-                          süre bitişi, bekleme sırasında çökme)
+                          (game_clock_test), ortak ızgara ve bölüm sonu
+                          diyaloğu, eşleştirme kuralları (300 tohum),
+                          çizim, sığma ve akış testleri
 assets/icon/         app_icon.png (tam dolgu) + app_icon_foreground.png (adaptive)
 assets/splash/       splash_full.png (tam ekran), splash_logo.png, splash_android12.png
 assets/fonts/        Baloo2 (Medium/Bold/ExtraBold, Türkçe'ye budanmış)

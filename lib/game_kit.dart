@@ -716,6 +716,9 @@ class InfoBox extends StatelessWidget {
         // boylece ekran okuyucu neyin ne oldugunu soyleyebiliyor.
         child: Semantics(
           label: '$title: $value',
+          // Without this the drawn emoji and value were read out again
+          // after the label: "Soru: 2 / 5, 🎯, 2 / 5".
+          excludeSemantics: true,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Padding(
@@ -857,11 +860,16 @@ Future<void> showLadderRoundDialog({
     ),
   };
 
+  void leaveGame(BuildContext dialogContext) {
+    Navigator.pop(dialogContext);
+    Navigator.pop(context);
+  }
+
   return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) {
-      return Dialog(
+      final dialog = Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         // Scrolls only when the screen is too short to hold it: on a
         // 320×568 phone the full dialog is ~110 px taller than the space.
@@ -943,10 +951,7 @@ Future<void> showLadderRoundDialog({
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  Navigator.pop(context);
-                },
+                onPressed: () => leaveGame(dialogContext),
                 child: Text(
                   'Oyundan Çık',
                   style: TextStyle(color: palette.label),
@@ -955,6 +960,16 @@ Future<void> showLadderRoundDialog({
             ],
           ),
         ),
+      );
+
+      // Back leaves the game, like "Oyundan Çık". Closing only the dialog
+      // left a finished board with nothing to tap.
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) leaveGame(dialogContext);
+        },
+        child: dialog,
       );
     },
   );
