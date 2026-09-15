@@ -318,16 +318,11 @@ class _ShapeGameState extends State<ShapeGame>
       return next;
     }
 
-    // Not clean: nothing earned, nothing lost. At the top with every star
-    // already earned there is nothing left to count down to.
-    final top = shapeLadder.length - 1;
-    final isMastered =
-        levelIndex == top && roundsCleared >= level.roundsToAdvance;
-
+    // Not clean: nothing earned, nothing lost, and no party either.
     return (
       levelIndex: levelIndex,
       roundsCleared: roundsCleared,
-      outcome: isMastered ? RoundOutcome.mastered : RoundOutcome.progress,
+      outcome: RoundOutcome.retry,
     );
   }
 
@@ -365,7 +360,8 @@ class _ShapeGameState extends State<ShapeGame>
         ),
         GameResultBox(
           palette: palette,
-          emoji: '🎯',
+          // 🎯 already means "question number" on the board above.
+          emoji: '✅',
           title: 'İlk seferde',
           value: '$firstTryRight/${_round.length}',
         ),
@@ -505,13 +501,21 @@ class _ShapeGameState extends State<ShapeGame>
   }
 
   Widget _buildTarget(ShapeQuestion? question) {
-    return Container(
+    final isAnswered = _answeredIndex != null;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.symmetric(horizontal: 18),
       padding: const EdgeInsets.all(12),
       width: double.infinity,
       decoration: BoxDecoration(
         color: palette.softBackground,
         borderRadius: BorderRadius.circular(Brand.cardRadius),
+        // The same green frame as the picked card: target and card match.
+        border: Border.all(
+          color: isAnswered ? Brand.leaf : Colors.transparent,
+          width: 4,
+        ),
       ),
       child: question == null
           ? const SizedBox.shrink()
@@ -522,13 +526,19 @@ class _ShapeGameState extends State<ShapeGame>
                 builder: (context, _) {
                   final answered = _answeredIndex;
 
-                  return CustomPaint(
-                    size: Size.infinite,
-                    painter: ShapePainter(
-                      figure: question.target,
-                      morphTarget:
-                          answered == null ? null : question.options[answered],
-                      morph: Curves.easeInOut.transform(_morph.value),
+                  // On the first rung the matching card is an exact copy, so
+                  // the morph changes nothing; the target nods instead.
+                  return Transform.scale(
+                    scale: 1 + 0.12 * sin(pi * _morph.value),
+                    child: CustomPaint(
+                      size: Size.infinite,
+                      painter: ShapePainter(
+                        figure: question.target,
+                        morphTarget: answered == null
+                            ? null
+                            : question.options[answered],
+                        morph: Curves.easeInOut.transform(_morph.value),
+                      ),
                     ),
                   );
                 },
@@ -610,10 +620,12 @@ class _ShapeGameState extends State<ShapeGame>
 
     return Semantics(
       button: true,
+      enabled: !isLocked,
+      selected: isAnswered,
       label: figure.kind.label,
       // The demo hand is decoration; the card is just its shape's name.
       excludeSemantics: true,
-      onTap: () => _handleOptionTap(index),
+      onTap: isLocked ? null : () => _handleOptionTap(index),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => _handleOptionTap(index),

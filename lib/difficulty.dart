@@ -282,4 +282,10 @@ enum RoundOutcome {
 
   /// Already on the top rung and it is full.
   mastered,
+
+  /// A round that did not count, in a game that grades rounds: nothing
+  /// earned, nothing lost. Shown as "one more round", not as a celebration —
+  /// otherwise tapping at random would be cheered exactly like careful play.
+  /// [advanceLadder] never returns it; the game decides.
+  retry,
 }

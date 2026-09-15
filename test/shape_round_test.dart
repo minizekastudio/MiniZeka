@@ -22,6 +22,20 @@ List<ShapeFigure> _wrong(ShapeQuestion q) => [
 
 int _rungOf(ShapeVariation variation) => variation.index;
 
+bool _isAxisAligned(double rotation) {
+  final quarter = pi / 2;
+  final rest = rotation % quarter;
+  return rest < 1e-9 || quarter - rest < 1e-9;
+}
+
+bool _isTextbook(ShapeFigure figure) {
+  final prototype =
+      ShapeFigure.prototype(figure.kind, colorIndex: figure.colorIndex);
+  return figure.proportion == prototype.proportion &&
+      figure.skew == 0 &&
+      figure.rotation == 0;
+}
+
 void main() {
   test('her bölümün bir kuralı var', () {
     expect(ShapeVariation.values.length, shapeLadder.length);
@@ -174,6 +188,35 @@ void main() {
           correct.rotation == 0;
 
       expect(isTextbook, isFalse, reason: '$correct');
+    }
+  });
+
+  test('kare hedefinde çapraz duran tek kart doğru kart olmaz', () {
+    // The answer to a square is a square turned 45°. If nothing else on the
+    // board sits at a slant, the slant alone gives it away.
+    for (final variation in [
+      ShapeVariation.orientation,
+      ShapeVariation.proportion,
+    ]) {
+      for (final q in _questions(_rungOf(variation))) {
+        if (q.target.kind != ShapeKind.square) continue;
+
+        final correct = q.options[q.correctIndex];
+        if (_isAxisAligned(correct.rotation)) continue;
+
+        expect(
+          _wrong(q).any((w) =>
+              w.kind != ShapeKind.circle && !_isAxisAligned(w.rotation)),
+          isTrue,
+          reason: '${variation.name}: $q',
+        );
+      }
+    }
+  });
+
+  test('oran bölümü: ders kitabı dışı tek kart doğru kart olmaz', () {
+    for (final q in _questions(_rungOf(ShapeVariation.proportion))) {
+      expect(_wrong(q).any((w) => !_isTextbook(w)), isTrue, reason: '$q');
     }
   });
 

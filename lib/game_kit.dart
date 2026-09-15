@@ -880,6 +880,14 @@ Future<void> showLadderRoundDialog({
       'Yeni Tur',
       Icons.play_arrow_rounded,
     ),
+    RoundOutcome.retry => (
+      '💪',
+      palette.softBackground,
+      'Bir tur daha!',
+      'Önce iyice bak, sonra dokun! 👀',
+      'Yeni Tur',
+      Icons.refresh_rounded,
+    ),
   };
 
   final gameRoute = ModalRoute.of(context);

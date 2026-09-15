@@ -187,7 +187,9 @@ void main() {
     }
     await tester.pumpAndSettle();
 
-    expect(find.text('🎉'), findsOneWidget);
+    expect(find.text('💪'), findsOneWidget);
+    expect(find.text('🎉'), findsNothing,
+        reason: 'rastgele dokunmak kutlanmamalı');
     expect(find.byIcon(Icons.star_rounded), findsNothing);
     expect(
       (await _prefs()).getInt(StorageKeys.gameRoundsCleared(GameId.shape)),

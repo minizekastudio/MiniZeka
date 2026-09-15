@@ -102,6 +102,25 @@ void main() {
       expect(find.text('🚀'), findsNothing);
     });
 
+    testWidgets('temiz olmayan tur kutlama değil, bir tur daha ister',
+        (tester) async {
+      await _show(
+        tester,
+        outcome: RoundOutcome.retry,
+        levelIndex: 1,
+        roundsCleared: 1,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('💪'), findsOneWidget);
+      expect(find.text('Bir tur daha!'), findsOneWidget);
+      expect(find.text('🎉'), findsNothing);
+      expect(find.text('Harika İş Çıkardın!'), findsNothing);
+      expect(find.text('Yeni Tur'), findsOneWidget);
+      // Nothing was lost: the stars already earned still show.
+      expect(find.byIcon(Icons.star_rounded), findsOneWidget);
+    });
+
     testWidgets('son bölümde kupa gösterir', (tester) async {
       final top = memoryLadder.length - 1;
 

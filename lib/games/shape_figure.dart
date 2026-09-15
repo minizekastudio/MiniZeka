@@ -123,32 +123,42 @@ class ShapeFigure {
     );
   }
 
-  /// Share of the box's shorter side the figure's circumscribed circle
-  /// takes at full scale. The rest is margin for the outline stroke.
-  static const double _fill = 0.84;
+  /// How far from the centre a figure may reach at full scale, as a share
+  /// of half the box's shorter side. Only turned or stretched figures come
+  /// near it; the card's padding holds the outline stroke.
+  static const double _fill = 1.0;
+
+  /// Area every figure aims for, as a multiple of its squared reach.
+  ///
+  /// Figures used to fill the circle around them, which left a triangle
+  /// with a third of a circle's area: on every board it was visibly the
+  /// smallest card, so size gave the answer away. Aiming for one shared area
+  /// makes a circle, a square and a triangle look the same size; a figure
+  /// that cannot reach that area without leaving the box (a squat triangle)
+  /// is simply as large as it can be.
+  static const double _areaFactor = 1.15;
 
   /// The outline centred in [box], scaled and turned.
   ///
-  /// Every figure is sized by its circumscribed circle, so it stays inside
-  /// the box however it is turned, and turning a square does not shrink it.
+  /// The reach limit is a circle, so a figure stays inside the box however
+  /// it is turned, and turning a square does not shrink it.
   Path outlineIn(Size box) {
-    final radius = box.shortestSide / 2 * _fill * scale;
+    final reach = box.shortestSide / 2 * _fill * scale;
+    final area = _areaFactor * reach * reach;
 
     final Path shape = switch (kind) {
       ShapeKind.circle => Path()
-        ..addOval(Rect.fromCircle(center: Offset.zero, radius: radius)),
-      ShapeKind.oval => Path()
         ..addOval(
-          Rect.fromCenter(
+          Rect.fromCircle(
             center: Offset.zero,
-            width: radius * 2,
-            height: radius * 2 / proportion,
+            radius: min(sqrt(area / pi), reach),
           ),
         ),
+      ShapeKind.oval => _oval(area, reach),
       ShapeKind.square ||
       ShapeKind.triangle ||
       ShapeKind.rectangle =>
-        _polygon(_unitVertices(), radius),
+        _polygon(_unitVertices(), area, reach),
     };
 
     final placement = Matrix4.translationValues(
@@ -189,12 +199,37 @@ class ShapeFigure {
     }
   }
 
-  static Path _polygon(List<Offset> vertices, double radius) {
-    final reach = vertices.map((v) => v.distance).reduce(max);
-    final factor = radius / reach;
+  Path _oval(double area, double reach) {
+    // Area of an ellipse: pi * halfWidth * halfHeight, halfHeight being
+    // halfWidth / proportion.
+    final halfWidth = min(sqrt(area * proportion / pi), reach);
+
+    return Path()
+      ..addOval(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: halfWidth * 2,
+          height: halfWidth * 2 / proportion,
+        ),
+      );
+  }
+
+  static Path _polygon(List<Offset> vertices, double area, double reach) {
+    final unitReach = vertices.map((v) => v.distance).reduce(max);
+    final factor = min(sqrt(area / _polygonArea(vertices)), reach / unitReach);
 
     return Path()
       ..addPolygon([for (final v in vertices) v * factor], true);
+  }
+
+  static double _polygonArea(List<Offset> vertices) {
+    var twice = 0.0;
+    for (var i = 0; i < vertices.length; i++) {
+      final a = vertices[i];
+      final b = vertices[(i + 1) % vertices.length];
+      twice += a.dx * b.dy - b.dx * a.dy;
+    }
+    return twice.abs() / 2;
   }
 
   @override

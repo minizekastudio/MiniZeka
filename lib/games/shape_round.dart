@@ -213,7 +213,7 @@ class _QuestionBuilder {
     final count = cardCount - 1;
     final kinds = _distractorKinds(target.kind, count);
 
-    if (variation == ShapeVariation.orientation) _putTurnableSecond(kinds);
+    if (_isAtLeast(ShapeVariation.orientation)) _putTurnableSecond(kinds);
 
     final figures = [
       for (final kind in kinds)
@@ -273,7 +273,7 @@ class _QuestionBuilder {
               1 => figures[i].copyWith(
                   colorIndex: _anyColor(),
                   scale: _anyScale(),
-                  rotation: _visibleTurn(figures[i].kind),
+                  rotation: _turnLike(correct, figures[i].kind),
                 ),
               _ => _maybeTurned(
                   figures[i].copyWith(
@@ -286,14 +286,27 @@ class _QuestionBuilder {
 
       case ShapeVariation.proportion:
       case ShapeVariation.nearMiss:
+        // Slot 0 wears the target's colour and size. Slot 1 is unusual too,
+        // and slanted when the matching card is, so neither an odd
+        // proportion nor a slant alone picks out the answer.
         return [
           for (var i = 0; i < figures.length; i++)
-            i == 0
-                ? figures[i].copyWith(
-                    colorIndex: target.colorIndex,
-                    scale: target.scale,
-                  )
-                : _mixed(figures[i]),
+            switch (i) {
+              0 => figures[i].copyWith(
+                  colorIndex: target.colorIndex,
+                  scale: target.scale,
+                ),
+              1 => _slantedLike(
+                  correct,
+                  _unusual(
+                    figures[i].copyWith(
+                      colorIndex: _anyColor(),
+                      scale: _anyScale(),
+                    ),
+                  ),
+                ),
+              _ => _mixed(figures[i]),
+            },
         ];
     }
   }
@@ -381,6 +394,24 @@ class _QuestionBuilder {
   ShapeFigure _maybeTurned(ShapeFigure figure) => random.nextBool()
       ? figure.copyWith(rotation: _visibleTurn(figure.kind))
       : figure;
+
+  static bool _isSlanted(double rotation) {
+    final rest = rotation % (pi / 2);
+    return rest > 1e-9 && pi / 2 - rest > 1e-9;
+  }
+
+  /// A turn for a wrong card of [kind] that looks like the matching card's.
+  ///
+  /// A square's answer is turned 45°, and nothing else ever sat at a slant,
+  /// so the slant alone gave it away. When the matching card is slanted, the
+  /// wrong card is slanted too.
+  double _turnLike(ShapeFigure correct, ShapeKind kind) =>
+      _isSlanted(correct.rotation) ? pi / 4 : _visibleTurn(kind);
+
+  ShapeFigure _slantedLike(ShapeFigure correct, ShapeFigure figure) =>
+      _isSlanted(correct.rotation) && figure.kind != ShapeKind.circle
+          ? figure.copyWith(rotation: pi / 4)
+          : figure;
 
   /// A non-textbook example of the same kind.
   ShapeFigure _unusual(ShapeFigure figure) {

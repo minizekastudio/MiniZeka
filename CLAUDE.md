@@ -234,6 +234,11 @@ oynamıyorsa ekranda "Tekrar Oyna" yazamaz:
 | `progress` | 🎉 + dolan yıldızlar, "yeni bölüme N tur kaldı" | Yeni Tur |
 | `levelUp` | 🚀 + "2. Bölüm → 3. Bölüm" rozetleri, yeni kart sayısı | Sonraki Bölüm |
 | `mastered` | 🏆 + dolu yıldızlar | Yeni Tur |
+| `retry` | 💪 "Bir tur daha!", yıldızlar aynı kalır | Yeni Tur |
+
+`retry` yalnızca turu notlayan oyunlarda (Eşleştirme) çıkar: temiz olmayan
+tur kutlanmaz, yoksa rastgele dokunmak dikkatli oynamakla aynı 🎉'yi alır.
+Hiçbir şey de düşmez.
 
 Sıra önemli: okuma bilmeyen çocuk için önce emoji ve renk, sonra yıldız
 rozetleri, en sonda metin gelir.
@@ -268,6 +273,14 @@ değiştirmiş"; her bölüm bir özellik daha değiştirir (`ShapeVariation`,
   bakmadan "küçük olanı / dönmüş olanı" seçerdi.
 - Kare hiçbir zaman dikdörtgen hedefinin çeldiricisi değildir (kare de bir
   dikdörtgendir); dikdörtgen oranı her zaman ≥ 1,5.
+- Doğru kart çapraz duruyorsa (45° dönmüş kare) en az bir çeldirici de
+  çapraz durur; oran bölümünde en az bir çeldirici de ders kitabı dışıdır.
+  Aksi halde "tek eğik kart" ya da "tek tuhaf kart" cevabı ele veriyordu.
+- **Şekiller ortak bir alana göre boyutlanır**, kendilerini saran çembere
+  göre değil. Eskiden üçgenin alanı dairenin üçte biriydi ve her tahtada
+  en küçük kart oluyordu: boy cevabı ele veriyordu. Çember yalnızca üst
+  sınır (dönen şekil kartın dışına çıkmasın). `shape_figure_test` alanları
+  ölçer.
 - Soru arası diyalog yok. Doğru: ses, yeşil çerçeve, hedef seçilen kartın
   kılığına dönüşür (kuralı sözsüz gösterir), sonraki soru kendiliğinden
   gelir. Yanlış: kart sallanır, soluklaşır, kilitlenir; çocuk doğruyu bulana
@@ -417,7 +430,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     161 test: oyun duman testleri, süre sayacı,
+test/                     178 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu

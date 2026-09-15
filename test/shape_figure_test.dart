@@ -5,6 +5,25 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mini_zeka/games/shape_figure.dart';
 
+
+/// Area enclosed by a drawn outline, from points sampled along it.
+double _areaOf(Path path) {
+  final points = <Offset>[];
+  for (final metric in path.computeMetrics()) {
+    for (var d = 0.0; d < metric.length; d += 0.5) {
+      points.add(metric.getTangentForOffset(d)!.position);
+    }
+  }
+
+  var twice = 0.0;
+  for (var i = 0; i < points.length; i++) {
+    final a = points[i];
+    final b = points[(i + 1) % points.length];
+    twice += a.dx * b.dy - b.dx * a.dy;
+  }
+  return twice.abs() / 2;
+}
+
 void main() {
   group('ShapeFigure çizimi', () {
     const box = Size(120, 90);
@@ -38,6 +57,49 @@ void main() {
             expect(inside.contains(point), isTrue, reason: '$figure @ $point');
           }
         }
+      }
+    });
+
+    test('ders kitabı şekilleri aynı boyda yaklaşık aynı alanı kaplar', () {
+      // Sized by the circle around them, a triangle covered a third of a
+      // circle's area and was always visibly the smallest card: size gave
+      // the answer away.
+      const square = Size(120, 120);
+      final areas = {
+        for (final kind in ShapeKind.values)
+          kind: _areaOf(
+            ShapeFigure.prototype(kind, colorIndex: 0).outlineIn(square),
+          ),
+      };
+
+      final largest = areas.values.reduce(max);
+      final smallest = areas.values.reduce(min);
+
+      expect(largest / smallest, lessThanOrEqualTo(1.25), reason: '$areas');
+    });
+
+    test('alışılmadık oranlı şekiller de çok küçük kalmaz', () {
+      const square = Size(120, 120);
+      final reference = _areaOf(
+        const ShapeFigure.prototype(ShapeKind.square, colorIndex: 0)
+            .outlineIn(square),
+      );
+
+      final unusual = [
+        const ShapeFigure.prototype(ShapeKind.triangle, colorIndex: 0)
+            .copyWith(proportion: 1.8),
+        const ShapeFigure.prototype(ShapeKind.triangle, colorIndex: 0)
+            .copyWith(proportion: 0.45),
+        const ShapeFigure.prototype(ShapeKind.triangle, colorIndex: 0)
+            .copyWith(proportion: 0.8, skew: 0.4),
+        const ShapeFigure.prototype(ShapeKind.rectangle, colorIndex: 0)
+            .copyWith(proportion: 2.4),
+      ];
+
+      for (final figure in unusual) {
+        expect(_areaOf(figure.outlineIn(square)) / reference,
+            greaterThanOrEqualTo(0.6),
+            reason: '$figure');
       }
     });
 
