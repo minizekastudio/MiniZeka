@@ -151,58 +151,6 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
 
   static const double _cardGap = 12;
 
-  /// Kartlari ekrana tam sigdiran izgara.
-  ///
-  /// Once satiri tam dolduran sutun sayilari denenir (yarim sira kalmasin),
-  /// aralarindan kartin en buyuk gorundugu secilir. Hicbiri tam bolmuyorsa
-  /// en iyi gorunen kullanilir. En-boy orani kutuya birebir oturacak sekilde
-  /// hesaplandigi icin kaydirmaya gerek kalmiyor.
-  ({int columns, double aspectRatio}) _fitGrid(
-    int count,
-    Size box,
-    double gap,
-  ) {
-    if (count <= 0 || box.width <= 0 || box.height <= 0) {
-      return (columns: 2, aspectRatio: 1);
-    }
-
-    var bestColumns = 2;
-    var bestSide = -1.0;
-    var sawExact = false;
-
-    for (var columns = 2; columns <= 5; columns++) {
-      if (columns > count) break;
-
-      final rows = (count / columns).ceil();
-      final exact = count % columns == 0;
-
-      // Tam bolen bir secenek bulunduysa artik yalnizca onlar yarisir.
-      if (sawExact && !exact) continue;
-
-      final cardWidth = (box.width - gap * (columns - 1)) / columns;
-      final cardHeight = (box.height - gap * (rows - 1)) / rows;
-      final side = cardWidth < cardHeight ? cardWidth : cardHeight;
-
-      if (exact && !sawExact) {
-        sawExact = true;
-        bestSide = -1;
-      }
-
-      if (side > bestSide) {
-        bestSide = side;
-        bestColumns = columns;
-      }
-    }
-
-    final rows = (count / bestColumns).ceil();
-    final cardWidth = (box.width - gap * (bestColumns - 1)) / bestColumns;
-    final cardHeight = (box.height - gap * (rows - 1)) / rows;
-
-    final ratio = cardHeight > 0 ? cardWidth / cardHeight : 1.0;
-
-    return (columns: bestColumns, aspectRatio: ratio.clamp(0.5, 2.0));
-  }
-
   void startGame() {
     _boardGeneration++;
 
@@ -321,70 +269,6 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   // OYUN TAMAMLANDI
   // =====================================================
 
-  /// Ayni bolumde kalindiysa bir sonraki basamaga ne kadar kaldigi.
-  String _roundsLeftMessage() {
-    final left = level.roundsToAdvance - roundsCleared;
-    if (left <= 0) return 'Tüm kartların eşlerini buldun! 🧠✨';
-    if (left == 1) return 'Yeni bölüme bir tur kaldı! 🧠✨';
-    return 'Yeni bölüme $left tur kaldı! 🧠✨';
-  }
-
-  /// Merdivendeki yeri yazidan once gosteren gorsel.
-  Widget _ladderVisual(RoundOutcome outcome) {
-    if (outcome == RoundOutcome.levelUp) {
-      // levelIndex zaten arttirildi: eski bolum = levelIndex.
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _levelChip('$levelIndex. Bölüm', passed: true),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            child: Icon(
-              Icons.arrow_forward_rounded,
-              size: 24,
-              color: Color(0xFF21CA3A),
-            ),
-          ),
-          _levelChip('${levelIndex + 1}. Bölüm', passed: false),
-        ],
-      );
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(level.roundsToAdvance, (i) {
-        final done = i < roundsCleared;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Icon(
-            done ? Icons.star_rounded : Icons.star_outline_rounded,
-            size: 32,
-            color: done ? Brand.sun : const Color(0xFFBFE6C6),
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _levelChip(String label, {required bool passed}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: passed ? const Color(0xFFEDF7EF) : const Color(0xFF23D83E),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w900,
-          color: passed ? const Color(0xFF8FBF9A) : Colors.white,
-        ),
-      ),
-    );
-  }
-
   void _showGameFinishedDialog(RoundOutcome outcome) {
     if (finishDialogShown || timeUpDialogShown) return;
 
@@ -392,180 +276,43 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
 
     final usedTime = gameTimer.usedSeconds;
 
-    // Cocuk okuyamiyor olabilir: durumu once emoji, renk ve yildizlar
-    // anlatir, metin yalnizca destekler. Bolum atlandiginda "Tekrar Oyna"
-    // yanlis olurdu, ayni tahta bir daha gelmiyor.
-    final (
-      String emoji,
-      Color ring,
-      String title,
-      String message,
-      String action,
-      IconData actionIcon,
-    ) shown = switch (outcome) {
-      RoundOutcome.levelUp => (
-          '🚀',
-          const Color(0xFFFFF1CC),
-          'Yeni Bölüm Açıldı!',
-          'Artık ${level.cards} kartla oynuyorsun! ✨',
-          'Sonraki Bölüm',
-          Icons.arrow_forward_rounded,
-        ),
-      RoundOutcome.mastered => (
-          '🏆',
-          const Color(0xFFFFF1CC),
-          'Tüm Bölümleri Bitirdin!',
-          'Son bölümdesin, hafızan çok güçlü 🧠',
-          'Yeni Tur',
-          Icons.refresh_rounded,
-        ),
-      RoundOutcome.progress => (
-          '🎉',
-          const Color(0xFFD8FFDC),
-          'Harika İş Çıkardın!',
-          _roundsLeftMessage(),
-          'Yeni Tur',
-          Icons.play_arrow_rounded,
-        ),
-    };
-
-    showDialog(
+    showLadderRoundDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Emoji
-                Container(
-                  width: 82,
-                  height: 82,
-                  decoration: BoxDecoration(
-                    color: shown.$2,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      shown.$1,
-                      style: const TextStyle(fontSize: 46),
-                    ),
-                  ),
-                ),
+      palette: palette,
+      outcome: outcome,
+      ladder: memoryLadder,
+      levelIndex: levelIndex,
+      roundsCleared: roundsCleared,
+      levelUpMessage: 'Artık ${level.cards} kartla oynuyorsun! ✨',
+      masteredMessage: 'Son bölümdesin, hafızan çok güçlü 🧠',
+      flair: '🧠✨',
+      results: [
+        GameResultBox(
+          palette: palette,
+          emoji: '⭐',
+          title: 'Puan',
+          value: '$score',
+        ),
+        GameResultBox(
+          palette: palette,
+          emoji: '🎯',
+          title: 'Hamle',
+          value: '$moves',
+        ),
+        GameResultBox(
+          palette: palette,
+          emoji: '⏱️',
+          title: 'Süre',
+          value: formatSeconds(usedTime),
+        ),
+      ],
+      onNextRound: () {
+        // The clock resumes by itself once the dialog is gone. If the day
+        // is already used up, say so instead of dealing a board that
+        // cannot be played.
+        if (!ensurePlayTimeLeft()) return;
 
-                const SizedBox(height: 16),
-
-                Text(
-                  shown.$3,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF20813A),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Merdivendeki yer: atlandiysa eski -> yeni bolum,
-                // atlanmadiysa dolan yildizlar.
-                _ladderVisual(outcome),
-
-                const SizedBox(height: 12),
-
-                Text(
-                  shown.$4,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    color: Color(0xFF21CA3A),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Sonuçlar
-                Row(
-                  children: [
-                    GameResultBox(
-                      palette: GamePalette.memory,
-                      emoji: '⭐',
-                      title: 'Puan',
-                      value: '$score',
-                    ),
-                    const SizedBox(width: 8),
-                    GameResultBox(
-                      palette: GamePalette.memory,
-                      emoji: '🎯',
-                      title: 'Hamle',
-                      value: '$moves',
-                    ),
-                    const SizedBox(width: 8),
-                    GameResultBox(
-                      palette: GamePalette.memory,
-                      emoji: '⏱️',
-                      title: 'Süre',
-                      value: formatSeconds(usedTime),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 22),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-
-                      // The clock resumes by itself once this dialog is
-                      // gone. If the day is already used up, say so instead
-                      // of dealing a board that cannot be played.
-                      if (!ensurePlayTimeLeft()) return;
-
-                      setState(startGame);
-                    },
-                    icon: Icon(shown.$6),
-                    label: Text(
-                      shown.$5,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF23D83E),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(17),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Oyundan Çık',
-                    style: TextStyle(color: Color(0xFF21CA3A)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        setState(startGame);
       },
     );
   }
@@ -736,7 +483,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                     // Tahta her zaman ekrana tam sigar: sutun sayisi ve
                     // en-boy orani eldeki kutuya gore hesaplanir, kaydirma
                     // yok. Eskiden 3 sutun sabitti ve son sira tasiyordu.
-                    final grid = _fitGrid(
+                    final grid = fitGrid(
                       cards.length,
                       constraints.biggest,
                       _cardGap,

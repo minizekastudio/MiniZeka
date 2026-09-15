@@ -745,3 +745,301 @@ class InfoBox extends StatelessWidget {
     );
   }
 }
+
+/// Lays out [count] cards so the whole board fits [box] without scrolling.
+///
+/// Column counts that fill every row are tried first, so there is never a
+/// half-empty last row; among those, the one showing the largest card wins.
+/// Only when no column count divides [count] does a ragged layout compete.
+/// The aspect ratio is derived from the box itself, which is what lets a
+/// non-scrolling grid fill the space exactly.
+({int columns, double aspectRatio}) fitGrid(int count, Size box, double gap) {
+  if (count <= 0 || box.width <= 0 || box.height <= 0) {
+    return (columns: 2, aspectRatio: 1);
+  }
+
+  var bestColumns = 2;
+  var bestSide = -1.0;
+  var sawExact = false;
+
+  for (var columns = 2; columns <= 5; columns++) {
+    if (columns > count) break;
+
+    final rows = (count / columns).ceil();
+    final exact = count % columns == 0;
+
+    // Once a column count fills every row, only such counts compete.
+    if (sawExact && !exact) continue;
+
+    final cardWidth = (box.width - gap * (columns - 1)) / columns;
+    final cardHeight = (box.height - gap * (rows - 1)) / rows;
+    final side = cardWidth < cardHeight ? cardWidth : cardHeight;
+
+    if (exact && !sawExact) {
+      sawExact = true;
+      bestSide = -1;
+    }
+
+    if (side > bestSide) {
+      bestSide = side;
+      bestColumns = columns;
+    }
+  }
+
+  final rows = (count / bestColumns).ceil();
+  final cardWidth = (box.width - gap * (bestColumns - 1)) / bestColumns;
+  final cardHeight = (box.height - gap * (rows - 1)) / rows;
+
+  final ratio = cardHeight > 0 ? cardWidth / cardHeight : 1.0;
+
+  return (columns: bestColumns, aspectRatio: ratio.clamp(0.5, 2.0));
+}
+
+/// The end of a round in a game that climbs a [GameLevel] ladder.
+///
+/// A child who cannot read is told what happened by the emoji, its colour
+/// and the stars or level badges first; the text only backs that up. The
+/// primary button never says "play again" when the next board is a new
+/// level, because it is not the same game any more.
+Future<void> showLadderRoundDialog({
+  required BuildContext context,
+  required GamePalette palette,
+  required RoundOutcome outcome,
+  required List<GameLevel> ladder,
+  required int levelIndex,
+  required int roundsCleared,
+  required String levelUpMessage,
+  required String masteredMessage,
+  required String flair,
+  required List<Widget> results,
+  required VoidCallback onNextRound,
+}) {
+  final level = ladder[levelIndex];
+
+  String roundsLeftMessage() {
+    final left = level.roundsToAdvance - roundsCleared;
+    if (left == 1) return 'Yeni bölüme bir tur kaldı! $flair';
+    return 'Yeni bölüme $left tur kaldı! $flair';
+  }
+
+  final (
+    String emoji,
+    Color ring,
+    String title,
+    String message,
+    String action,
+    IconData actionIcon,
+  )
+  shown = switch (outcome) {
+    RoundOutcome.levelUp => (
+      '🚀',
+      Brand.sunLight,
+      'Yeni Bölüm Açıldı!',
+      levelUpMessage,
+      'Sonraki Bölüm',
+      Icons.arrow_forward_rounded,
+    ),
+    RoundOutcome.mastered => (
+      '🏆',
+      Brand.sunLight,
+      'Tüm Bölümleri Bitirdin!',
+      masteredMessage,
+      'Yeni Tur',
+      Icons.refresh_rounded,
+    ),
+    RoundOutcome.progress => (
+      '🎉',
+      palette.softBackground,
+      'Harika İş Çıkardın!',
+      roundsLeftMessage(),
+      'Yeni Tur',
+      Icons.play_arrow_rounded,
+    ),
+  };
+
+  return showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        // Scrolls only when the screen is too short to hold it: on a
+        // 320×568 phone the full dialog is ~110 px taller than the space.
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 82,
+                height: 82,
+                decoration: BoxDecoration(
+                  color: shown.$2,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(shown.$1, style: const TextStyle(fontSize: 46)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                shown.$3,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: palette.heading,
+                ),
+              ),
+              const SizedBox(height: 14),
+              LadderProgressBadge(
+                palette: palette,
+                outcome: outcome,
+                level: level,
+                levelIndex: levelIndex,
+                roundsCleared: roundsCleared,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                shown.$4,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 17, color: palette.label),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  for (var i = 0; i < results.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 8),
+                    results[i],
+                  ],
+                ],
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    onNextRound();
+                  },
+                  icon: Icon(shown.$6),
+                  label: Text(
+                    shown.$5,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: palette.button,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(17),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  'Oyundan Çık',
+                  style: TextStyle(color: palette.label),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+/// Where the child stands on the ladder, shown without needing to read:
+/// "old level → new level" badges after a level-up, otherwise one star per
+/// clean round on the current level.
+class LadderProgressBadge extends StatelessWidget {
+  const LadderProgressBadge({
+    super.key,
+    required this.palette,
+    required this.outcome,
+    required this.level,
+    required this.levelIndex,
+    required this.roundsCleared,
+  });
+
+  final GamePalette palette;
+  final RoundOutcome outcome;
+  final GameLevel level;
+
+  /// Already advanced: after a level-up this is the new level.
+  final int levelIndex;
+  final int roundsCleared;
+
+  @override
+  Widget build(BuildContext context) {
+    if (outcome == RoundOutcome.levelUp) {
+      // Two badges and an arrow are wider than a narrow phone's dialog.
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _chip('$levelIndex. Bölüm', isPassed: true),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(
+                Icons.arrow_forward_rounded,
+                size: 24,
+                color: palette.label,
+              ),
+            ),
+            _chip('${levelIndex + 1}. Bölüm', isPassed: false),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(level.roundsToAdvance, (i) {
+        final isEarned = i < roundsCleared;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Icon(
+            isEarned ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: 32,
+            color: isEarned ? Brand.sun : palette.value.withValues(alpha: 0.35),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _chip(String label, {required bool isPassed}) {
+    // The passed level used to be pale green on pale green (1.9:1) and read
+    // as blank. It stays quieter than the new level through its fill, not by
+    // fading the text away.
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: isPassed ? palette.softBackground : palette.button,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w900,
+          color: isPassed ? palette.heading : Colors.white,
+        ),
+      ),
+    );
+  }
+}
