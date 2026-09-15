@@ -433,7 +433,7 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
 
     AchievementManager.unlock('logic_master');
     AchievementManager.unlock('first_step');
-    AchievementManager.markGamePlayed('logic');
+    AchievementManager.markGamePlayed(game);
 
     final message = score >= 40
         ? 'Muhteşem bir mantık yürüttün! 🌟'

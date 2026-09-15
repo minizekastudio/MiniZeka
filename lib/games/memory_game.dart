@@ -246,7 +246,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
       if (matched.every((item) => item)) {
         final outcome = _roundCleared();
         AchievementManager.unlock('first_step');
-        AchievementManager.markGamePlayed('memory');
+        AchievementManager.markGamePlayed(game);
         _showGameFinishedDialog(outcome);
       }
     }

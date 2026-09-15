@@ -313,7 +313,7 @@ class _ShapeGameState extends State<ShapeGame>
 
     AchievementManager.unlock('shape_master');
     AchievementManager.unlock('first_step');
-    AchievementManager.markGamePlayed(game.storageId);
+    AchievementManager.markGamePlayed(game);
 
     final firstTryRight = _round.length - _firstTryMistakes;
 

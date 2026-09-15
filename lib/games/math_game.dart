@@ -314,7 +314,7 @@ class _MathGameState extends State<MathGame> with GameSessionMixin {
     finalDialogShown = true;
     await AchievementManager.unlock('math_master');
     await AchievementManager.unlock('first_step');
-    await AchievementManager.markGamePlayed('math');
+    await AchievementManager.markGamePlayed(game);
 
     if (!mounted) return;
 

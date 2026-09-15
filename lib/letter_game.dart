@@ -714,7 +714,7 @@ class _LetterGameState extends State<LetterGame>
 
     await AchievementManager.unlock('first_step');
     await AchievementManager.unlock('letter_master');
-    await AchievementManager.markGamePlayed('letter');
+    await AchievementManager.markGamePlayed(game);
 
     await SoundManager.playGameOver();
 

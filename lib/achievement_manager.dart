@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'game_id.dart';
 import 'storage_keys.dart';
 
 class AchievementManager {
@@ -31,14 +32,18 @@ class AchievementManager {
     final unlocked = await getUnlocked();
     return unlocked.contains(achievementKey);
   }
-  static Future<void> markGamePlayed(String gameKey) async {
+  /// Records that [game] has been played at least once.
+  ///
+  /// Takes a [GameId], not a string: callers used to pass hand-typed ids
+  /// ('memory', 'math') that only matched the stored ids by coincidence.
+  static Future<void> markGamePlayed(GameId game) async {
     final prefs = await SharedPreferences.getInstance();
 
     final playedGames =
         prefs.getStringList(StorageKeys.playedGames) ?? <String>[];
 
-    if (!playedGames.contains(gameKey)) {
-      playedGames.add(gameKey);
+    if (!playedGames.contains(game.storageId)) {
+      playedGames.add(game.storageId);
 
       await prefs.setStringList(
         StorageKeys.playedGames,

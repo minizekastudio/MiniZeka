@@ -537,7 +537,7 @@ class _WordGameState extends State<WordGame>
 
     await AchievementManager.unlock('first_step');
     await AchievementManager.unlock('word_master');
-    await AchievementManager.markGamePlayed('word');
+    await AchievementManager.markGamePlayed(game);
 
     await SoundManager.playGameOver();
 

@@ -331,7 +331,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
     finalDialogShown = true;
     await AchievementManager.unlock('attention_master');
     await AchievementManager.unlock('first_step');
-    await AchievementManager.markGamePlayed('attention');
+    await AchievementManager.markGamePlayed(game);
 
     if (!mounted) return;
 
