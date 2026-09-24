@@ -79,7 +79,7 @@ void main() {
         for (var seed = 0; seed < _seeds; seed++) {
           final round = buildShapeRound(rung: rung, random: Random(seed));
 
-          expect(round.length, shapeQuestionsPerRound);
+          expect(round.length, questionsPerRound);
           for (var i = 1; i < round.length; i++) {
             expect(round[i].target.kind, isNot(round[i - 1].target.kind));
           }
@@ -245,8 +245,8 @@ void main() {
   });
 
   test('temiz tur: ilk dokunuşta en fazla bir hata', () {
-    expect(isCleanShapeRound(0), isTrue);
-    expect(isCleanShapeRound(1), isTrue);
-    expect(isCleanShapeRound(2), isFalse);
+    expect(isCleanRound(0), isTrue);
+    expect(isCleanRound(1), isTrue);
+    expect(isCleanRound(2), isFalse);
   });
 }

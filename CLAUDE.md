@@ -157,7 +157,7 @@ Oyun bazında:
 |---|---|---|
 | Hafıza | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Eşleştirme | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Dikkat | Sembol: 6/9/12/16 | Evet |
+| Dikkat | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Matematik | Sayı aralığı: 5/10/15/20 | Evet |
 | Kelime Avı | Kelime zorluğu: 1/1/2/3 | Evet |
 | Harfler | Kelime zorluğu: 1/1/2/3 | Evet |
@@ -309,6 +309,46 @@ Dürüstlük notu: kart sayıları, "≤1 hata" eşiği ve süreler kalibrasyon.
 Kaynakların belirlediği şey eksen sırası (özdeş → renk → boy → yön → oran →
 yakın çeldirici).
 
+### Dikkat oyununun bölüm merdiveni
+
+Zorluk **kutu sayısıyla** artıyordu, oysa görsel aramada asıl belirleyici
+hedefin çeldiricilere ne kadar benzediği: farkı bariz olan hedef kutu sayısı
+artsa da göze çarpar, benzeyen hedef kutu kutu aramayı zorlar
+(Treisman & Gelade 1980; Duncan & Humphreys 1989). Üstelik iki sembol 16'lık
+düz listeden rastgele eşleşiyordu: bir tahta 🍎 arasında 🚗 (bedava), sonraki
+🍎 arasında 🍏 (o puntoda imkânsız) çıkıyordu.
+
+`attentionLadder` (`lib/difficulty.dart`) + `attentionRules`
+(`lib/games/attention_round.dart`):
+
+| Bölüm | Kutu | Fark nerede |
+|---|---|---|
+| 1 | 6 | Başka kümeden (🍎 arasında ⚽) |
+| 2 | 9 | Başka kümeden |
+| 3 | 9 | **Aynı kümeden** (🍎 arasında 🍓) |
+| 4 | 12 | Çeldiriciler karışık, hedef başka kümeden |
+| 5 | 12 | Karışık + aynı kümeden |
+| 6 | 16 | Karışık + aynı kümeden |
+
+- Kümeler hafıza oyunuyla **ortak** (`memory_symbols.dart`). Hafıza "aynı
+  tahtada benzeyen iki yüz olmasın" diye okur, Dikkat tam tersini ister.
+- **Tahtada tek bir yüz bir kez görünür**, o da hedeftir: her çeldirici en az
+  iki kez konur, yoksa ikinci bir "farklı" doğardı.
+- **Üst sınır 16 kutu.** 20 kutu dar telefonda 64 px dokunma kuralını
+  sağlamıyor.
+- Yanlış dokunuş tahtayı bitirmez: kutu sallanıp kilitlenir, çocuk aramaya
+  devam eder. 2 yanlıştan sonra hedef nabız gibi atar. Soru arası diyalog
+  yok; tur 5 tahta, sonunda ortak ekran.
+- Eskiden tek yanlış dokunuş soruyu kapatıyordu ve çocuk doğruyu hiç
+  görmüyordu; öğrenilen şey "yanlışsam oyun biter" oluyordu.
+- `DifficultyTracker` kullanılmıyordu: 3 soruluk oturumda üst üste 3 doğru
+  gerektiği için 2. seviyeye pratikte ulaşılamıyor, puan çarpanı ve
+  "Kolay/Orta/Zor" etiketi boşa çalışıyordu.
+
+`test/attention_round_test.dart` her bölümü 300 tohumla, `attention_fit_test`
+altı bölümü üç telefonda (yarım sıra yok, kutu ≥ 64 px), `attention_flow_test`
+akışı doğruluyor.
+
 ### Öncesinde ne yanlıştı
 
 - "Zorluk" adı altında üç ilgisiz şey vardı: oyunlara kopyalanmış `childAge`
@@ -459,6 +499,8 @@ lib/game_timer.dart       günlük süre sayacı (saat enjekte edilebilir)
 lib/games/                beş oyun (hafıza, dikkat, matematik, eşleştirme, mantık)
 lib/games/shape_figure.dart  şekil türleri, bir örneğin görünümü, çizimi
 lib/games/shape_round.dart   eşleştirme bölüm kuralları ve soru üretici
+lib/games/memory_symbols.dart  benzeşme kümeleri (hafıza + dikkat ortak)
+lib/games/attention_round.dart dikkat bölüm kuralları ve tahta üretici
 lib/word_game.dart        Kelime Avı — henüz lib/games/ altına taşınmadı
 lib/letter_game.dart      Harfleri Yerleştir — aynı şekilde
 lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
@@ -466,7 +508,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     212 test: oyun duman testleri, süre sayacı,
+test/                     256 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu

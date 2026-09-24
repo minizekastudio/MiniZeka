@@ -33,19 +33,6 @@ enum ShapeVariation {
       values[rung.clamp(0, values.length - 1)];
 }
 
-/// Questions in one round.
-const int shapeQuestionsPerRound = 5;
-
-/// A round is clean — and counts towards the next rung — with at most this
-/// many questions answered wrong on the first tap.
-///
-/// Needed because a wrong tap does not end a question here: without it a
-/// child could tap cards at random and still climb.
-const int maxFirstTryMistakesInCleanRound = 1;
-
-bool isCleanShapeRound(int firstTryMistakes) =>
-    firstTryMistakes <= maxFirstTryMistakesInCleanRound;
-
 /// One target and the cards to choose from; exactly one card is the same
 /// kind of shape as the target.
 class ShapeQuestion {
@@ -61,7 +48,7 @@ class ShapeQuestion {
 List<ShapeQuestion> buildShapeRound({
   required int rung,
   required Random random,
-  int questionCount = shapeQuestionsPerRound,
+  int questionCount = questionsPerRound,
 }) {
   final safeRung = rung.clamp(0, shapeLadder.length - 1);
   final builder = _QuestionBuilder(

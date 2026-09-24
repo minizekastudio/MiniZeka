@@ -6,7 +6,6 @@ import '../achievement_manager.dart';
 import '../game_id.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../storage_keys.dart';
-import '../app_theme.dart';
 import '../difficulty.dart';
 import '../game_kit.dart';
 import 'memory_symbols.dart';
@@ -424,50 +423,12 @@ class _MemoryGameState extends State<MemoryGame>
             // Cocuk nerede oldugunu ve bir sonraki basamaga ne kadar
             // kaldigini yaziyi okumadan gorsun diye: bolum numarasi ve
             // her temiz tur icin bir nokta.
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  children: [
-                    Text(
-                      '${levelIndex + 1}. Bölüm',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: game.palette.value,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ...List.generate(level.roundsToAdvance, (i) {
-                      final done = i < roundsCleared;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: Icon(
-                          done
-                              ? Icons.star_rounded
-                              : Icons.star_outline_rounded,
-                          size: 22,
-                          color: done
-                              ? Brand.sun
-                              : game.palette.value.withValues(alpha: 0.35),
-                        ),
-                      );
-                    }),
-                    const SizedBox(width: 14),
-                    Text(
-                      '${cards.length} kart',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: game.palette.label,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            LadderStrip(
+              palette: palette,
+              levelIndex: levelIndex,
+              roundsCleared: roundsCleared,
+              roundsToAdvance: level.roundsToAdvance,
+              trailing: '${cards.length} kart',
             ),
 
             const SizedBox(height: 10),

@@ -306,7 +306,7 @@ class _ShapeGameState extends State<ShapeGame>
     AchievementManager.unlock('first_step');
     AchievementManager.markGamePlayed(game);
 
-    if (isCleanShapeRound(_firstTryMistakes)) {
+    if (isCleanRound(_firstTryMistakes)) {
       final next = advanceLadder(
         ladder: shapeLadder,
         levelIndex: levelIndex,
@@ -417,7 +417,7 @@ class _ShapeGameState extends State<ShapeGame>
                   InfoBox(
                     emoji: '🎯',
                     title: 'Soru',
-                    value: '${_questionIndex + 1} / $shapeQuestionsPerRound',
+                    value: '${_questionIndex + 1} / $questionsPerRound',
                   ),
                   const SizedBox(width: 8),
                   InfoBox(
@@ -429,49 +429,18 @@ class _ShapeGameState extends State<ShapeGame>
               ),
             ),
             const SizedBox(height: 10),
-            _buildLevelStrip(),
+            LadderStrip(
+              palette: palette,
+              levelIndex: levelIndex,
+              roundsCleared: roundsCleared,
+              roundsToAdvance: level.roundsToAdvance,
+            ),
             const SizedBox(height: 8),
             _buildTimeBar(),
             const SizedBox(height: 12),
             Expanded(flex: 3, child: _buildTarget(question)),
             const SizedBox(height: 12),
             Expanded(flex: 7, child: _buildOptions(question)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLevelStrip() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Row(
-          children: [
-            Text(
-              '${levelIndex + 1}. Bölüm',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: palette.value,
-              ),
-            ),
-            const SizedBox(width: 10),
-            ...List.generate(level.roundsToAdvance, (i) {
-              final isEarned = i < roundsCleared;
-
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Icon(
-                  isEarned ? Icons.star_rounded : Icons.star_outline_rounded,
-                  size: 22,
-                  color: isEarned
-                      ? Brand.sun
-                      : palette.value.withValues(alpha: 0.35),
-                ),
-              );
-            }),
           ],
         ),
       ),
@@ -582,8 +551,7 @@ class _ShapeGameState extends State<ShapeGame>
                         physics: const NeverScrollableScrollPhysics(),
                         padding: EdgeInsets.zero,
                         itemCount: count,
-                        gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: grid.columns,
                           crossAxisSpacing: _cardGap,
                           mainAxisSpacing: _cardGap,
@@ -605,7 +573,8 @@ class _ShapeGameState extends State<ShapeGame>
     final isCorrect = index == question.correctIndex;
     final isLocked = _lockedOptions.contains(index);
     final isAnswered = _answeredIndex == index;
-    final isHinted = isCorrect &&
+    final isHinted =
+        isCorrect &&
         !_isResolving &&
         (_isShowingDemo || _wrongTapsThisQuestion >= _hintAfterWrongTaps);
 
@@ -657,9 +626,7 @@ class _ShapeGameState extends State<ShapeGame>
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(10),
-                      child: CustomPaint(
-                        painter: ShapePainter(figure: figure),
-                      ),
+                      child: CustomPaint(painter: ShapePainter(figure: figure)),
                     ),
                     if (isCorrect && _isShowingDemo)
                       Align(

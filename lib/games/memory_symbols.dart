@@ -8,19 +8,24 @@ import 'dart:math';
 /// and the game punished a memory that had worked.
 ///
 /// One face per group per board. Groups with a single face carry no risk.
+///
+/// The attention game reads the same groups the other way round: it needs two
+/// faces a child could mix up, so its harder rungs draw both the odd one out
+/// and the rest of the board from a single group.
 const List<List<String>> symbolClusters = [
-  ['🍎', '🍓', '🍉'], // small red round fruit
-  ['⭐', '🌞'], // yellow, radiating
-  ['🐱', '🐶', '🐼', '🐸'], // animal faces
-  ['🚀', '🚗'], // vehicles
-  ['🌸', '🌈'], // soft, many-coloured
-  ['⚽'],
+  ['🍎', '🍓', '🍉', '🍒'], // small red round fruit
+  ['⭐', '🌟', '🌞'], // yellow, radiating
+  ['🐱', '🐶', '🐼', '🐷'], // animal faces
+  ['🚗', '🚕', '🚙', '🚌'], // vehicles
+  ['🌸', '🌺', '🌷'], // flowers
+  ['⚽', '🏀', '🏐', '🎾'], // balls
   ['🦋'],
   ['🎈'],
   ['🍌'],
   ['🐟'],
   ['🎁'],
   ['🌵'],
+  ['🌈'],
 ];
 
 /// The most pairs a board can ask for.

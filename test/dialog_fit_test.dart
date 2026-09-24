@@ -67,15 +67,14 @@ void main() {
         });
       }
 
-      for (final game in [GameId.attention, GameId.math, GameId.logic]) {
+      // Dikkat artık soru arası diyalog kullanmıyor.
+      for (final game in [GameId.math, GameId.logic]) {
         testWidgets('${game.shortTitle}: cevap diyaloğu taşmıyor',
             (tester) async {
           await _open(tester, game, phone.value);
 
           final state = _state(tester, game);
           switch (game) {
-            case GameId.attention:
-              state.selectItem(0);
             case GameId.math:
               state.answer(state.options.first as int);
             case GameId.logic:
@@ -96,11 +95,9 @@ void main() {
           await _open(tester, game, phone.value);
 
           final state = _state(tester, game);
-          state.question = game == GameId.attention ? 3 : 5;
+          state.question = 5;
 
           switch (game) {
-            case GameId.attention:
-              state.selectItem(0);
             case GameId.math:
               state.answer(state.options.first as int);
             case GameId.logic:

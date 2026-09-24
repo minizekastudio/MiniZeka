@@ -202,6 +202,43 @@ Duration mismatchHoldFor(AgeBand band) => switch (band) {
 /// would make a correct guess feel slower than a wrong one.
 const Duration matchHold = Duration(milliseconds: 350);
 
+/// The attention game's ladder.
+///
+/// Difficulty used to come from the number of boxes, with the odd one out
+/// drawn at random from a flat list: one board asked to spot a 🚗 among
+/// apples (free), the next a 🍏 among 🍎 (impossible at that size). What
+/// actually decides how hard a visual search is, is how much the target
+/// resembles the rest — a target that differs in an obvious way pops out
+/// however many boxes there are, while a similar one forces a box-by-box
+/// search (Treisman & Gelade 1980; Duncan & Humphreys 1989).
+///
+/// So the rungs raise similarity first and count second, and what changes on
+/// each is written in `attentionRules` (lib/games/attention_round.dart).
+///
+/// The counts stop at 16: a 20-box board cannot give 64 px touch targets on
+/// the narrowest phone. Counts and round counts are calibration.
+const List<GameLevel> attentionLadder = [
+  GameLevel(cards: 6, roundsToAdvance: 2),
+  GameLevel(cards: 9, roundsToAdvance: 3),
+  GameLevel(cards: 9, roundsToAdvance: 3),
+  GameLevel(cards: 12, roundsToAdvance: 3),
+  GameLevel(cards: 12, roundsToAdvance: 3),
+  GameLevel(cards: 16, roundsToAdvance: 3),
+];
+
+/// Questions in one round, for every game that climbs a ladder.
+const int questionsPerRound = 5;
+
+/// A round counts towards the next rung with at most this many questions
+/// answered wrong on the first tap.
+///
+/// Needed wherever a wrong tap does not end the question: without it a child
+/// could tap at random and still climb.
+const int maxFirstTryMistakesInCleanRound = 1;
+
+bool isCleanRound(int firstTryMistakes) =>
+    firstTryMistakes <= maxFirstTryMistakesInCleanRound;
+
 /// Where a child resumes the ladder when a game opens.
 ///
 /// Age sets the floor and saved progress can only lift it, so the level never

@@ -704,6 +704,77 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
   }
 }
 
+/// Where the child stands on a ladder, on the game screen itself: which
+/// rung, and a star for every clean round on it.
+class LadderStrip extends StatelessWidget {
+  const LadderStrip({
+    super.key,
+    required this.palette,
+    required this.levelIndex,
+    required this.roundsCleared,
+    required this.roundsToAdvance,
+    this.trailing,
+  });
+
+  final GamePalette palette;
+  final int levelIndex;
+  final int roundsCleared;
+  final int roundsToAdvance;
+
+  /// Optional note after the stars, e.g. how many cards are on the board.
+  final String? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final note = trailing;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          children: [
+            Text(
+              '${levelIndex + 1}. Bölüm',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                color: palette.value,
+              ),
+            ),
+            const SizedBox(width: 10),
+            ...List.generate(roundsToAdvance, (i) {
+              final isEarned = i < roundsCleared;
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Icon(
+                  isEarned ? Icons.star_rounded : Icons.star_outline_rounded,
+                  size: 22,
+                  color: isEarned
+                      ? Brand.sun
+                      : palette.value.withValues(alpha: 0.35),
+                ),
+              );
+            }),
+            if (note != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                note,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: palette.label,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// The daily allowance, as a bar.
 ///
 /// It carries no text: the same time is already in the ⏱️ box above at a

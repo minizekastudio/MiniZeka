@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mini_zeka/game_id.dart';
-import 'package:mini_zeka/games/attention_game.dart';
 import 'package:mini_zeka/games/logic_game.dart';
 import 'package:mini_zeka/games/math_game.dart';
 import 'package:mini_zeka/sound_manager.dart';
@@ -30,13 +29,6 @@ class _Quiz {
 }
 
 final _quizzes = [
-  _Quiz(
-    name: 'Dikkat',
-    game: GameId.attention,
-    build: () => const AttentionGame(),
-    answer: (state) => state.selectItem(0),
-    lastQuestion: 3,
-  ),
   _Quiz(
     name: 'Matematik',
     game: GameId.math,
