@@ -208,6 +208,16 @@ kalıyor, doğru bulan çocuğu yanlış bulandan uzun bekletmek anlamsız.
 Yön kaynaklı (işlem hızı çocuklukta hızla artar, Kail 1991), milisaniyeler
 kalibrasyon.
 
+**Kart yüzleri kümelerden dağıtılır** (`memory_symbols.dart`): bir tahtada
+birbirine benzeyen iki yüz bulunmaz. Eskiden düz bir listeden çekiliyordu ve
+🍎 ile 🍓 sık sık aynı tahtaya düşüyordu; "kırmızı olanı" hatırlayan çocuk
+kendi hatası olmadan yanılıyordu. En büyük tahta 10 çift istediği için en az
+10 küme olmalı. Rastgelelik enjekte edilir (`MemoryGame(random:)`).
+
+**Üst üste üç kayıptan sonra ipucu:** çocuk bir kart açınca eşi nabız gibi
+atar; kart çevrilmez, hamle yine sayılır. Eşleşme seriyi sıfırlar. Eskiden
+kaybetme serisinden çıkmanın tek yolu tahmin etmeye devam etmekti.
+
 Izgara `_fitGrid` ile eldeki kutuya göre hesaplanıyor: satırı tam dolduran
 sütun sayıları arasından kartın en büyük göründüğü seçilir, kaydırma yok.
 `test/memory_fit_test.dart` altı bölümü üç telefon boyutunda çizip taşma
@@ -456,7 +466,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     178 test: oyun duman testleri, süre sayacı,
+test/                     212 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu

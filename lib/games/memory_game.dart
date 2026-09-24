@@ -9,6 +9,7 @@ import '../storage_keys.dart';
 import '../app_theme.dart';
 import '../difficulty.dart';
 import '../game_kit.dart';
+import 'memory_symbols.dart';
 import '../sound_manager.dart';
 
 // =====================================================
@@ -16,13 +17,33 @@ import '../sound_manager.dart';
 // =====================================================
 
 class MemoryGame extends StatefulWidget {
-  const MemoryGame({super.key});
+  const MemoryGame({super.key, this.random});
+
+  /// Injected by tests so a board can be reproduced.
+  final Random? random;
 
   @override
   State<MemoryGame> createState() => _MemoryGameState();
 }
 
-class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
+class _MemoryGameState extends State<MemoryGame>
+    with TickerProviderStateMixin, GameSessionMixin {
+  late final Random _random = widget.random ?? Random();
+
+  /// After this many mismatched pairs in a row, the partner of the card the
+  /// child turns over is pointed out. Losing three in a row is where a small
+  /// child starts tapping at random instead of remembering.
+  static const int _hintAfterMisses = 3;
+
+  int _consecutiveMisses = 0;
+
+  /// Card being pointed out, or -1. Public so a test can read it.
+  int hintIndex = -1;
+
+  late final AnimationController _hintPulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+  );
   // ---- GameSessionMixin sozlesmesi ----
 
   @override
@@ -98,25 +119,6 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
     return next.outcome;
   }
 
-  final List<String> symbols = [
-    '🍎',
-    '⭐',
-    '🚀',
-    '🐱',
-    '🌈',
-    '⚽',
-    '🐶',
-    '🍉',
-    '🌸',
-    '🦋',
-    '🚗',
-    '🐼',
-    '🍓',
-    '🌞',
-    '🎈',
-    '🐸',
-  ];
-
   List<String> cards = [];
   List<bool> revealed = [];
   List<bool> matched = [];
@@ -162,13 +164,15 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
     // yeni tur kurulurken okunuyor.
     final pairCount = level.cards ~/ 2;
 
-    final selectedSymbols = List<String>.from(symbols)..shuffle(Random());
-
-    final selectedPairs = selectedSymbols.take(pairCount).toList();
+    // One face per look-alike group, so no board holds 🍎 next to 🍓.
+    final selectedPairs = dealPairSymbols(
+      pairCount: pairCount,
+      random: _random,
+    );
 
     cards = [...selectedPairs, ...selectedPairs];
 
-    cards.shuffle(Random());
+    cards.shuffle(_random);
 
     revealed = List<bool>.filled(cards.length, false);
 
@@ -183,6 +187,9 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
     checking = false;
     finishDialogShown = false;
     timeUpDialogShown = false;
+
+    _consecutiveMisses = 0;
+    _clearHint();
 
     if (mounted) {
       setState(() {});
@@ -205,10 +212,12 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
     // İlk kart
     if (firstIndex == -1) {
       firstIndex = index;
+      _offerHintFor(index);
       return;
     }
 
     // İkinci kart
+    _clearHint();
     //
     // Everything the wait below needs is captured first. "Yeni Oyun" stays
     // tappable during the wait and resets firstIndex to -1, so reading the
@@ -244,6 +253,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
         secondIndex = -1;
 
         checking = false;
+        _consecutiveMisses = 0;
       });
 
       // Bütün kartlar eşleşti
@@ -265,8 +275,47 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
         secondIndex = -1;
 
         checking = false;
+        _consecutiveMisses++;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _hintPulse.dispose();
+    super.dispose();
+  }
+
+  /// Points out the partner of the card just turned over, once the child has
+  /// lost several pairs in a row.
+  ///
+  /// The partner pulses until the next tap; nothing is turned over for the
+  /// child and the move still counts. Without it the only way out of a run
+  /// of misses was to keep guessing.
+  void _offerHintFor(int index) {
+    if (_consecutiveMisses < _hintAfterMisses) return;
+
+    final after = cards.indexWhere(
+      (symbol) => symbol == cards[index],
+      index + 1,
+    );
+
+    final partner = after != -1
+        ? after
+        : cards.indexWhere((s) => s == cards[index]);
+
+    if (partner == -1 || partner == index || matched[partner]) return;
+
+    setState(() => hintIndex = partner);
+    _hintPulse.repeat(reverse: true);
+  }
+
+  void _clearHint() {
+    _hintPulse
+      ..stop()
+      ..value = 0;
+
+    if (hintIndex != -1) setState(() => hintIndex = -1);
   }
 
   // =====================================================
@@ -475,81 +524,96 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                           onTap: matched[index]
                               ? null
                               : () => selectCard(index),
-                          child: GestureDetector(
-                            onTap: () => selectCard(index),
+                          child: AnimatedBuilder(
+                            animation: _hintPulse,
+                            builder: (context, child) => Transform.scale(
+                              // The pointed-out partner breathes until the
+                              // next tap.
+                              scale: index == hintIndex
+                                  ? 1 + 0.07 * _hintPulse.value
+                                  : 1,
+                              child: child,
+                            ),
+                            child: GestureDetector(
+                              onTap: () => selectCard(index),
 
-                            child: AnimatedScale(
-                              scale: matched[index] ? 0.94 : 1.0,
+                              child: AnimatedScale(
+                                scale: matched[index] ? 0.94 : 1.0,
 
-                              duration: const Duration(milliseconds: 180),
+                                duration: const Duration(milliseconds: 180),
 
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 220),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 220),
 
-                                decoration: BoxDecoration(
-                                  gradient: matched[index]
-                                      ? const LinearGradient(
-                                          colors: [
-                                            Color(0xFFD8F3DC),
-                                            Color(0xFFEAF9ED),
-                                          ],
-                                        )
-                                      : show
-                                      ? const LinearGradient(
-                                          colors: [
-                                            Colors.white,
-                                            Color(0xFFF9F5FF),
-                                          ],
-                                        )
-                                      : const LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Color(0xFF50E263),
-                                            Color(0xFF23D83E),
-                                          ],
-                                        ),
+                                  decoration: BoxDecoration(
+                                    gradient: matched[index]
+                                        ? const LinearGradient(
+                                            colors: [
+                                              Color(0xFFD8F3DC),
+                                              Color(0xFFEAF9ED),
+                                            ],
+                                          )
+                                        : show
+                                        ? const LinearGradient(
+                                            colors: [
+                                              Colors.white,
+                                              Color(0xFFF9F5FF),
+                                            ],
+                                          )
+                                        : const LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              Color(0xFF50E263),
+                                              Color(0xFF23D83E),
+                                            ],
+                                          ),
 
-                                  borderRadius: BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(20),
 
-                                  border: Border.all(
-                                    color: matched[index]
-                                        ? const Color(0xFF9ED2A6)
-                                        : Colors.transparent,
-                                    width: 2,
+                                    border: Border.all(
+                                      color: matched[index]
+                                          ? const Color(0xFF9ED2A6)
+                                          : Colors.transparent,
+                                      width: 2,
+                                    ),
+
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 6,
+                                        offset: Offset(0, 3),
+                                      ),
+                                    ],
                                   ),
 
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Colors.black12,
-                                      blurRadius: 6,
-                                      offset: Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
+                                  child: Center(
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(
+                                        milliseconds: 180,
+                                      ),
 
-                                child: Center(
-                                  child: AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 180),
+                                      transitionBuilder: (child, animation) {
+                                        return ScaleTransition(
+                                          scale: animation,
+                                          child: child,
+                                        );
+                                      },
 
-                                    transitionBuilder: (child, animation) {
-                                      return ScaleTransition(
-                                        scale: animation,
-                                        child: child,
-                                      );
-                                    },
+                                      child: Text(
+                                        show ? cards[index] : '?',
 
-                                    child: Text(
-                                      show ? cards[index] : '?',
+                                        key: ValueKey(
+                                          show ? cards[index] : '?',
+                                        ),
 
-                                      key: ValueKey(show ? cards[index] : '?'),
-
-                                      style: TextStyle(
-                                        fontSize: show ? 38 : 32,
-                                        fontWeight: FontWeight.bold,
-                                        color: show
-                                            ? Colors.black
-                                            : Colors.white,
+                                        style: TextStyle(
+                                          fontSize: show ? 38 : 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: show
+                                              ? Colors.black
+                                              : Colors.white,
+                                        ),
                                       ),
                                     ),
                                   ),
