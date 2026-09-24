@@ -326,6 +326,17 @@ ekranlarda `Color(0xFF...)` yazılmaz. Palet logodan türetildi:
 - En küçük dokunma alanı 64 px (Material'ın 48'i yetersiz), buton yüksekliği 68 px
 - Gövde yazısı en az 17 punto, kart yarıçapı 28, buton yarıçapı 24
 
+**Doğru/yanlış iki kanaldan verilir: ses ve titreşim.** Titreşim ses
+ayarından bağımsız çalar (`SoundManager.playCorrect/playWrong`), çünkü sesi
+kapatan ebeveyn çocuğu tek kanalda bırakıyordu. Doğru hafif, yanlış biraz
+daha belirgin titrer.
+
+**Oyun tahtasındaki kart da 64 px kuralına tabidir.** `test/memory_fit_test`
+ve `test/shape_fit_test` her bölümü üç telefon boyutunda çizip kartın kısa
+kenarını ölçer. Hafızada 20 kartlık tahtanın sığabilmesi için alttaki
+"Yeni Oyun" düğmesi kaldırıldı (zaten tur ortasında tek dokunuşla tahtayı
+siliyordu; yeni tur artık tur sonu ekranından geliyor, Eşleştirme'deki gibi).
+
 Çocuğun bastığı butonlarda yükseklik elle yazılmaz, `Brand.buttonHeight`
 kullanılır (eskiden 52 px'ti, kuralın altında). Ebeveyn paneli, ayarlar ve
 PIN ekranı muaf: onları yetişkin kullanıyor.

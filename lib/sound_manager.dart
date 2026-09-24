@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 import 'storage_keys.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,6 +62,10 @@ class SoundManager {
   // =====================================================
 
   static Future<void> playCorrect() async {
+    // Before the sound switch: a parent who mutes the app leaves the child
+    // with one feedback channel. The buzz answers even in silence.
+    HapticFeedback.lightImpact();
+
     if (!_isSoundEnabled) return;
 
     try {
@@ -82,6 +87,9 @@ class SoundManager {
   // =====================================================
 
   static Future<void> playWrong() async {
+    // A touch firmer than the right answer, so the two never feel alike.
+    HapticFeedback.mediumImpact();
+
     if (!_isSoundEnabled) return;
 
     try {

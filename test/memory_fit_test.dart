@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:mini_zeka/app_theme.dart';
 import 'package:mini_zeka/difficulty.dart';
 import 'package:mini_zeka/game_id.dart';
 import 'package:mini_zeka/games/memory_game.dart';
@@ -25,7 +26,10 @@ void main() {
       testWidgets('$cards kart ${phone.key} ekranına taşmadan sığar',
           (tester) async {
         SharedPreferences.setMockInitialValues({
-          StorageKeys.childAge: 9,
+          // The youngest band starts at rung 0, so the saved rung is the one
+          // that gets drawn. With an older child the ladder floor lifted the
+          // board and the first two rungs were never really tested.
+          StorageKeys.childAge: 4,
           StorageKeys.gameLevel(GameId.memory): level,
           StorageKeys.gameLimitMinutes(GameId.memory): 30,
         });
@@ -43,6 +47,33 @@ void main() {
           isNull,
           reason: '$cards kart ${phone.key} ekranında taşıyor',
         );
+
+        final cardFinder = find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              (widget.properties.button ?? false) &&
+              widget.properties.label == 'Kapalı kart',
+        );
+
+        expect(cardFinder, findsNWidgets(cards));
+
+        final screen = Offset.zero & phone.value;
+
+        for (var i = 0; i < cards; i++) {
+          final rect = tester.getRect(cardFinder.at(i));
+
+          expect(screen.contains(rect.topLeft), isTrue, reason: '$rect');
+          expect(
+            screen.contains(rect.bottomRight - const Offset(1, 1)),
+            isTrue,
+            reason: 'kart ekran dışında: $rect',
+          );
+          expect(
+            rect.shortestSide,
+            greaterThanOrEqualTo(Brand.minTouchTarget),
+            reason: '$cards kart ${phone.key}: kart ${rect.size}',
+          );
+        }
       });
     }
   }

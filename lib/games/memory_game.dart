@@ -149,7 +149,11 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
   // YENİ OYUN
   // =====================================================
 
-  static const double _cardGap = 12;
+  /// Tight enough that a 20-card board still gives 64 px cards on the
+  /// narrowest phone.
+  static const double _cardGap = 8;
+
+  static const EdgeInsets _boardPadding = EdgeInsets.fromLTRB(12, 4, 12, 12);
 
   void startGame() {
     _boardGeneration++;
@@ -434,7 +438,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
             // =========================================
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                padding: _boardPadding,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     // Tahta her zaman ekrana tam sigar: sutun sayisi ve
@@ -461,79 +465,92 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                       itemBuilder: (_, index) {
                         final show = revealed[index] || matched[index];
 
-                        return GestureDetector(
-                          onTap: () => selectCard(index),
+                        return Semantics(
+                          button: true,
+                          enabled: !matched[index],
+                          // The card's face, or that it is still face down.
+                          // Without this a screen reader found nothing here.
+                          label: show ? cards[index] : 'Kapalı kart',
+                          excludeSemantics: true,
+                          onTap: matched[index]
+                              ? null
+                              : () => selectCard(index),
+                          child: GestureDetector(
+                            onTap: () => selectCard(index),
 
-                          child: AnimatedScale(
-                            scale: matched[index] ? 0.94 : 1.0,
+                            child: AnimatedScale(
+                              scale: matched[index] ? 0.94 : 1.0,
 
-                            duration: const Duration(milliseconds: 180),
+                              duration: const Duration(milliseconds: 180),
 
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 220),
 
-                              decoration: BoxDecoration(
-                                gradient: matched[index]
-                                    ? const LinearGradient(
-                                        colors: [
-                                          Color(0xFFD8F3DC),
-                                          Color(0xFFEAF9ED),
-                                        ],
-                                      )
-                                    : show
-                                    ? const LinearGradient(
-                                        colors: [
-                                          Colors.white,
-                                          Color(0xFFF9F5FF),
-                                        ],
-                                      )
-                                    : const LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          Color(0xFF50E263),
-                                          Color(0xFF23D83E),
-                                        ],
-                                      ),
+                                decoration: BoxDecoration(
+                                  gradient: matched[index]
+                                      ? const LinearGradient(
+                                          colors: [
+                                            Color(0xFFD8F3DC),
+                                            Color(0xFFEAF9ED),
+                                          ],
+                                        )
+                                      : show
+                                      ? const LinearGradient(
+                                          colors: [
+                                            Colors.white,
+                                            Color(0xFFF9F5FF),
+                                          ],
+                                        )
+                                      : const LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color(0xFF50E263),
+                                            Color(0xFF23D83E),
+                                          ],
+                                        ),
 
-                                borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(20),
 
-                                border: Border.all(
-                                  color: matched[index]
-                                      ? const Color(0xFF9ED2A6)
-                                      : Colors.transparent,
-                                  width: 2,
+                                  border: Border.all(
+                                    color: matched[index]
+                                        ? const Color(0xFF9ED2A6)
+                                        : Colors.transparent,
+                                    width: 2,
+                                  ),
+
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 6,
+                                      offset: Offset(0, 3),
+                                    ),
+                                  ],
                                 ),
 
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 6,
-                                    offset: Offset(0, 3),
-                                  ),
-                                ],
-                              ),
+                                child: Center(
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 180),
 
-                              child: Center(
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 180),
+                                    transitionBuilder: (child, animation) {
+                                      return ScaleTransition(
+                                        scale: animation,
+                                        child: child,
+                                      );
+                                    },
 
-                                  transitionBuilder: (child, animation) {
-                                    return ScaleTransition(
-                                      scale: animation,
-                                      child: child,
-                                    );
-                                  },
+                                    child: Text(
+                                      show ? cards[index] : '?',
 
-                                  child: Text(
-                                    show ? cards[index] : '?',
+                                      key: ValueKey(show ? cards[index] : '?'),
 
-                                    key: ValueKey(show ? cards[index] : '?'),
-
-                                    style: TextStyle(
-                                      fontSize: show ? 38 : 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: show ? Colors.black : Colors.white,
+                                      style: TextStyle(
+                                        fontSize: show ? 38 : 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: show
+                                            ? Colors.black
+                                            : Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -544,39 +561,6 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
                       },
                     );
                   },
-                ),
-              ),
-            ),
-
-            // =========================================
-            // YENİ OYUN
-            // =========================================
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
-              child: SizedBox(
-                width: double.infinity,
-                height: Brand.buttonHeight,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    if (!ensurePlayTimeLeft()) return;
-
-                    setState(startGame);
-                  },
-
-                  icon: const Icon(Icons.refresh_rounded),
-
-                  label: const Text(
-                    'Yeni Oyun',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF23D83E),
-                    side: const BorderSide(color: Color(0xFF23D83E)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(17),
-                    ),
-                  ),
                 ),
               ),
             ),

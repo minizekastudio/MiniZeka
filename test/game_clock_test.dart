@@ -159,7 +159,7 @@ void main() {
     });
   });
 
-  testWidgets('kartlar dönmeyi beklerken "Yeni Oyun"a basmak çökertmez',
+  testWidgets('kartlar dönmeyi beklerken tahta yenilenirse çökmez',
       (tester) async {
     final cardCount = memoryLadder[0].cards;
 
@@ -182,7 +182,11 @@ void main() {
     expect(find.text('?'), findsNWidgets(cardCount - 2));
     expect(250 < matchHold.inMilliseconds, isTrue);
 
-    await tester.tap(find.text('Yeni Oyun'));
+    // Deal a new board underneath the pair being checked, the way the round
+    // dialog's "Yeni Tur" does.
+    final dynamic state = tester.state(find.byType(MemoryGame));
+    // ignore: invalid_use_of_protected_member
+    state.setState(state.startGame);
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
 
