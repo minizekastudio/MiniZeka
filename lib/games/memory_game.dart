@@ -422,54 +422,11 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
             // =========================================
             // SÜRE İLERLEME ÇUBUĞU
             // =========================================
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: const Text(
-                          '⏱️ Günlük oyun süresi',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF21CA3A),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        gameTimer.formattedRemaining,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2AA74B),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: timeProgress,
-                      minHeight: 7,
-                      backgroundColor: const Color(0xFFD1FAD5),
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        timeProgress < 0.2
-                            ? const Color(0xFFD47A7A)
-                            : const Color(0xFF23D83E),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            GameTimeBar(
+              palette: palette,
+              progress: timeProgress,
+              remaining: gameTimer.formattedRemaining,
             ),
-
             const SizedBox(height: 12),
 
             // =========================================
@@ -598,7 +555,7 @@ class _MemoryGameState extends State<MemoryGame> with GameSessionMixin {
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
               child: SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: Brand.buttonHeight,
                 child: OutlinedButton.icon(
                   onPressed: () {
                     if (!ensurePlayTimeLeft()) return;

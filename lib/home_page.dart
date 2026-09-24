@@ -371,7 +371,7 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: Brand.buttonHeight,
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(dialogContext),
                     style: ElevatedButton.styleFrom(

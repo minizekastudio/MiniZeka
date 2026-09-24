@@ -276,7 +276,7 @@ Future<void> showGameHelpDialog({
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: Brand.buttonHeight,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(dialogContext),
                   style: ElevatedButton.styleFrom(
@@ -410,7 +410,8 @@ Future<void> showTimeUpDialog({
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
-        child: Padding(
+        // Scrolls only when the screen is too short for it.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -470,7 +471,7 @@ Future<void> showTimeUpDialog({
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: Brand.buttonHeight,
                 child: ElevatedButton(
                   onPressed: () => leaveGame(dialogContext),
                   style: ElevatedButton.styleFrom(
@@ -700,6 +701,49 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
     }
 
     super.dispose();
+  }
+}
+
+/// The daily allowance, as a bar.
+///
+/// It carries no text: the same time is already in the ⏱️ box above at a
+/// size a child can read. The second copy was 11pt — below the app's own
+/// floor — and its row overflowed the narrowest phone by a hair.
+class GameTimeBar extends StatelessWidget {
+  const GameTimeBar({
+    super.key,
+    required this.palette,
+    required this.progress,
+    required this.remaining,
+  });
+
+  final GamePalette palette;
+
+  /// 1 at the start of the day, 0 when the allowance is gone.
+  final double progress;
+
+  /// Only for screen readers.
+  final String remaining;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Semantics(
+        label: 'Kalan günlük süre: $remaining',
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 7,
+            backgroundColor: palette.softBackground,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              progress < 0.2 ? Brand.ladybug : palette.button,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -955,7 +999,7 @@ Future<void> showLadderRoundDialog({
               const SizedBox(height: 22),
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: Brand.buttonHeight,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pop(dialogContext);

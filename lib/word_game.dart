@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'achievement_manager.dart';
+import 'app_theme.dart';
 import 'game_id.dart';
 import 'game_kit.dart';
 import 'sound_manager.dart';
@@ -732,7 +733,7 @@ class _WordGameState extends State<WordGame>
                     SizedBox(
                       width:
                       double.infinity,
-                      height: 52,
+                      height: Brand.buttonHeight,
                       child:
                       ElevatedButton(
                         onPressed: () {
@@ -1455,12 +1456,17 @@ class _WordGameState extends State<WordGame>
                                 ),
                                 child: Row(
                                   children: [
-                                    const Text(
-                                      '🎯',
-                                      style:
-                                      TextStyle(
-                                        fontSize:
-                                        16,
+                                    const Flexible(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          '🎯',
+                                          style:
+                                          TextStyle(
+                                            fontSize:
+                                            16,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(
@@ -1502,18 +1508,21 @@ class _WordGameState extends State<WordGame>
                                     const SizedBox(
                                       width: 7,
                                     ),
-                                    Text(
-                                      '${_questionIndex + 1}/$_totalQuestions',
-                                      style:
-                                      const TextStyle(
-                                        fontSize:
-                                        10,
-                                        fontWeight:
-                                        FontWeight
-                                            .w900,
-                                        color:
-                                        Color(
-                                          0xFF23D83E,
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        '${_questionIndex + 1}/$_totalQuestions',
+                                        style:
+                                        const TextStyle(
+                                          fontSize:
+                                          10,
+                                          fontWeight:
+                                          FontWeight
+                                              .w900,
+                                          color:
+                                          Color(
+                                            0xFF23D83E,
+                                          ),
                                         ),
                                       ),
                                     ),

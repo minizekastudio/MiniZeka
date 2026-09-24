@@ -326,6 +326,21 @@ ekranlarda `Color(0xFF...)` yazılmaz. Palet logodan türetildi:
 - En küçük dokunma alanı 64 px (Material'ın 48'i yetersiz), buton yüksekliği 68 px
 - Gövde yazısı en az 17 punto, kart yarıçapı 28, buton yarıçapı 24
 
+Çocuğun bastığı butonlarda yükseklik elle yazılmaz, `Brand.buttonHeight`
+kullanılır (eskiden 52 px'ti, kuralın altında). Ebeveyn paneli, ayarlar ve
+PIN ekranı muaf: onları yetişkin kullanıyor.
+
+**Diyaloglar en dar telefonda (320×568) sığmak zorunda.** Butonlar büyüyünce
+sonuç diyalogları ~100 px taşıyor ve düğmeleri ekran dışında kalıyordu;
+hepsi `SingleChildScrollView` içinde, yalnızca sığmadığında kayıyor.
+`test/dialog_fit_test.dart` yedi oyunun "?" modalını, üç oyunun cevap ve
+sonuç diyaloglarını ve süre uyarısını iki telefon boyutunda çiziyor.
+
+**Günlük süre çubuğu ortak:** `GameTimeBar` (`game_kit.dart`). Yazı taşımaz —
+aynı süre yukarıdaki ⏱️ kutusunda zaten çocuğun okuyabileceği boyutta var.
+Eskiden her oyun 11 puntoluk ikinci bir kopyasını çiziyordu ve o satır dar
+telefonda taşıyordu.
+
 ## Devam eden iş — ekran sadeleştirmesi
 
 Kullanıcının açık isteği: **gerekmedikçe yazı olmasın.** Okuma bilmeyen 4-8 yaş

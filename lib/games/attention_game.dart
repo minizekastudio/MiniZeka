@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../achievement_manager.dart';
+import '../app_theme.dart';
 import '../difficulty.dart';
 import '../game_id.dart';
 import '../game_kit.dart';
@@ -203,7 +204,10 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          child: Padding(
+          // Scrolls only when the screen is too short for it: at 320x568 the
+          // result dialog was ~100 px taller than the space, so its buttons
+          // sat off-screen.
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -283,7 +287,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
 
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: Brand.buttonHeight,
                   child: ElevatedButton(
                     onPressed: () => continueAfterAnswer(dialogContext),
                     style: ElevatedButton.styleFrom(
@@ -343,7 +347,10 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          child: Padding(
+          // Scrolls only when the screen is too short for it: at 320x568 the
+          // result dialog was ~100 px taller than the space, so its buttons
+          // sat off-screen.
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -421,7 +428,7 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
 
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: Brand.buttonHeight,
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.pop(dialogContext);
@@ -563,55 +570,11 @@ class _AttentionGameState extends State<AttentionGame> with GameSessionMixin {
             // SÜRE ÇUBUĞU
             // =========================================
 
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        '⏱️ Günlük oyun süresi',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF806D60),
-                        ),
-                      ),
-                      Text(
-                        gameTimer.formattedRemaining,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFB96B29),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: timeProgress,
-                      minHeight: 7,
-                      backgroundColor: const Color(0xFFF0DED0),
-                      valueColor:
-                      AlwaysStoppedAnimation<Color>(
-                        timeProgress < 0.2
-                            ? const Color(0xFFD47A7A)
-                            : const Color(0xFFE88B42),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            GameTimeBar(
+              palette: palette,
+              progress: timeProgress,
+              remaining: gameTimer.formattedRemaining,
             ),
-
             const SizedBox(height: 12),
 
             // =========================================
