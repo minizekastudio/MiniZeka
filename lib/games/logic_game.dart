@@ -1,25 +1,37 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../achievement_manager.dart';
 import '../app_theme.dart';
+import '../difficulty.dart';
 import '../game_id.dart';
 import '../game_kit.dart';
 import '../sound_manager.dart';
+import '../storage_keys.dart';
+import 'logic_round.dart';
 
-// =====================================================
-// 5 - MANTIK OYUNU
-// =====================================================
-
+/// Spot what repeats, then say what belongs in the gap.
+///
+/// The game used to be twenty hand-written questions, five per age band —
+/// a child saw a whole band in one round and the same five the next time —
+/// and most of them were sentences the target age cannot read. Patterns are
+/// wordless and endless; the rungs of [logicLadder] lengthen the unit that
+/// repeats and then hide a step in the middle of the row.
 class LogicGame extends StatefulWidget {
-  const LogicGame({super.key});
+  const LogicGame({super.key, this.random});
+
+  /// Injected by tests so a round can be reproduced.
+  final Random? random;
 
   @override
   State<LogicGame> createState() => _LogicGameState();
 }
 
-class _LogicGameState extends State<LogicGame> with GameSessionMixin {
-  // ---- GameSessionMixin sozlesmesi ----
-
+class _LogicGameState extends State<LogicGame>
+    with TickerProviderStateMixin, GameSessionMixin {
   @override
   GameId get game => GameId.logic;
 
@@ -30,889 +42,526 @@ class _LogicGameState extends State<LogicGame> with GameSessionMixin {
   @override
   int get currentScore => score;
 
-  /// Oyun bittiyse sure uyarisi gosterme.
   @override
-  bool get canShowTimeUpDialog => !finalDialogShown;
+  bool get canShowTimeUpDialog => !_isRoundOver;
+
+  static const double _optionGap = 12;
+
+  static const Duration _foundHold = Duration(milliseconds: 800);
+
+  /// After this many wrong taps the repeating unit is pointed out.
+  static const int _hintAfterWrongTaps = 2;
+
+  late final Random _random = widget.random ?? Random();
+
+  // ---- ladder -------------------------------------------------------------
+
+  int levelIndex = 0;
+  int roundsCleared = 0;
+
+  GameLevel get level => logicLadder[levelIndex];
 
   @override
-  void onChildAgeLoaded() => _applyAgeQuestions();
+  void onChildAgeLoaded() {
+    levelIndex = startingLevelFor(ageBand);
+    _loadProgress();
+  }
 
-  /// Yasa uygun soru havuzunu secip karistirir.
-  /// Su an hangi havuzdan soru geldigi. Yas bandi tabanidir, cocuk
-  /// seviye atladikca bir ust havuza kayar.
-  int _poolInUse = 0;
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
 
-  int get _wantedPool => difficulty.scaled(
-        const [0, 1, 2, 3],
-        max: ageQuestionPools.length - 1,
-      );
-
-  void _applyAgeQuestions() {
-    _poolInUse = _wantedPool;
-
-    questions = List<Map<String, dynamic>>.from(
-      ageQuestionPools[_poolInUse],
+    final resumed = resumeLadder(
+      ladder: logicLadder,
+      startingLevel: levelIndex,
+      savedLevel: prefs.getInt(StorageKeys.gameLevel(game)),
+      savedRounds: prefs.getInt(StorageKeys.gameRoundsCleared(game)) ?? 0,
     );
 
-    questions.shuffle();
+    if (!mounted) return;
 
-    question = 1;
-    score = 0;
-    answering = false;
+    setState(() {
+      levelIndex = resumed.levelIndex;
+      roundsCleared = resumed.roundsCleared;
+      _startRound();
+    });
   }
 
-  /// Seviye yukseldiyse kalan sorulari bir ust havuzdan doldurur.
-  /// Soru sayaci korunur; yalnizca bundan sonraki sorular degisir.
-  void _refreshPoolIfLevelChanged() {
-    if (_wantedPool == _poolInUse) return;
-
-    _poolInUse = _wantedPool;
-
-    final fresh = List<Map<String, dynamic>>.from(
-      ageQuestionPools[_poolInUse],
-    )..shuffle();
-
-    // Cevaplanmis sorular yerinde kalsin, gerisi yeni havuzdan.
-    questions = [
-      ...questions.take(question),
-      ...fresh.where((q) => !questions.take(question).contains(q)),
-    ];
+  Future<void> _saveProgress(int level, int rounds) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(StorageKeys.gameLevel(game), level);
+    await prefs.setInt(StorageKeys.gameRoundsCleared(game), rounds);
   }
 
-  int question = 1;
+  // ---- round state --------------------------------------------------------
+
+  List<LogicQuestion> _round = const [];
+  int _questionIndex = 0;
   int score = 0;
 
-  bool answering = false;
-  bool finalDialogShown = false;
+  int _firstTryMistakes = 0;
+  int _wrongTapsThisQuestion = 0;
+  final Set<int> _lockedOptions = {};
 
-  late List<Map<String, dynamic>> questions;
-  final List<List<Map<String, dynamic>>> ageQuestionPools = [
-    // =====================================================
-    // 4-5 YAŞ
-    // =====================================================
-    [
-      {
-        'question': 'Hangisi diğerlerinden farklıdır?',
-        'options': ['🍎', '🍎', '🍎', '🚗'],
-        'answer': '🚗',
-      },
-      {
-        'question': 'Hangisi bir hayvandır?',
-        'options': ['🐶', '🍎', '🚗', '🌳'],
-        'answer': '🐶',
-      },
-      {
-        'question': '1, 2, 3, 4, ?',
-        'options': ['5', '6', '7', '8'],
-        'answer': '5',
-      },
-      {
-        'question': 'Hangisi diğerlerinden farklıdır?',
-        'options': ['⭐', '⭐', '🌈', '⭐'],
-        'answer': '🌈',
-      },
-      {
-        'question': 'Hangisi bir yiyecektir?',
-        'options': ['🍎', '🚗', '🐶', '🌳'],
-        'answer': '🍎',
-      },
-    ],
+  int? _answeredIndex;
+  bool _isResolving = false;
+  bool _isRoundOver = false;
+  int _roundGeneration = 0;
 
-    // =====================================================
-    // 6-7 YAŞ
-    // =====================================================
-    [
-      {
-        'question': '2, 4, 6, 8, ?',
-        'options': ['9', '10', '11', '12'],
-        'answer': '10',
-      },
-      {
-        'question': '3, 6, 9, 12, ?',
-        'options': ['13', '14', '15', '16'],
-        'answer': '15',
-      },
-      {
-        'question': 'Hangisi diğerlerinden farklıdır?',
-        'options': ['🔵', '🔵', '🔺', '🔵'],
-        'answer': '🔺',
-      },
-      {
-        'question': '5, 10, 15, 20, ?',
-        'options': ['21', '22', '25', '30'],
-        'answer': '25',
-      },
-      {
-        'question': 'Hangisi bir hayvan değildir?',
-        'options': ['🐶', '🐱', '🐟', '🌳'],
-        'answer': '🌳',
-      },
-    ],
+  LogicQuestion? get _question =>
+      _round.isEmpty ? null : _round[_questionIndex];
 
-    // =====================================================
-    // 8-9 YAŞ
-    // =====================================================
-    [
-      {
-        'question': '5, 10, 15, 20, ?',
-        'options': ['22', '24', '25', '30'],
-        'answer': '25',
-      },
-      {
-        'question': '2, 5, 8, 11, ?',
-        'options': ['12', '13', '14', '15'],
-        'answer': '14',
-      },
-      {
-        'question': 'Hangisi diğerlerinden farklıdır?',
-        'options': ['🟦', '🟦', '🟩', '🟦'],
-        'answer': '🟩',
-      },
-      {
-        'question': '10, 20, 30, 40, ?',
-        'options': ['45', '50', '55', '60'],
-        'answer': '50',
-      },
-      {
-        'question': '3, 6, 12, 24, ?',
-        'options': ['36', '42', '48', '50'],
-        'answer': '48',
-      },
-    ],
+  bool get _showsUnitHint => _wrongTapsThisQuestion >= _hintAfterWrongTaps;
 
-    // =====================================================
-    // 10-12 YAŞ
-    // =====================================================
-    [
-      {
-        'question': '3, 6, 12, 24, ?',
-        'options': ['36', '42', '48', '54'],
-        'answer': '48',
-      },
-      {
-        'question': '2, 6, 12, 20, ?',
-        'options': ['28', '30', '32', '36'],
-        'answer': '30',
-      },
-      {
-        'question': '81, 27, 9, 3, ?',
-        'options': ['1', '2', '0', '6'],
-        'answer': '1',
-      },
-      {
-        'question': '7, 14, 21, 28, ?',
-        'options': ['32', '35', '36', '42'],
-        'answer': '35',
-      },
-      {
-        'question': '4, 8, 16, 32, ?',
-        'options': ['48', '56', '64', '72'],
-        'answer': '64',
-      },
-    ],
-  ];
+  // ---- animation ----------------------------------------------------------
 
-  String get currentQuestion =>
-      questions[question - 1]['question'];
+  late final AnimationController _shake = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
+  );
 
-  List<String> get currentOptions =>
-      List<String>.from(
-        questions[question - 1]['options'],
-      );
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+  );
 
-  String get correctAnswer =>
-      questions[question - 1]['answer'];
+  int? _shakingIndex;
+  Timer? _holdTimer;
 
   @override
   void initState() {
     super.initState();
-
-    // Sorulari hemen kur: yas bilgisi asenkron geldigi icin ilk build
-    // ondan once calisiyor ve 'questions' atanmamis kaliyordu.
-    _applyAgeQuestions();
-
     startGameSession();
   }
 
-  // =====================================================
-  // CEVAP
-  // =====================================================
+  @override
+  void dispose() {
+    _holdTimer?.cancel();
+    _shake.dispose();
+    _pulse.dispose();
+    super.dispose();
+  }
 
-  void answer(String selectedAnswer) {
-    if (gameTimer.timeIsOver ||
-        answering ||
-        finalDialogShown) {
-      return;
+  // ---- flow ---------------------------------------------------------------
+
+  void _startRound() {
+    _roundGeneration++;
+
+    _round = buildLogicRound(rung: levelIndex, random: _random);
+    _questionIndex = 0;
+    score = 0;
+    _firstTryMistakes = 0;
+    _isRoundOver = false;
+
+    _beginQuestion();
+  }
+
+  void _beginQuestion() {
+    _wrongTapsThisQuestion = 0;
+    _lockedOptions.clear();
+    _answeredIndex = null;
+    _shakingIndex = null;
+    _isResolving = false;
+
+    _pulse
+      ..stop()
+      ..value = 0;
+  }
+
+  void _handleOptionTap(int index) {
+    if (!ensurePlayTimeLeft()) return;
+
+    final question = _question;
+    if (question == null || _isResolving || _isRoundOver) return;
+    if (_lockedOptions.contains(index)) return;
+
+    if (index == question.correctIndex) {
+      _resolveCorrect(index);
+    } else {
+      _handleWrong(index);
     }
+  }
+
+  void _handleWrong(int index) {
+    SoundManager.playWrong();
+
+    if (_wrongTapsThisQuestion == 0) _firstTryMistakes++;
+    _wrongTapsThisQuestion++;
 
     setState(() {
-      answering = true;
+      _lockedOptions.add(index);
+      _shakingIndex = index;
     });
 
-    final correct =
-        selectedAnswer == correctAnswer;
+    _shake.forward(from: 0);
 
-    final earned = correct ? difficulty.level * 10 : 0;
-
-    if (correct) {
-      score += earned;
-      difficulty.correct();
-    } else {
-      difficulty.wrong();
+    // A wrong answer does not end the question. After two tries the part
+    // that repeats is pointed out, which is the thing to read here.
+    if (_wrongTapsThisQuestion >= _hintAfterWrongTaps) {
+      _pulse.repeat(reverse: true);
     }
-
-    // Seviye yukseldiyse kalan sorular daha zor havuzdan gelsin.
-    _refreshPoolIfLevelChanged();
-
-    _showAnswerDialog(correct);
   }
 
-  // =====================================================
-  // CEVAP SONUCU
-  // =====================================================
+  void _resolveCorrect(int index) {
+    final generation = _roundGeneration;
+    final isFirstTry = _wrongTapsThisQuestion == 0;
 
-  void _showAnswerDialog(bool correct) {
-    if (correct) {
-      SoundManager.playCorrect();
-    } else {
-      SoundManager.playWrong();
-    }
-    // Back continues like the button. Closing only the dialog left the
-    // question answered and every option ignoring taps.
-    void continueAfterAnswer(BuildContext dialogContext) {
-      Navigator.pop(dialogContext);
+    SoundManager.playCorrect();
+    _pulse
+      ..stop()
+      ..value = 0;
 
-      if (question == 5) {
-        _showFinalResult();
-      } else {
+    setState(() {
+      _isResolving = true;
+      _answeredIndex = index;
+
+      if (isFirstTry) score += (levelIndex + 1) * 10;
+    });
+
+    final isLastQuestion = _questionIndex + 1 >= _round.length;
+    final settled = isLastQuestion ? _settleRound() : null;
+
+    _holdTimer?.cancel();
+    _holdTimer = Timer(_foundHold, () {
+      if (!mounted || generation != _roundGeneration) return;
+
+      if (settled == null) {
         setState(() {
-          question++;
-          answering = false;
+          _questionIndex++;
+          _beginQuestion();
         });
+      } else {
+        _finishRound(settled);
       }
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        final dialog = Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          // Scrolls only when the screen is too short for it: at 320x568 the
-          // result dialog was ~100 px taller than the space, so its buttons
-          // sat off-screen.
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 78,
-                  height: 78,
-                  decoration: BoxDecoration(
-                    color: correct
-                        ? const Color(0xFFE1F4D4)
-                        : const Color(0xFFFFE7E7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      correct ? '🎉' : '💭',
-                      style: const TextStyle(
-                        fontSize: 42,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                Text(
-                  correct
-                      ? 'Harika! 🧩'
-                      : 'Tekrar Düşün! 💭',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 23,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF506245),
-                  ),
-                ),
-
-                const SizedBox(height: 7),
-
-                Text(
-                  correct
-                      ? 'Mantık sorusunu doğru çözdün!'
-                      : 'Doğru cevap: $correctAnswer',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    height: 1.4,
-                    color: Color(0xFF71806A),
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                if (correct)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 13,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0F8EA),
-                      borderRadius:
-                      BorderRadius.circular(15),
-                    ),
-                    child: const Text(
-                      '⭐ +10 Puan',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF587047),
-                      ),
-                    ),
-                  ),
-
-                if (correct)
-                  const SizedBox(height: 18),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: Brand.buttonHeight,
-                  child: ElevatedButton(
-                    onPressed: () => continueAfterAnswer(dialogContext),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      const Color(0xFF587047),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(17),
-                      ),
-                    ),
-                    child: Text(
-                      question == 5
-                          ? 'Sonucu Gör'
-                          : 'Devam Et',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-
-        return PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, _) {
-            if (!didPop) continueAfterAnswer(dialogContext);
-          },
-          child: dialog,
-        );
-      },
-    );
+    });
   }
 
-  // =====================================================
-  // OYUN TAMAMLANDI
-  // =====================================================
-
-  void _showFinalResult() {
-    if (finalDialogShown) return;
-
-    finalDialogShown = true;
-
-    SoundManager.playGameOver();
-
+  _SettledRound _settleRound() {
     AchievementManager.unlock('logic_master');
     AchievementManager.unlock('first_step');
     AchievementManager.markGamePlayed(game);
 
-    final message = score >= 40
-        ? 'Muhteşem bir mantık yürüttün! 🌟'
-        : 'Biraz daha pratik yaparsan daha da iyi olacaksın! 💪';
+    if (isCleanRound(_firstTryMistakes)) {
+      final next = advanceLadder(
+        ladder: logicLadder,
+        levelIndex: levelIndex,
+        roundsCleared: roundsCleared,
+      );
 
-    showDialog(
+      _saveProgress(next.levelIndex, next.roundsCleared);
+
+      return next;
+    }
+
+    return (
+      levelIndex: levelIndex,
+      roundsCleared: roundsCleared,
+      outcome: RoundOutcome.retry,
+    );
+  }
+
+  void _finishRound(_SettledRound settled) {
+    setState(() {
+      levelIndex = settled.levelIndex;
+      roundsCleared = settled.roundsCleared;
+      _isRoundOver = true;
+    });
+
+    if (timeUpDialogShown) return;
+
+    final firstTryRight = _round.length - _firstTryMistakes;
+
+    showLadderRoundDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        final dialog = Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          // Scrolls only when the screen is too short for it: at 320x568 the
-          // result dialog was ~100 px taller than the space, so its buttons
-          // sat off-screen.
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 82,
-                  height: 82,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE1F4D4),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '🏆',
-                      style: TextStyle(
-                        fontSize: 45,
-                      ),
-                    ),
-                  ),
-                ),
+      palette: palette,
+      outcome: settled.outcome,
+      ladder: logicLadder,
+      levelIndex: levelIndex,
+      roundsCleared: roundsCleared,
+      levelUpMessage: _newRungMessage(logicRuleFor(levelIndex)),
+      masteredMessage: 'Örüntüleri çözüyorsun! ✨',
+      flair: '🧩',
+      results: [
+        GameResultBox(
+          palette: palette,
+          emoji: '⭐',
+          title: 'Puan',
+          value: '$score',
+        ),
+        GameResultBox(
+          palette: palette,
+          emoji: '✅',
+          title: 'İlk seferde',
+          value: '$firstTryRight/${_round.length}',
+        ),
+        GameResultBox(
+          palette: palette,
+          emoji: '⏱️',
+          title: 'Süre',
+          value: formatSeconds(gameTimer.usedSeconds),
+        ),
+      ],
+      onNextRound: () {
+        if (!ensurePlayTimeLeft()) return;
 
-                const SizedBox(height: 16),
-
-                const Text(
-                  'Mantık Ustası!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF506245),
-                  ),
-                ),
-
-                const SizedBox(height: 7),
-
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    height: 1.4,
-                    color: Color(0xFF71806A),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    GameResultBox(
-                      palette: GamePalette.logic,
-                      emoji: '⭐',
-                      title: 'Puan',
-                      value: '$score',
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    GameResultBox(
-                      palette: GamePalette.logic,
-                      emoji: '🎯',
-                      title: 'Soru',
-                      value: '5 / 5',
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    GameResultBox(
-                      palette: GamePalette.logic,
-                      emoji: '⏱️',
-                      title: 'Süre',
-                      value: formatSeconds(
-                        gameTimer.usedSeconds,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 22),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: Brand.buttonHeight,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-
-                      if (gameTimer.timeIsOver) {
-                        Navigator.pop(context);
-                        return;
-                      }
-
-                      setState(() {
-                        question = 1;
-                        score = 0;
-                        answering = false;
-                        finalDialogShown = false;
-                        timeUpDialogShown = false;
-
-                        // Soru havuzu yas bandindan; band tanimi difficulty.dart'ta tek yerde.
-                        final poolIndex = ageBand.step;
-
-                        questions =
-                        List<Map<String, dynamic>>.from(
-                          ageQuestionPools[poolIndex],
-                        );
-
-                        questions.shuffle();
-                      });
-                    },
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                    ),
-                    label: const Text(
-                      'Tekrar Oyna',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      const Color(0xFF587047),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(17),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 7),
-
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Oyundan Çık',
-                    style: TextStyle(
-                      color: Color(0xFF71806A),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-
-        // Back leaves the game, like "Oyundan Çık". Closing only the
-        // dialog left a finished game that ignored every tap.
-        return PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, _) {
-            if (didPop) return;
-            Navigator.pop(dialogContext);
-            Navigator.pop(context);
-          },
-          child: dialog,
-        );
+        setState(_startRound);
       },
     );
   }
 
-  // =====================================================
-  // BUILD
-  // =====================================================
+  static String _newRungMessage(LogicRule rule) {
+    if (!rule.isGapAtEnd) return 'Artık eksik parça ortada! 🔎';
+    if (rule.units.contains(PatternUnit.abc)) {
+      return 'Artık üç şeyli örüntüler! 🧩';
+    }
+    if (rule.units.length > 1) return 'Artık örüntüler uzuyor! 🧩';
+    return 'Hadi başlayalım! ✨';
+  }
+
+  // ---- build --------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
-    final options = currentOptions;
+    final question = _question;
 
     return Scaffold(
-      backgroundColor:
-      Theme.of(context).scaffoldBackgroundColor,
-
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: GameAppBarTitle(game: game),
         centerTitle: true,
-        actions: [
-          GameHelpButton(game: game),
-        ],
-        backgroundColor:
-        Theme.of(context).appBarTheme.backgroundColor,
+        actions: [GameHelpButton(game: game)],
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
       ),
-
       body: SafeArea(
         child: Column(
           children: [
-            // =========================================
-            // BİLGİ KUTULARI
-            // =========================================
-
             Padding(
-              padding:
-              const EdgeInsets.symmetric(
-                horizontal: 18,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(
                 children: [
-                  InfoBox(
-                    emoji: '⭐',
-                    title: 'Puan',
-                    value: '$score',
-                  ),
-
+                  InfoBox(emoji: '⭐', title: 'Puan', value: '$score'),
                   const SizedBox(width: 8),
-
                   InfoBox(
                     emoji: '🎯',
                     title: 'Soru',
-                    value: '$question / 5',
+                    value: '${_questionIndex + 1} / $questionsPerRound',
                   ),
-
                   const SizedBox(width: 8),
-
                   InfoBox(
                     emoji: '⏱️',
                     title: 'Kalan',
-                    value:
-                    gameTimer
-                        .formattedRemaining,
+                    value: gameTimer.formattedRemaining,
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
-
-            // =========================================
-            // SÜRE ÇUBUĞU
-            // =========================================
-
+            LadderStrip(
+              palette: palette,
+              levelIndex: levelIndex,
+              roundsCleared: roundsCleared,
+              roundsToAdvance: level.roundsToAdvance,
+            ),
+            const SizedBox(height: 8),
             GameTimeBar(
               palette: palette,
               progress: timeProgress,
               remaining: gameTimer.formattedRemaining,
             ),
             const SizedBox(height: 12),
-
-            // =========================================
-            // SORU KARTI
-            // =========================================
-
-            Container(
-              margin:
-              const EdgeInsets.symmetric(
-                horizontal: 18,
-              ),
-              padding: const EdgeInsets.all(25),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius:
-                BorderRadius.circular(27),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 7,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(
-                      horizontal: 13,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                      const Color(0xFFF0F8EA),
-                      borderRadius:
-                      BorderRadius.circular(
-                        12,
-                      ),
-                    ),
-                    child: Text(
-                      '🧠 Soru $question / 5',
-                      style:
-                      const TextStyle(
-                        fontSize: 12,
-                        fontWeight:
-                        FontWeight.bold,
-                        color:
-                        Color(0xFF587047),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  Text(
-                    currentQuestion,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      height: 1.35,
-                      fontWeight:
-                      FontWeight.w900,
-                      color:
-                      Color(0xFF506245),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    'Düşün ve doğru cevabı seç! 💭',
-                    style: TextStyle(
-                      fontSize: 17,
-                      color:
-                      Color(0xFF71806A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // =========================================
-            // CEVAPLAR
-            // =========================================
-
-            Expanded(
-              child: ListView.builder(
-                padding:
-                const EdgeInsets.fromLTRB(
-                  18,
-                  0,
-                  18,
-                  15,
-                ),
-                itemCount: options.length,
-                itemBuilder: (_, index) {
-                  final option =
-                  options[index];
-
-                  return Padding(
-                    padding:
-                    const EdgeInsets.only(
-                      bottom: 10,
-                    ),
-                    child: SizedBox(
-                      height: 58,
-                      child:
-                      ElevatedButton(
-                        onPressed: () {
-                          answer(option);
-                        },
-                        style:
-                        ElevatedButton
-                            .styleFrom(
-                          backgroundColor:
-                          Colors.white,
-                          foregroundColor:
-                          const Color(
-                            0xFF587047,
-                          ),
-                          elevation: 2,
-                          shadowColor:
-                          Colors.black12,
-                          shape:
-                          RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius
-                                .circular(
-                              18,
-                            ),
-                            side:
-                            const BorderSide(
-                              color: Color(
-                                0xFFDCEAD5,
-                              ),
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration:
-                              const BoxDecoration(
-                                color: Color(
-                                  0xFFF0F8EA,
-                                ),
-                                shape:
-                                BoxShape
-                                    .circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  String.fromCharCode(
-                                    65 + index,
-                                  ),
-                                  style:
-                                  const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight:
-                                    FontWeight
-                                        .bold,
-                                    color:
-                                    Color(
-                                      0xFF587047,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(
-                              width: 12,
-                            ),
-
-                            Expanded(
-                              child: Text(
-                                option,
-                                textAlign:
-                                TextAlign.center,
-                                style:
-                                const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight:
-                                  FontWeight
-                                      .bold,
-                                ),
-                              ),
-                            ),
-
-                            const Icon(
-                              Icons
-                                  .arrow_forward_ios_rounded,
-                              size: 15,
-                              color:
-                              Color(
-                                0xFF9BAE91,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+            Expanded(flex: 4, child: _buildPatternCard(question)),
+            const SizedBox(height: 12),
+            Expanded(flex: 6, child: _buildOptions(question)),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildPatternCard(LogicQuestion? question) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Brand.cardLight,
+        borderRadius: BorderRadius.circular(Brand.cardRadius),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 7,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: question == null
+          ? const SizedBox.shrink()
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final step = constraints.biggest.width /
+                    (question.sequence.length + 0.5);
+                final size = min(step * 0.7, constraints.biggest.height * 0.5);
+
+                return AnimatedBuilder(
+                  animation: _pulse,
+                  builder: (context, _) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var i = 0; i < question.sequence.length; i++)
+                        _buildStep(question, i, size),
+                    ],
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildStep(LogicQuestion question, int index, double size) {
+    final isGap = index == question.gapIndex;
+    final isAnswered = isGap && _answeredIndex != null;
+
+    // The hint lifts the first repetition: that is the part to read.
+    final isInUnit = index < question.unit.slots.length;
+    final scale = _showsUnitHint && isInUnit ? 1 + 0.12 * _pulse.value : 1.0;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: size * 0.06),
+      child: Transform.scale(
+        scale: scale,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: isGap && !isAnswered
+              ? DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: palette.softBackground,
+                    borderRadius: BorderRadius.circular(size * 0.25),
+                    border: Border.all(color: palette.button, width: 3),
+                  ),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '?',
+                        style: TextStyle(
+                          fontSize: size * 0.6,
+                          fontWeight: FontWeight.w900,
+                          color: palette.button,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      question.sequence[index],
+                      style: TextStyle(fontSize: size * 0.8),
+                    ),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptions(LogicQuestion? question) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+      child: question == null
+          ? const SizedBox.shrink()
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final grid = fitGrid(
+                  question.options.length,
+                  constraints.biggest,
+                  _optionGap,
+                );
+
+                return AnimatedBuilder(
+                  animation: _shake,
+                  builder: (context, _) => GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    itemCount: question.options.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: grid.columns,
+                      crossAxisSpacing: _optionGap,
+                      mainAxisSpacing: _optionGap,
+                      childAspectRatio: grid.aspectRatio,
+                    ),
+                    itemBuilder: (context, index) =>
+                        _buildOption(question, index),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildOption(LogicQuestion question, int index) {
+    final symbol = question.options[index];
+    final isLocked = _lockedOptions.contains(index);
+    final isAnswered = _answeredIndex == index;
+
+    var shift = 0.0;
+    if (_shakingIndex == index && _shake.isAnimating) {
+      shift = sin(_shake.value * pi * 6) * 8 * (1 - _shake.value);
+    }
+
+    return Semantics(
+      button: true,
+      enabled: !isLocked,
+      selected: isAnswered,
+      label: symbol,
+      excludeSemantics: true,
+      onTap: isLocked ? null : () => _handleOptionTap(index),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _handleOptionTap(index),
+        child: Transform.translate(
+          offset: Offset(shift, 0),
+          child: AnimatedOpacity(
+            opacity: isLocked ? 0.35 : 1,
+            duration: const Duration(milliseconds: 200),
+            child: LayoutBuilder(
+              builder: (context, constraints) => Container(
+                decoration: BoxDecoration(
+                  color: Brand.cardLight,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isAnswered ? Brand.leaf : Colors.transparent,
+                    width: 4,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    symbol,
+                    style: TextStyle(
+                      fontSize: constraints.biggest.shortestSide * 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
+
+typedef _SettledRound = ({
+  int levelIndex,
+  int roundsCleared,
+  RoundOutcome outcome,
+});

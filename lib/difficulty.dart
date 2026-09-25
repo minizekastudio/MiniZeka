@@ -244,6 +244,29 @@ const List<GameLevel> mathLadder = [
   GameLevel(cards: 4, roundsToAdvance: 3),
 ];
 
+/// The logic game's ladder.
+///
+/// The game used to hold twenty hand-written questions, five per age band —
+/// and a round is five questions, so a child saw the whole band in one
+/// sitting and the same five again next time. Most of them were sentences
+/// ("Hangisi bir hayvandır?") the target age cannot read, or number
+/// sequences, which is reading of another kind.
+///
+/// Now it is repeating patterns, which are wordless, endless to generate and
+/// the usual first step into algebraic thinking at this age: read the unit
+/// that repeats, then say what belongs in the gap. The rungs lengthen the
+/// unit and then move the gap off the end (see `logicRules`).
+///
+/// `cards` is the number of answer choices.
+const List<GameLevel> logicLadder = [
+  GameLevel(cards: 4, roundsToAdvance: 2),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+];
+
 /// Questions in one round, for every game that climbs a ladder.
 const int questionsPerRound = 5;
 

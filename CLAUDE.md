@@ -145,11 +145,11 @@ Tanım `lib/difficulty.dart`'ta, başka hiçbir yerde yaş eşiği yazılmaz.
   seviyeyi ekler, tavanı aşmaz.
 
 Seviyenin ne zaman etki ettiği oyunun yapısına göre değişir: soru-cevap
-döngüsü olanlarda hemen bir sonraki soruda, Hafıza'da açılmış tahta
-bozulmasın diye bir sonraki turda, Mantık'ta kalan sorular bir üst
-havuzdan gelerek. Eşleştirme de Hafıza gibi bölüm merdiveninde; ilerleme
-kalıcı. `DifficultyTracker` kalıcı değildir (yaş her yüklendiğinde yeniden
-kurulur), merdivenli oyunlarda kullanılmaz.
+Beş oyun (Hafıza, Eşleştirme, Dikkat, Matematik, Mantık) kalıcı bölüm
+merdiveni kullanır: ilerleme kaydedilir, seviye geri gitmez, tur sonunda
+ortak ekran gelir. `DifficultyTracker` kalıcı değildir (yaş her yüklendiğinde
+yeniden kurulur), bu yüzden merdivenli oyunlarda kullanılmaz; geriye yalnızca
+Kelime Avı ve Harfler'de kullanılıyor.
 
 Oyun bazında:
 
@@ -161,7 +161,7 @@ Oyun bazında:
 | Matematik | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Kelime Avı | Kelime zorluğu: 1/1/2/3 | Evet |
 | Harfler | Kelime zorluğu: 1/1/2/3 | Evet |
-| Mantık | Soru havuzu 0/1/2/3 | Evet — üst havuza kayar |
+| Mantık | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 
 ### Hafıza oyununun bölüm merdiveni
 
@@ -384,6 +384,43 @@ Ayrıca oyunda yalnızca toplama vardı.
 bölümü üç telefonda, `math_flow_test` akışı ve nesnelerin ne zaman
 göründüğünü doğruluyor.
 
+### Mantık oyununun bölüm merdiveni
+
+Oyun **20 elle yazılmış sorudan** ibaretti: yaş bandı başına 5 soru, tur da
+5 soru. Yani çocuk ilk turda havuzun tamamını görüyor, ikinci turda aynı beş
+soruyu tekrar alıyordu. Soruların çoğu cümleydi ("Hangisi bir hayvandır?") —
+hedef kitle okuyamıyor; kalanı sayı dizisiydi, o da başka türlü bir okuma.
+
+Yerine **örüntü tamamlama** geldi: yazısız, sonsuz üretilebilir ve bu yaşta
+tekrarlayan örüntüler cebirsel düşünmenin ilk adımı sayılır. "Farklı olanı
+bul" türü sorular bilerek alınmadı; o zaten Dikkat oyunu.
+
+`logicLadder` (`lib/difficulty.dart`) + `logicRules`
+(`lib/games/logic_round.dart`):
+
+| Bölüm | Birim | Boşluk |
+|---|---|---|
+| 1 | AB (🍌⚽🍌⚽…) | sonda |
+| 2 | AAB / ABB | sonda |
+| 3 | ABC | sonda |
+| 4 | AB / AAB / ABB | **satırın ortasında** |
+| 5 | ABC / AABB | ortada |
+| 6 | ABC / AABB / ABB | ortada |
+
+- Satır her zaman tam tekrarlarla biter ve boşluk asla ilk tekrarda olmaz:
+  çocuk önce birimi görmeli.
+- Örüntü yüzleri benzeşme kümelerinden birer birer çekilir (🍎 ile 🍓 aynı
+  örüntüde olmaz): bu bir görme testi değil.
+- **Şıklar kestirme vermez:** hem dizide geçen birden çok yüz hem de dizide
+  hiç olmayan bir yüz bulunur. "Dizide geçeni seç" ya da "geçmeyeni seç"
+  işe yaramaz.
+- İki yanlıştan sonra ilk tekrar (birim) nabız gibi atar: okunması gereken
+  şey odur.
+- Soru arası diyalog yok; tur 5 soru, sonunda ortak tur sonu ekranı.
+
+`test/logic_round_test.dart` her bölümü 300 tohumla, `logic_flow_test` akışı
+ve altı bölümün üç telefonda sığmasını doğruluyor.
+
 ### Öncesinde ne yanlıştı
 
 - "Zorluk" adı altında üç ilgisiz şey vardı: oyunlara kopyalanmış `childAge`
@@ -537,6 +574,7 @@ lib/games/shape_round.dart   eşleştirme bölüm kuralları ve soru üretici
 lib/games/memory_symbols.dart  benzeşme kümeleri (hafıza + dikkat ortak)
 lib/games/attention_round.dart dikkat bölüm kuralları ve tahta üretici
 lib/games/math_round.dart    matematik bölüm kuralları ve soru üretici
+lib/games/logic_round.dart   mantık örüntü kuralları ve soru üretici
 lib/word_game.dart        Kelime Avı — henüz lib/games/ altına taşınmadı
 lib/letter_game.dart      Harfleri Yerleştir — aynı şekilde
 lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
@@ -544,7 +582,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     304 test: oyun duman testleri, süre sayacı,
+test/                     355 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu

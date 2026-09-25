@@ -15,6 +15,10 @@ import 'package:mini_zeka/word_game.dart';
 
 /// Screens open dialogs a child has to reach the buttons of. On the
 /// narrowest phone the app supports they must not overflow.
+///
+/// Games no longer put a dialog between questions; what is left is the help
+/// sheet, the time-up warning and the shared round-end dialog (covered by
+/// test/ladder_round_dialog_test.dart).
 final _phones = <String, Size>{
   'dar telefon': const Size(320, 568),
   'orta telefon': const Size(360, 640),
@@ -47,11 +51,6 @@ Future<void> _open(WidgetTester tester, GameId game, Size phone) async {
   await tester.pump(const Duration(milliseconds: 500));
 }
 
-dynamic _state(WidgetTester tester, GameId game) =>
-    tester.state(find.byWidgetPredicate(
-      (w) => w.runtimeType == _games[game]!().runtimeType,
-    ));
-
 void main() {
   for (final phone in _phones.entries) {
     group(phone.key, () {
@@ -63,53 +62,6 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(find.text('Anladım'), findsOneWidget);
-          expect(tester.takeException(), isNull);
-        });
-      }
-
-      // Yalnızca Mantık'ta soru arası diyalog kaldı.
-      for (final game in [GameId.logic]) {
-        testWidgets('${game.shortTitle}: cevap diyaloğu taşmıyor',
-            (tester) async {
-          await _open(tester, game, phone.value);
-
-          final state = _state(tester, game);
-          switch (game) {
-            case GameId.logic:
-              state.answer(state.currentOptions.first as String);
-            default:
-              fail('bu oyun soru-cevap değil');
-          }
-
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 600));
-
-          expect(find.byType(Dialog), findsOneWidget);
-          expect(tester.takeException(), isNull);
-        });
-
-        testWidgets('${game.shortTitle}: sonuç diyaloğu taşmıyor',
-            (tester) async {
-          await _open(tester, game, phone.value);
-
-          final state = _state(tester, game);
-          state.question = 5;
-
-          switch (game) {
-            case GameId.logic:
-              state.answer(state.currentOptions.first as String);
-            default:
-              fail('bu oyun soru-cevap değil');
-          }
-
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 600));
-
-          // Through the answer dialog to the result.
-          await tester.binding.handlePopRoute();
-          await tester.pumpAndSettle();
-
-          expect(find.text('Tekrar Oyna'), findsOneWidget);
           expect(tester.takeException(), isNull);
         });
       }
