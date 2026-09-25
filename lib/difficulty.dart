@@ -13,6 +13,8 @@
 /// progress is saved and never goes backwards.
 library;
 
+import 'game_id.dart';
+
 /// The four age bands the games are tuned for.
 enum AgeBand {
   /// 4-5
@@ -39,11 +41,11 @@ enum AgeBand {
 
   /// Parent-facing label for this band.
   String get label => switch (this) {
-        AgeBand.preschool => '4 – 5 Yaş',
-        AgeBand.early => '6 – 7 Yaş',
-        AgeBand.mid => '8 – 9 Yaş',
-        AgeBand.older => '10 – 12 Yaş',
-      };
+    AgeBand.preschool => '4 – 5 Yaş',
+    AgeBand.early => '6 – 7 Yaş',
+    AgeBand.mid => '8 – 9 Yaş',
+    AgeBand.older => '10 – 12 Yaş',
+  };
 }
 
 /// Every game now climbs its own saved ladder, so the old in-game
@@ -125,11 +127,11 @@ const List<GameLevel> shapeLadder = [
 /// helplessness responses are already present at 4-7 (Burhans & Dweck 1995),
 /// so the level never visibly goes backwards.
 int startingLevelFor(AgeBand band) => switch (band) {
-      AgeBand.preschool => 0,
-      AgeBand.early => 1,
-      AgeBand.mid => 2,
-      AgeBand.older => 3,
-    };
+  AgeBand.preschool => 0,
+  AgeBand.early => 1,
+  AgeBand.mid => 2,
+  AgeBand.older => 3,
+};
 
 /// How long a mismatched pair stays face up before turning back over.
 ///
@@ -141,11 +143,11 @@ int startingLevelFor(AgeBand band) => switch (band) {
 /// The values are a calibration, not a measured constant: the evidence
 /// settles the direction (younger means longer), not the milliseconds.
 Duration mismatchHoldFor(AgeBand band) => switch (band) {
-      AgeBand.preschool => const Duration(milliseconds: 1100),
-      AgeBand.early => const Duration(milliseconds: 900),
-      AgeBand.mid => const Duration(milliseconds: 700),
-      AgeBand.older => const Duration(milliseconds: 550),
-    };
+  AgeBand.preschool => const Duration(milliseconds: 1100),
+  AgeBand.early => const Duration(milliseconds: 900),
+  AgeBand.mid => const Duration(milliseconds: 700),
+  AgeBand.older => const Duration(milliseconds: 550),
+};
 
 /// A matched pair stays on the board anyway, so this only needs to be long
 /// enough to see the second card land. Waiting the full mismatch hold here
@@ -259,6 +261,22 @@ const List<GameLevel> letterLadder = [
   GameLevel(cards: 4, roundsToAdvance: 3),
   GameLevel(cards: 4, roundsToAdvance: 3),
 ];
+
+/// The ladder a game climbs.
+///
+/// Every game has one, so the switch is exhaustive: adding a game to
+/// [GameId] will not compile until it is given a ladder here. The parent
+/// panel reads progress through this, which is why it cannot disagree with
+/// the games about how many rungs there are.
+List<GameLevel> ladderFor(GameId game) => switch (game) {
+  GameId.memory => memoryLadder,
+  GameId.shape => shapeLadder,
+  GameId.attention => attentionLadder,
+  GameId.letter => letterLadder,
+  GameId.word => wordLadder,
+  GameId.math => mathLadder,
+  GameId.logic => logicLadder,
+};
 
 /// Questions in one round, for every game that climbs a ladder.
 const int questionsPerRound = 5;

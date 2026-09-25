@@ -82,6 +82,10 @@ Bu bölüm bağlayıcıdır. Yeni kod bunlara uyar; mevcut kod dokunuldukça uya
   ayarlarını sessizce siliyordu.
 - Bir anahtarın adı ya da biçimi değişecekse **önce `StorageMigration`'a bir
   adım eklenir** ve `currentVersion` artırılır. Veri kaybı kabul edilmez.
+- **Bir oyunun merdiveni `ladderFor(GameId)`'dir** (`lib/difficulty.dart`).
+  `switch` enum üzerinde tam kapsamlı: yeni oyun merdiven verilmeden derlenmez.
+  Ebeveyn paneli ilerlemeyi bunun üzerinden okuyor, bu yüzden basamak sayısı
+  konusunda oyunla panelin ayrı düşmesi mümkün değil.
 
 ### Tasarım kalıpları
 
@@ -513,6 +517,43 @@ oldu.
 `test/letter_round_test.dart` üreteci 200 tohumla, `letter_flow_test` akışı
 ve altı bölümün üç telefonda sığmasını doğruluyor.
 
+### Ebeveyn panelinde bölüm ilerlemesi
+
+Yedi oyun da kalıcı ilerleme yazıyordu ama hiç kimse onu görüp
+değiştiremiyordu. Bu bir eksiklik değil **tuzaktı**:
+
+> `resumeLadder` yaşı yalnızca **taban** kabul eder — kayıt tabandan
+> yüksekse kayıt kazanır. Kurulumda yaş yanlış girilirse (diyelim 10) çocuk
+> yedi oyunda da 4. bölümden başlar ve ilk temiz turda bu diske yazılır. O
+> noktadan sonra ebeveyn yaşı 4'e düzeltse bile `saved >= floor` olduğu için
+> hiçbir şey değişmez. Uygulamada geri dönüş yolu yoktu.
+
+Panele **🪜 Bölüm İlerlemesi** kartı eklendi: oyun başına bölüm numarası,
+turu gösteren yıldızlar (çocuğun oyun ekranında gördüğüyle aynı) ve
+sıfırlama. Hiç oynanmamış oyunun sıfırlama düğmesi kapalı. Altta "Tüm
+ilerlemeyi sıfırla" var; her ikisi de onay soruyor, çünkü geri alınamaz.
+
+Panel diskteki ham sayıyı değil **çocuğun göreceği bölümü** gösterir
+(`resumedFor`): yaş tabanı diske yazılmadığı için ikisi farklı olabiliyor.
+
+Yaş düşürüldüğünde, kaydı yeni tabanın üstünde kalan oyunlar için
+sıfırlama teklif edilir (`offerResetAfterAgeDrop`). Yalnızca taban gerçekten
+düştüğünde sorar: yaşı yükseltilmiş bir çocuğun hak ettiği ilerleme için
+soru sorulmaz.
+
+`test/parent_progress_test.dart` bunların hepsini doğruluyor.
+
+### Bu sırada düzelen üç görsel hata
+
+- **`SwitchListTile`'lar `Material` dışındaydı.** "Açık Oyunlar" kartı kendi
+  beyaz zeminini çizdiği için dokunma dalgaları onun arkasına boyanıyor ve
+  hiç görünmüyordu. Flutter bunu bir assertion ile söylüyor; paneli test
+  etmeye kalkana kadar kimse görmemişti.
+- **Kullanım kartındaki "Kullanılan / Limit" satırı taşıyordu** (dar
+  telefonda 99 px). İki metin de `Flexible` oldu.
+- **PIN ekranında `\n` düz yazı olarak görünüyordu** (`parent_login.dart`):
+  kaçış karakteri iki kez kaçırılmıştı.
+
 ### Öncesinde ne yanlıştı
 
 - "Zorluk" adı altında üç ilgisiz şey vardı: oyunlara kopyalanmış `childAge`
@@ -680,7 +721,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     452 test: oyun duman testleri, süre sayacı,
+test/                     459 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu

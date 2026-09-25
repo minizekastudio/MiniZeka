@@ -499,8 +499,8 @@ class _ParentLoginPageState extends State<ParentLoginPage>
 
                                 Text(
                                   hasPin
-                                      ? 'Zeka Bahçesi ayarlarına devam etmek için\\nPIN kodunu gir.'
-                                      : 'Çocuk bölümünün ayarlarını korumak için\\n4 haneli bir PIN belirle.',
+                                      ? 'Zeka Bahçesi ayarlarına devam etmek için\nPIN kodunu gir.'
+                                      : 'Çocuk bölümünün ayarlarını korumak için\n4 haneli bir PIN belirle.',
                                   textAlign:
                                   TextAlign.center,
                                   style: const TextStyle(

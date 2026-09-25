@@ -38,6 +38,22 @@ class _ParentPanelState extends State<ParentPanel> {
     for (final game in GameId.values) game: true,
   };
 
+  // =====================================================
+  // BÖLÜM İLERLEMESİ
+  // =====================================================
+
+  /// Diske yazılmış bölüm; hiç oynanmadıysa null.
+  final Map<GameId, int?> savedLevel = {
+    for (final game in GameId.values) game: null,
+  };
+
+  final Map<GameId, int> savedRounds = {
+    for (final game in GameId.values) game: 0,
+  };
+
+  /// Oyunların kullanacağı bant: girilmemişse onların da düştüğü 9 yaş.
+  AgeBand get childBand => AgeBand.forAge(childAge == 0 ? 9 : childAge);
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +79,103 @@ class _ParentPanelState extends State<ParentPanel> {
   Future<void> loadAllData() async {
     await loadDurations();
     await loadGameUsage();
+    await loadProgress();
+  }
+
+  // =====================================================
+  // BÖLÜM İLERLEMESİNİ YÜKLE
+  // =====================================================
+
+  Future<void> loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (!mounted) return;
+
+    setState(() {
+      for (final game in GameId.values) {
+        savedLevel[game] = prefs.getInt(StorageKeys.gameLevel(game));
+        savedRounds[game] =
+            prefs.getInt(StorageKeys.gameRoundsCleared(game)) ?? 0;
+      }
+    });
+  }
+
+  /// Çocuğun oyunu açtığında göreceği bölüm.
+  ///
+  /// Kayıt yoksa yaştan gelen taban; kayıt varsa odur. Panelin diskteki ham
+  /// sayıyı değil bunu göstermesi şart: yaş tabanı kayda yazılmıyor, yani
+  /// ikisi farklı olabiliyor.
+  ({int levelIndex, int roundsCleared}) resumedFor(GameId game) => resumeLadder(
+        ladder: ladderFor(game),
+        startingLevel: startingLevelFor(childBand),
+        savedLevel: savedLevel[game],
+        savedRounds: savedRounds[game] ?? 0,
+      );
+
+  /// Kaydı silinince gerçekten aşağı inecek oyunlar.
+  ///
+  /// Yaş yalnızca taban olduğu için, kayıt tabanın üstündeyken yaşı
+  /// düşürmek tek başına hiçbir şey yapmaz.
+  List<GameId> get gamesAboveAgeFloor => [
+        for (final game in GameId.values)
+          if ((savedLevel[game] ?? -1) > startingLevelFor(childBand)) game,
+      ];
+
+  // =====================================================
+  // BÖLÜM İLERLEMESİNİ SIFIRLA
+  // =====================================================
+
+  Future<void> resetProgress(Iterable<GameId> games) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    for (final game in games) {
+      await prefs.remove(StorageKeys.gameLevel(game));
+      await prefs.remove(StorageKeys.gameRoundsCleared(game));
+    }
+
+    await loadProgress();
+  }
+
+  /// Sıfırlama geri alınamaz, o yüzden her zaman sorulur.
+  Future<void> confirmReset({GameId? game}) async {
+    final games = game == null ? GameId.values : [game];
+
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+        ),
+        title: Text(
+          game == null
+              ? 'Tüm ilerleme sıfırlansın mı?'
+              : '${game.title} sıfırlansın mı?',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        ),
+        content: Text(
+          game == null
+              ? 'Yedi oyunun da kazanılmış bölümleri silinir ve hepsi '
+                  'yaşa uygun bölümden başlar. Geri alınamaz.'
+              : 'Kazanılmış bölümler silinir ve oyun yaşa uygun bölümden '
+                  'başlar. Geri alınamaz.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Sıfırla'),
+          ),
+        ],
+      ),
+    );
+
+    if (approved ?? false) await resetProgress(games);
   }
 
   // =====================================================
@@ -351,6 +464,8 @@ class _ParentPanelState extends State<ParentPanel> {
 
                     if (!mounted) return;
 
+                    final previousFloor = startingLevelFor(childBand);
+
                     setState(() {
                       childAge = selectedAge;
                     });
@@ -364,6 +479,8 @@ class _ParentPanelState extends State<ParentPanel> {
                         ),
                       ),
                     );
+
+                    await offerResetAfterAgeDrop(previousFloor);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
@@ -383,6 +500,54 @@ class _ParentPanelState extends State<ParentPanel> {
       },
     );
   }
+  /// Yaşı düşürmek tek başına çocuğu aşağı indirmez; sıfırlama gerekir.
+  ///
+  /// Kurulumda yaş yanlış girildiyse çocuk yedi oyunda da üst bölümden
+  /// başlar ve ilk temiz turda bu diske yazılır. O noktadan sonra yaşı
+  /// düzeltmek hiçbir şey yapmaz — uygulamada geri dönüş yolu yoktu.
+  Future<void> offerResetAfterAgeDrop(int previousFloor) async {
+    // Only when the floor actually dropped: a child who is legitimately
+    // ahead of a raised age has earned that, and must not be asked about it.
+    if (startingLevelFor(childBand) >= previousFloor) return;
+
+    final stuck = gamesAboveAgeFloor;
+
+    if (stuck.isEmpty || !mounted) return;
+
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+        ),
+        title: const Text(
+          'Kayıtlı bölümler daha yukarıda',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        ),
+        content: Text(
+          '${stuck.length} oyunda çocuğun kazandığı bölüm, yeni yaşın '
+          'başlangıç bölümünden yukarıda. Yaş yalnızca başlangıcı belirlediği '
+          'için bu oyunlar olduğu yerde kalır. Sıfırlansınlar mı?',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Kalsın'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Sıfırla'),
+          ),
+        ],
+      ),
+    );
+
+    if (approved ?? false) await resetProgress(stuck);
+  }
+
   Future<void> changeParentPin() async {
     final currentPinController = TextEditingController();
     final newPinController = TextEditingController();
@@ -619,6 +784,73 @@ class _ParentPanelState extends State<ParentPanel> {
   // PANELDEKİ KÜÇÜK OYUN GEÇMİŞİ KARTI
   // =====================================================
 
+  /// One game's rung, as the child will see it, plus its own reset.
+  Widget progressRow(GameId game) {
+    final ladder = ladderFor(game);
+    final resumed = resumedFor(game);
+    final level = ladder[resumed.levelIndex];
+
+    final isTopRung = resumed.levelIndex == ladder.length - 1;
+    final isMastered =
+        isTopRung && resumed.roundsCleared >= level.roundsToAdvance;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          // Short titles: "Matematik Oyunu" wraps to two lines here and
+          // leaves the rows staggered.
+          Expanded(
+            flex: 4,
+            child: Text(
+              '${game.emoji} ${game.shortTitle}',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F7D38),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              isMastered
+                  ? '🏆 ${ladder.length}. Bölüm'
+                  : '${resumed.levelIndex + 1}. Bölüm',
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+          ),
+          // Stars are the same progress the child sees on the game screen.
+          Semantics(
+            label: '${resumed.roundsCleared} / ${level.roundsToAdvance} tur',
+            excludeSemantics: true,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < level.roundsToAdvance; i++)
+                  Icon(
+                    i < resumed.roundsCleared
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    size: 18,
+                    color: const Color(0xFFFFC53D),
+                  ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: '${game.title} ilerlemesini sıfırla',
+            onPressed: savedLevel[game] == null
+                ? null
+                : () => confirmReset(game: game),
+            icon: const Icon(Icons.restart_alt_rounded, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget buildUsageCard({
     required String game,
     required int usedSeconds,
@@ -685,22 +917,32 @@ class _ParentPanelState extends State<ParentPanel> {
 
           const SizedBox(height: 6),
 
+          // Both sides flex: a long usage string ("1 sa 05 dk") used to
+          // push this row past the card edge.
           Row(
             mainAxisAlignment:
             MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Kullanılan: ${formatUsage(usedSeconds)}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF21CA3A),
+              Flexible(
+                child: Text(
+                  'Kullanılan: ${formatUsage(usedSeconds)}',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF21CA3A),
+                  ),
                 ),
               ),
-              Text(
-                'Limit: $allowedMinutes dk',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF21CA3A),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Limit: $allowedMinutes dk',
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF21CA3A),
+                  ),
                 ),
               ),
             ],
@@ -1049,20 +1291,30 @@ class _ParentPanelState extends State<ParentPanel> {
                     style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   const SizedBox(height: 6),
-                  ...GameId.values.map(
-                    (game) => SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      value: gameEnabled[game] ?? true,
-                      onChanged: (value) => toggleGame(game, value),
-                      activeThumbColor: const Color(0xFF23D83E),
-                      title: Text(
-                        game.labelWithEmoji,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1F7D38),
+                  // The card paints its own white background, so the tiles
+                  // need a Material of their own or their ink splashes are
+                  // painted behind it and never seen.
+                  Material(
+                    type: MaterialType.transparency,
+                    child: Column(
+                      children: [
+                        ...GameId.values.map(
+                          (game) => SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            value: gameEnabled[game] ?? true,
+                            onChanged: (value) => toggleGame(game, value),
+                            activeThumbColor: const Color(0xFF23D83E),
+                            title: Text(
+                              game.labelWithEmoji,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1F7D38),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
@@ -1221,6 +1473,58 @@ class _ParentPanelState extends State<ParentPanel> {
             ),
 
             const SizedBox(height: 25),
+
+            // =================================================
+            // BÖLÜM İLERLEMESİ
+            // =================================================
+
+            Container(
+              margin: const EdgeInsets.only(bottom: 18),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 5,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '🪜 Bölüm İlerlemesi',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF1F7D38),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Her oyun temiz turlarla bölüm açar ve açılan bölüm geri '
+                    'gitmez. Yaş yalnızca başlangıç bölümünü belirler, bu '
+                    'yüzden yaşı düşürmek kazanılmış bölümü geri almaz — '
+                    'onun için sıfırlama gerekir.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 10),
+                  ...GameId.values.map(progressRow),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: () => confirmReset(),
+                      icon: const Icon(Icons.restart_alt_rounded),
+                      label: const Text('Tüm ilerlemeyi sıfırla'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             // =================================================
             // OYUN GEÇMİŞİ
