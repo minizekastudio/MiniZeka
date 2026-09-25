@@ -69,6 +69,9 @@ const List<WordItem> wordPool = [
   WordItem(word: 'ŞEMSİYE', emoji: '☂️'),
   WordItem(word: 'PENGUEN', emoji: '🐧'),
   WordItem(word: 'DOMATES', emoji: '🍅'),
+  WordItem(word: 'ANAHTAR', emoji: '🔑'),
+  WordItem(word: 'DİNOZOR', emoji: '🦕'),
+  WordItem(word: 'MAKARNA', emoji: '🍝'),
   WordItem(word: 'OTOBÜS', emoji: '🚌'),
   WordItem(word: 'TELEFON', emoji: '📞'),
 
@@ -83,29 +86,17 @@ const List<WordItem> wordPool = [
   WordItem(word: 'PATLICAN', emoji: '🍆'),
   WordItem(word: 'MİKROFON', emoji: '🎤'),
   WordItem(word: 'AYÇİÇEĞİ', emoji: '🌻'),
-  WordItem(word: 'TELEVİZYON', emoji: '📺'),
   WordItem(word: 'BİLGİSAYAR', emoji: '💻'),
 ];
-
-/// What a question asks for.
-enum WordTask {
-  /// Which letter does this word start with?
-  firstLetter,
-
-  /// Put the letters in order to spell it.
-  spell,
-}
 
 /// What each rung of [wordLadder] asks for.
 class WordRule {
   const WordRule({
-    required this.task,
     required this.minLength,
     required this.maxLength,
     required this.tiles,
   });
 
-  final WordTask task;
   final int minLength;
   final int maxLength;
 
@@ -124,16 +115,17 @@ class WordRule {
   int extraLettersFor(String word) => max(0, tiles - word.length);
 }
 
+/// Naming the letter a picture starts with belongs to the letter game; this
+/// one only builds words, so its first rung is the shortest of them.
 const List<WordRule> wordRules = [
-  // The picture carries the question, so the first rung may use any word.
-  WordRule(task: WordTask.firstLetter, minLength: 2, maxLength: 12, tiles: 4),
-  WordRule(task: WordTask.spell, minLength: 2, maxLength: 3, tiles: 4),
-  WordRule(task: WordTask.spell, minLength: 4, maxLength: 4, tiles: 4),
-  WordRule(task: WordTask.spell, minLength: 5, maxLength: 5, tiles: 6),
-  WordRule(task: WordTask.spell, minLength: 6, maxLength: 7, tiles: 8),
+  WordRule(minLength: 2, maxLength: 3, tiles: 4),
+  WordRule(minLength: 4, maxLength: 4, tiles: 4),
+  WordRule(minLength: 5, maxLength: 5, tiles: 6),
+  WordRule(minLength: 6, maxLength: 6, tiles: 8),
+  WordRule(minLength: 7, maxLength: 7, tiles: 8),
   // The last rung drops the spare letters and spells the longest word that
   // still fits eight tiles.
-  WordRule(task: WordTask.spell, minLength: 8, maxLength: 8, tiles: 8),
+  WordRule(minLength: 8, maxLength: 8, tiles: 8),
 ];
 
 WordRule wordRuleFor(int rung) =>
@@ -146,17 +138,11 @@ const List<String> _spareLetters = [
 ];
 
 class WordQuestion {
-  const WordQuestion({
-    required this.task,
-    required this.item,
-    required this.letters,
-  });
+  const WordQuestion({required this.item, required this.letters});
 
-  final WordTask task;
   final WordItem item;
 
-  /// [WordTask.firstLetter]: the choices. [WordTask.spell]: the tiles, in
-  /// the order they are laid out.
+  /// The tiles, in the order they are laid out.
   final List<String> letters;
 
   String get word => item.word;
@@ -164,7 +150,7 @@ class WordQuestion {
   /// Letters of the word, in order.
   List<String> get spelling => word.split('');
 
-  String get answer => task == WordTask.firstLetter ? spelling.first : word;
+  String get answer => word;
 }
 
 /// Builds a round of [questionsPerRound] words for [rung].
@@ -192,28 +178,11 @@ List<WordQuestion> buildWordRound({
     final item = choices[i % choices.length];
 
     questions.add(
-      WordQuestion(
-        task: rule.task,
-        item: item,
-        letters: rule.task == WordTask.firstLetter
-            ? _firstLetterChoices(item, rule, random)
-            : _tilesFor(item, rule, random),
-      ),
+      WordQuestion(item: item, letters: _tilesFor(item, rule, random)),
     );
   }
 
   return questions;
-}
-
-List<String> _firstLetterChoices(WordItem item, WordRule rule, Random random) {
-  final correct = item.word.split('').first;
-
-  final others = [
-    for (final letter in _spareLetters)
-      if (letter != correct) letter,
-  ]..shuffle(random);
-
-  return <String>[correct, ...others.take(rule.tiles - 1)]..shuffle(random);
 }
 
 List<String> _tilesFor(WordItem item, WordRule rule, Random random) {

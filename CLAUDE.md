@@ -133,35 +133,32 @@ Bu bölüm bağlayıcıdır. Yeni kod bunlara uyar; mevcut kod dokunuldukça uya
 
 ## Zorluk sistemi
 
-Tek kavram: **yaş bandı tabanı + oyun içinde kazanılan seviye**.
+Tek kavram: **yaş bandı tabanı + oynayarak tırmanılan bölüm merdiveni**.
 Tanım `lib/difficulty.dart`'ta, başka hiçbir yerde yaş eşiği yazılmaz.
 
 - `AgeBand` — dört bant: 4-5, 6-7, 8-9, 10-12. Ebeveyn panelindeki etiket de
   buradan (`AgeBand.label`).
-- `DifficultyTracker` — seviye 1'den başlar, **üst üste 3 doğru** cevapta
-  yükselir, en fazla 3. Yanlış cevap seriyi sıfırlar ama **seviyeyi
-  düşürmez**: hedef kitle 4-8 yaş, amaç ceza değil teşvik.
-- `scaled([a,b,c,d], max:)` — yaş bandına göre tabanı seçer, kazanılan
-  seviyeyi ekler, tavanı aşmaz.
+- `startingLevelFor(band)` — yaş yalnızca **nereden başlanacağını** söyler.
+- Gerisini çocuk kazanır: temiz turlar bölüm açar, ilerleme kaydedilir ve
+  seviye asla geri gitmez.
 
-Seviyenin ne zaman etki ettiği oyunun yapısına göre değişir: soru-cevap
-Beş oyun (Hafıza, Eşleştirme, Dikkat, Matematik, Mantık) kalıcı bölüm
-merdiveni kullanır: ilerleme kaydedilir, seviye geri gitmez, tur sonunda
-ortak ekran gelir. `DifficultyTracker` kalıcı değildir (yaş her yüklendiğinde
-yeniden kurulur), bu yüzden merdivenli oyunlarda kullanılmaz; geriye yalnızca
-Kelime Avı ve Harfler'de kullanılıyor.
+**Yedi oyunun yedisi de merdiven kullanıyor.** Eski `DifficultyTracker`
+(seviye 1-3, üst üste 3 doğru, "🟢 Kolay / 🟡 Orta / 🔴 Zor" rozeti)
+silindi: bir oturumdan öbürüne yaşamıyordu — oysa çocuğun ihtiyacı tam
+olarak buydu — ve son iki kullanıcısı (Kelime Avı ile Harfler) merdivene
+geçirildi. `levelLabel()` ve `?` modalındaki seviye rozeti de onunla gitti.
 
 Oyun bazında:
 
-| Oyun | Yaş bandı neyi belirliyor | Seviye ile artar mı |
+| Oyun | Merdiven | Ne artıyor |
 |---|---|---|
-| Hafıza | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Eşleştirme | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Dikkat | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Matematik | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Kelime Avı | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Harfler | Kelime zorluğu: 1/1/2/3 | Evet |
-| Mantık | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
+| Hafıza | `memoryLadder` | Kart sayısı |
+| Eşleştirme | `shapeLadder` | Değişen özellik |
+| Dikkat | `attentionLadder` | Benzerlik, sonra kutu sayısı |
+| Matematik | `mathLadder` | İşlem ve sayı aralığı |
+| Kelime Avı | `wordLadder` | Kelime uzunluğu |
+| Harfler | `letterLadder` | Harf biçimi ve benzerlik |
+| Mantık | `logicLadder` | Örüntü birimi, boşluğun yeri |
 
 ### Hafıza oyununun bölüm merdiveni
 
@@ -440,14 +437,14 @@ Ayrıca havuz 3 kademede 18 kelimeydi ve bir tur 10 soruydu: en küçük bant
 `wordLadder` (`lib/difficulty.dart`) + `wordRules`
 (`lib/games/word_round.dart`):
 
-| Bölüm | Soru | Kelime | Taş |
-|---|---|---|---|
-| 1 | ilk harf hangisi | havuzun tamamı | 4 şık |
-| 2 | harfleri diz | 2-3 harf | 4 |
-| 3 | harfleri diz | 4 harf | 4 |
-| 4 | harfleri diz | 5 harf | 6 |
-| 5 | harfleri diz | 6-7 harf | 8 |
-| 6 | harfleri diz | 8 harf | 8 (fazladan harf yok) |
+| Bölüm | Kelime | Taş |
+|---|---|---|
+| 1 | 2-3 harf | 4 |
+| 2 | 4 harf | 4 |
+| 3 | 5 harf | 6 |
+| 4 | 6 harf | 8 |
+| 5 | 7 harf | 8 |
+| 6 | 8 harf | 8 (fazladan harf yok) |
 
 - **Taş sayısı sabittir, kelime uzunluğu değil.** Eksiği yedek harfler
   doldurur; böylece taşların sayısı cevabı ele vermez ve tahta hep aynı
@@ -455,8 +452,12 @@ Ayrıca havuz 3 kademede 18 kelimeydi ve bir tur 10 soruydu: en küçük bant
   yani 64 px'lik iki satır. Yalnızca 4, 6 ve 8 taş hem satırı tam doldurur
   hem 64 px'in üstünde kalır — 10 taş beş sütunlu 50 px, 12 taş üçüncü
   satırda 54 px olurdu.
-- İlk bölüm yalnızca ilk harfi sorar ve havuzun tamamını kullanır: resim
-  soruyu taşıdığı için uzun kelime (🌈 → G) sorun değil.
+- **Oyun yalnızca kelime kurar.** "Resim hangi harfle başlıyor?" bir ara
+  Kelime Avı'nın ilk bölümüydü; Harfler oyunu harf tanımaya döndürülünce
+  aynı soruyu iki oyun sorar oldu, bu yüzden buradan alındı.
+- Havuzda **hiçbir kelime boşa durmaz**: 8 harften uzun kelimeleri Kelime Avı
+  dizdiremez, onlar Harfler'in resim bölümünde çıkar. `word_round_test`
+  havuzdaki her kelimenin bir yerde göründüğünü doğruluyor.
 - Yanlış dizilim **hiçbir şey bitirmez**: taşlar yerine döner, tahta sallanır.
   İki yanlış denemeden sonra sıradaki taş büyüyüp küçülerek işaret edilir.
 - Dolu yuvaya dokunmak harfi geri alır; yanlış koyulan harf için tek çıkış
@@ -465,6 +466,52 @@ Ayrıca havuz 3 kademede 18 kelimeydi ve bir tur 10 soruydu: en küçük bant
 
 `test/word_round_test.dart` havuzun yazımını ve üreteci 200 tohumla,
 `word_flow_test` akışı ve altı bölümün üç telefonda sığmasını doğruluyor.
+
+### Harfleri Tanı'nın bölüm merdiveni
+
+Oyun **ikinci bir kelime kurma oyunuydu**: resmi göster, adını harflerden
+kur. Havuzundaki 17 kelimenin 16'sı Kelime Avı havuzunda da vardı. Yedi
+oyundan ikisi tam olarak aynı şeyi soruyordu. Yanında Kelime Avı'ndaki üç
+sorunun aynısı: ASCII'ye indirilmiş kelimeler (`KEDI`, `FIL`, `KITAP`,
+`GOKKUSAGI`), **150 saniyelik geri sayım**, **3 can**. Bir de okunamayan
+metin ipuçları ("Suda yaşayan bir hayvan") ve harfi yerleştirmenin tek yolu
+olarak **basılı tut-sürükle-bırak** (`LongPressDraggable`, 120 ms gecikme,
+58×64 px hedef) — 4 yaşındaki bir çocuk için ciddi bir motor beceri.
+
+Kelime kurmak Kelime Avı'nın işi. Bu oyun artık **harfin kendisini**
+öğretiyor: aynı harfi bulmak, küçük biçimini tanımak, resmin hangi sesle
+başladığını söylemek, alfabede sırayı bilmek. Yazmadan önceki adım budur ve
+uygulamada hiç yoktu. Oyunun adı da `Harfleri Yerleştir` → `Harfleri Tanı`
+oldu.
+
+`letterLadder` (`lib/difficulty.dart`) + `letterRules`
+(`lib/games/letter_round.dart`):
+
+| Bölüm | Soru | Çeldirici |
+|---|---|---|
+| 1 | Aynı harfi bul (A → A) | bambaşka harfler |
+| 2 | Aynı harfi bul | **benzeyenler** (I/İ, O/Ö, S/Ş…) |
+| 3 | Küçük harfini bul (A → a) | bambaşka |
+| 4 | Küçük harfini bul | benzeyenler |
+| 5 | Resim hangi harfle başlıyor? (🍎 → A) | benzeyenler |
+| 6 | Alfabede sırada hangisi? (E ? G Ğ) | komşu harfler |
+
+- **Küçük harfler elle yazılmış** (`lowerCaseLetters`), `toLowerCase()` ile
+  değil: Dart "I"yı "ı" değil "i" yapar. Aynı hatanın tersi (`toUpperCase()`
+  "i"yi "İ" değil "I" yapar) Kelime Avı havuzunu bozmuştu; test ikisini de
+  kayda geçiriyor.
+- **Benzeşme kümeleri** (`letterConfusions`): önce noktayla/çengelle/şapkayla
+  ayrılan Türkçe çiftler (I/İ, O/Ö, U/Ü, S/Ş, C/Ç, G/Ğ), sonra aynı yöne
+  bakan biçimler (B/D/P/R, M/N, E/F, V/Y, H/K). Bir harf en fazla bir kümede.
+  A'yı M'den ayırmak iki şeklin farkını görmek; O'yu Ö'den ayırmak harfi
+  okumaktır — merdiven ikincisine gider.
+- Alfabe bölümünde **boşluk asla başta değil** ve şıklar satırda görünen
+  harflerden seçilmez: "görmediğini seç" cevabı vermesin diye komşu harfler.
+- Yanlış şık soruyu bitirmez, kilitlenir; iki yanlıştan sonra doğru taş
+  büyüyüp küçülerek işaret edilir. Sürükleme yok, dokunma var.
+
+`test/letter_round_test.dart` üreteci 200 tohumla, `letter_flow_test` akışı
+ve altı bölümün üç telefonda sığmasını doğruluyor.
 
 ### Öncesinde ne yanlıştı
 
@@ -478,6 +525,11 @@ Ayrıca havuz 3 kademede 18 kelimeydi ve bir tur 10 soruydu: en küçük bant
 - Kelime Avı ve Harfler `childAge`'i **hiç kullanmıyordu**; 4 yaşındaki çocuk
   12 yaşındakiyle aynı kelimeleri alıyordu. Havuzlardaki `difficulty` alanı
   duruyordu ama Harfler'de soru numarasına, Kelime Avı'nda hiçbir şeye bağlıydı.
+- **Veri taşıma oyunun görünen adına bağlıydı.** `StorageMigration` eski
+  anahtarları `GameId.title`'dan üretiyordu; Harfler'in adı değişince eski
+  `duration_Harfleri Yerleştir` kaydı sessizce kurtarılamaz oluyordu — yani
+  taşımanın önlemek için var olduğu hatanın ta kendisi. Eski adlar artık
+  `_legacyTitles` içinde donduruldu ve bir test adın değişmesini şart koşuyor.
 
 ## Tasarım kuralları
 
@@ -549,13 +601,12 @@ hedefleniyor. Tespit edilen sorunlar ve planlanan çözümler:
    talimat kartı tamamen kalktı, metin `AppBar`'daki **`?` düğmesinin**
    arkasına taşındı (`GameHelpButton` + `showGameHelpDialog`, `game_kit.dart`).
    Talimat metinleri `GameId.helpTitle` / `helpBody` içinde, tek kaynakta.
-   Seviye bilgisi (🟢/🟡/🔴) kaybolmasın diye modalda gösteriliyor.
    Beş oyundan toplam 407 satır kalktı.
-   Kelime Avı ve Harfleri Yerleştir'de `AppBar` yok, özel başlık var; onlarda
-   `?` başlık satırına (kalplerin sağına) eklendi ve 10,5 puntoluk statik alt
-   satır kaldırıldı. Kelime Avı'ndaki ipucu (kelimeye göre değişiyor) ve
-   "Harfleri seçerek kelimeyi oluştur" (boş durum metni) işlevsel oldukları
-   için korundu. Yedi oyunun tamamında `?` var.
+   Kelime Avı ve Harfler o sırada `AppBar`'sızdı (kalpli özel başlık); ikisi
+   de merdivene geçirilirken diğer beş oyunun iskeletine oturdu, artık yedi
+   oyunun da `AppBar`'ı ve `?` düğmesi aynı. Modaldaki 🟢/🟡/🔴 seviye
+   rozeti `DifficultyTracker` ile birlikte kalktı — gösterecek seviye yok,
+   bölüm bilgisi zaten ekranda (`LadderStrip`).
 3b. ~~**Oyun listesi ekranı**~~ ✅ **bitti** — kartlar artık `GameId.values`'tan
    üretiliyor, elle yazılı kart kalmadı; sıra enum'dan yönetiliyor.
    - Sıra 4-8 yaşa göre: önce okuma gerektirmeyen görsel oyunlar (Hafıza,
@@ -613,21 +664,23 @@ lib/game_id.dart          TEK DOĞRU KAYNAK: yedi oyunun kimliği, başlığı,
 lib/storage_keys.dart     TEK DOĞRU KAYNAK: bütün SharedPreferences anahtarları
 lib/storage_migration.dart  açılışta çalışan sürümlü veri taşıma
 lib/game_timer.dart       günlük süre sayacı (saat enjekte edilebilir)
-lib/games/                beş oyun (hafıza, dikkat, matematik, eşleştirme, mantık)
+lib/games/                oyun ekranları ve soru üreticileri
 lib/games/shape_figure.dart  şekil türleri, bir örneğin görünümü, çizimi
 lib/games/shape_round.dart   eşleştirme bölüm kuralları ve soru üretici
 lib/games/memory_symbols.dart  benzeşme kümeleri (hafıza + dikkat ortak)
 lib/games/attention_round.dart dikkat bölüm kuralları ve tahta üretici
 lib/games/math_round.dart    matematik bölüm kuralları ve soru üretici
 lib/games/logic_round.dart   mantık örüntü kuralları ve soru üretici
-lib/word_game.dart        Kelime Avı — henüz lib/games/ altına taşınmadı
-lib/letter_game.dart      Harfleri Yerleştir — aynı şekilde
+lib/games/word_round.dart    kelime havuzu, bölüm kuralları ve soru üretici
+lib/games/letter_round.dart  alfabe, küçük harf eşlemesi, benzeşme kümeleri
+lib/word_game.dart        Kelime Avı — ekranı henüz lib/games/ altına taşınmadı
+lib/letter_game.dart      Harfleri Tanı — aynı şekilde
 lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
                           GamePalette, GameResultBox, InfoBox, levelForAge
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     402 test: oyun duman testleri, süre sayacı,
+test/                     452 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu

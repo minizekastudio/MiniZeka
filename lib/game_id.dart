@@ -47,13 +47,13 @@ enum GameId {
 
   letter(
     storageId: 'letter',
-    title: 'Harfleri Yerleştir',
+    title: 'Harfleri Tanı',
     shortTitle: 'Harfler',
     emoji: '🔤',
     difficulty: 1,
     defaultLimitMinutes: 15,
-    helpTitle: 'Harfleri sıraya koy!',
-    helpBody: 'Karışık harflerden doğru kelimeyi oluştur.',
+    helpTitle: 'Harfi tanı!',
+    helpBody: 'Aynı harfi, küçüğünü ya da sırada geleni bul.',
   ),
 
   word(

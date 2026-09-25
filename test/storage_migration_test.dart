@@ -44,6 +44,27 @@ void main() {
     );
   });
 
+  test('oyunun adı değişse de eski anahtar hâlâ taşınır', () async {
+    // The letter game was renamed once; a migration that reads old data
+    // must know the name it was written with, not today's title.
+    expect(GameId.letter.title, isNot('Harfleri Yerleştir'));
+
+    SharedPreferences.setMockInitialValues({
+      'duration_Harfleri Yerleştir': 25,
+      'game_time_Harfleri Yerleştir_$today': 90,
+    });
+
+    await StorageMigration.run();
+
+    final prefs = await SharedPreferences.getInstance();
+
+    expect(prefs.getInt(StorageKeys.gameLimitMinutes(GameId.letter)), 25);
+    expect(
+      prefs.getInt(StorageKeys.gamePlayedSeconds(GameId.letter, today)),
+      90,
+    );
+  });
+
   test('ikinci çalıştırma zarar vermez', () async {
     SharedPreferences.setMockInitialValues({
       'duration_Mantık Oyunu': 40,

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mini_zeka/difficulty.dart';
+import 'package:mini_zeka/games/letter_round.dart';
 import 'package:mini_zeka/games/word_round.dart';
 
 const _seeds = 200;
@@ -57,6 +58,28 @@ void main() {
       expect(words.toSet(), hasLength(words.length));
     });
 
+    test('havuzdaki her kelime bir yerde görünür', () {
+      // A word no rung can reach is dead weight: the word game stops at
+      // eight letters, and the letter game only shows a picture when its
+      // first letter has look-alikes.
+      for (final item in wordPool) {
+        final fitsAWordRung = wordRules.any(
+          (rule) =>
+              item.word.length >= rule.minLength &&
+              item.word.length <= rule.maxLength,
+        );
+
+        final fitsLetterGame =
+            confusionGroupOf(item.word.split('').first) != null;
+
+        expect(
+          fitsAWordRung || fitsLetterGame,
+          isTrue,
+          reason: '${item.word} hiçbir bölümde çıkmıyor',
+        );
+      }
+    });
+
     test('her bölümün bir tur dolduracak kadar kelimesi var', () {
       for (var rung = 0; rung < wordLadder.length; rung++) {
         final rule = wordRuleFor(rung);
@@ -81,7 +104,6 @@ void main() {
 
       test('bölüm ${rung + 1}: kelime uzunluğu kuralın içinde', () {
         for (final q in _questions(rung)) {
-          expect(q.task, rule.task);
           expect(q.word.length, greaterThanOrEqualTo(rule.minLength));
           expect(q.word.length, lessThanOrEqualTo(rule.maxLength));
         }
@@ -98,22 +120,12 @@ void main() {
     }
   });
 
-  test('ilk bölüm: dört harf şıkkı, biri kelimenin ilk harfi', () {
-    for (final q in _questions(0)) {
-      expect(q.task, WordTask.firstLetter);
-      expect(q.letters, hasLength(wordRules.first.tiles));
-      expect(q.letters.toSet(), hasLength(4));
-      expect(q.letters, contains(q.spelling.first));
-      expect(q.answer, q.spelling.first);
-    }
-  });
-
-  test('harf dizme bölümlerinde taşlar kelimeyi kurmaya yeter', () {
-    for (var rung = 1; rung < wordLadder.length; rung++) {
+  test('her bölümde taşlar kelimeyi kurmaya yeter', () {
+    for (var rung = 0; rung < wordLadder.length; rung++) {
       final rule = wordRuleFor(rung);
 
       for (final q in _questions(rung)) {
-        expect(q.task, WordTask.spell);
+        expect(q.answer, q.word);
         expect(q.letters, hasLength(rule.tiles));
         expect(q.word.length, lessThanOrEqualTo(rule.tiles));
 
@@ -149,18 +161,24 @@ void main() {
           wordRules[i].tiles,
           greaterThanOrEqualTo(wordRules[i - 1].tiles),
         );
+
+        expect(
+          wordRules[i].minLength,
+          greaterThan(wordRules[i - 1].minLength),
+          reason: 'kelimeler uzamalı',
+        );
       }
     }
 
-    expect(wordRules.last.tiles, greaterThan(wordRules[1].tiles));
+    expect(wordRules.last.tiles, greaterThan(wordRules.first.tiles));
   });
 
   test('her bölümde taşların bir kısmı fazladan harf olabilir', () {
     // The tiles are a fixed count, so a short word gets spare letters mixed
     // in and the board never gives the answer away by its width.
-    expect(wordRules[1].extraLettersFor('EV'), 2);
-    expect(wordRules[2].extraLettersFor('KEDİ'), 0);
-    expect(wordRules[4].extraLettersFor('KARPUZ'), 2);
+    expect(wordRules.first.extraLettersFor('EV'), 2);
+    expect(wordRules[1].extraLettersFor('KEDİ'), 0);
+    expect(wordRules[3].extraLettersFor('KARPUZ'), 2);
     expect(wordRules.last.extraLettersFor('DONDURMA'), 0);
   });
 

@@ -169,21 +169,14 @@ class _WordGameState extends State<WordGame>
   }
 
   /// How many letters the answer needs.
-  int get _slotCount {
-    final question = _question;
-    if (question == null) return 0;
-
-    return question.task == WordTask.firstLetter ? 1 : question.word.length;
-  }
+  int get _slotCount => _question?.word.length ?? 0;
 
   /// The tile a child should reach for next, for the hint.
   int? get _nextCorrectTile {
     final question = _question;
     if (question == null) return null;
 
-    final wanted = question.task == WordTask.firstLetter
-        ? question.spelling.first
-        : question.spelling[_placed.length.clamp(0, _slotCount - 1)];
+    final wanted = question.spelling[_placed.length.clamp(0, _slotCount - 1)];
 
     for (var i = 0; i < question.letters.length; i++) {
       if (question.letters[i] == wanted && !_placed.contains(i)) return i;
@@ -347,11 +340,9 @@ class _WordGameState extends State<WordGame>
   }
 
   static String _newRungMessage(int rung) {
-    if (wordRuleFor(rung).task == WordTask.firstLetter) {
-      return 'Hadi başlayalım! ✨';
-    }
-    if (wordRuleFor(rung - 1).task == WordTask.firstLetter) {
-      return 'Artık harfleri sen diziyorsun! 🔤';
+    if (rung == 0) return 'Hadi başlayalım! ✨';
+    if (wordRuleFor(rung).tiles > wordRuleFor(rung - 1).tiles) {
+      return 'Artık daha çok harf var! 🔤';
     }
     return 'Artık kelimeler uzuyor! 🔤';
   }

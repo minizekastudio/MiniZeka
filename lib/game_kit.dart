@@ -178,20 +178,13 @@ class GameAppBarTitle extends StatelessWidget {
 class GameHelpButton extends StatelessWidget {
   final GameId game;
 
-  /// Optional live status, e.g. "🟢 Kolay Seviye".
-  final String? levelLabel;
-
-  const GameHelpButton({super.key, required this.game, this.levelLabel});
+  const GameHelpButton({super.key, required this.game});
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: 'Nasıl oynanır?',
-      onPressed: () => showGameHelpDialog(
-        context: context,
-        game: game,
-        levelLabel: levelLabel,
-      ),
+      onPressed: () => showGameHelpDialog(context: context, game: game),
       icon: Icon(
         Icons.help_outline_rounded,
         size: 30,
@@ -205,7 +198,6 @@ class GameHelpButton extends StatelessWidget {
 Future<void> showGameHelpDialog({
   required BuildContext context,
   required GameId game,
-  String? levelLabel,
 }) {
   final palette = game.palette;
 
@@ -252,27 +244,6 @@ Future<void> showGameHelpDialog({
                   color: palette.label,
                 ),
               ),
-              if (levelLabel != null) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: palette.dialogChip,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    levelLabel,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: palette.value,
-                    ),
-                  ),
-                ),
-              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -520,12 +491,12 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
   /// `child_age` okunana kadarki varsayilan; load'daki geri dusus ile ayni.
   int childAge = 9;
 
-  /// Baseline from the child's age plus whatever they earn during play.
-  /// Rebuilt when the stored age arrives.
-  DifficultyTracker difficulty =
-      DifficultyTracker(band: AgeBand.forAge(9));
-
-  AgeBand get ageBand => difficulty.band;
+  /// Which rung of a game's ladder the child starts on. Rebuilt when the
+  /// stored age arrives.
+  ///
+  /// The age is a floor only: every game keeps its own saved progress and
+  /// never moves a child down.
+  AgeBand ageBand = AgeBand.forAge(9);
 
   bool timeUpDialogShown = false;
 
@@ -625,7 +596,7 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
 
     setState(() {
       childAge = savedAge;
-      difficulty = DifficultyTracker(band: AgeBand.forAge(savedAge));
+      ageBand = AgeBand.forAge(savedAge);
       onChildAgeLoaded();
     });
   }

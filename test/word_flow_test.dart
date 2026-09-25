@@ -78,13 +78,9 @@ Future<void> _tapSlot(WidgetTester tester, int slot) async {
 
 /// Indexes of the tiles that spell [question], in order.
 List<int> _solution(WordQuestion question) {
-  final wanted = question.task == WordTask.firstLetter
-      ? [question.spelling.first]
-      : question.spelling;
-
   final used = <int>[];
 
-  for (final letter in wanted) {
+  for (final letter in question.spelling) {
     for (var i = 0; i < question.letters.length; i++) {
       if (question.letters[i] == letter && !used.contains(i)) {
         used.add(i);
@@ -149,13 +145,12 @@ String _infoValue(WidgetTester tester, String title) {
 Future<SharedPreferences> _prefs() => SharedPreferences.getInstance();
 
 void main() {
-  testWidgets('ilk bölüm kelimenin ilk harfini sorar', (tester) async {
+  testWidgets('ilk bölüm kısa kelimeleri dizdirir', (tester) async {
     final semantics = tester.ensureSemantics();
     final round = _expectedRound(0);
     await _open(tester);
 
     final question = round.first;
-    expect(question.task, WordTask.firstLetter);
 
     // The picture is what the child reads; the word itself is not written.
     expect(find.text(question.item.emoji), findsOneWidget);
@@ -176,8 +171,6 @@ void main() {
     await _open(tester, rung: 1);
 
     final question = round.first;
-    expect(question.task, WordTask.spell);
-
     final solution = _solution(question);
     await _tapTile(tester, solution.first);
 
@@ -273,10 +266,7 @@ void main() {
     await _open(tester);
 
     for (var i = 0; i < round.length; i++) {
-      if (i < 2) {
-        await _tapTile(tester, _wrongTile(round[i]));
-        await tester.pump(const Duration(milliseconds: 400));
-      }
+      if (i < 2) await _wrongAttempt(tester, round[i]);
       await _answerRight(tester, round[i]);
     }
     await tester.pumpAndSettle();

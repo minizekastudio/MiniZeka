@@ -34,6 +34,23 @@ class StorageMigration {
     await _pruneOldUsage(prefs);
   }
 
+  /// The display names those keys were written with, frozen.
+  ///
+  /// They cannot be read from [GameId.title]: the title is editable, and a
+  /// migration that reads old data has to know the name as it was *then*.
+  /// Renaming "Harfleri Yerleştir" to "Harfleri Tanı" would otherwise have
+  /// silently stopped rescuing that game's settings — which is the very bug
+  /// this step exists to undo.
+  static const Map<GameId, String> _legacyTitles = {
+    GameId.memory: 'Hafıza Oyunu',
+    GameId.shape: 'Eşleştirme Oyunu',
+    GameId.attention: 'Dikkat Oyunu',
+    GameId.letter: 'Harfleri Yerleştir',
+    GameId.word: 'Kelime Avı',
+    GameId.math: 'Matematik Oyunu',
+    GameId.logic: 'Mantık Oyunu',
+  };
+
   /// v1: per-game keys used to embed the Turkish display name, e.g.
   /// `duration_Matematik Oyunu` and `game_time_Matematik Oyunu_2026-09-11`.
   /// Editing a game's name silently orphaned the parent's settings. Keys are
@@ -44,7 +61,7 @@ class StorageMigration {
     var moved = 0;
 
     for (final game in GameId.values) {
-      final legacyKey = 'duration_${game.title}';
+      final legacyKey = 'duration_${_legacyTitles[game]}';
       final minutes = prefs.getInt(legacyKey);
 
       if (minutes != null) {
@@ -88,8 +105,8 @@ class StorageMigration {
 
   /// Legacy keys carried the display name; resolve it back to a game.
   static GameId? _byTitle(String title) {
-    for (final game in GameId.values) {
-      if (game.title == title) return game;
+    for (final entry in _legacyTitles.entries) {
+      if (entry.value == title) return entry.key;
     }
     return null;
   }

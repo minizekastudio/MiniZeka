@@ -8,8 +8,9 @@
 ///     index and never touched the questions at all — it only multiplied the
 ///     score while the screen claimed "Zor Seviye"
 ///
-/// Now there is one concept: the child's [AgeBand] sets the baseline, and
-/// [DifficultyTracker] raises it only when the child earns it.
+/// Now there is one concept: the child's [AgeBand] picks the rung a game
+/// starts on, and the child climbs from there by playing clean rounds. The
+/// progress is saved and never goes backwards.
 library;
 
 /// The four age bands the games are tuned for.
@@ -45,62 +46,11 @@ enum AgeBand {
       };
 }
 
-/// In-game difficulty that actually moves.
-///
-/// Starts at level 1 and rises after [stepsToLevelUp] correct answers in a
-/// row. A wrong answer resets the streak but never lowers the level: for a
-/// 4-8 year old the point is encouragement, not punishment.
-class DifficultyTracker {
-  DifficultyTracker({required this.band});
-
-  final AgeBand band;
-
-  static const int stepsToLevelUp = 3;
-  static const int maxLevel = 3;
-
-  int _level = 1;
-  int _streak = 0;
-
-  /// 1..3. Shown to the child as Kolay / Orta / Zor.
-  int get level => _level;
-
-  /// How many correct answers in a row so far.
-  int get streak => _streak;
-
-  /// 0..2 — how much to add on top of the age baseline.
-  int get boost => _level - 1;
-
-  void correct() {
-    _streak++;
-
-    if (_streak >= stepsToLevelUp && _level < maxLevel) {
-      _level++;
-      _streak = 0;
-    }
-  }
-
-  void wrong() => _streak = 0;
-
-  void reset() {
-    _level = 1;
-    _streak = 0;
-  }
-
-  /// Picks from a four-entry table by age band, then adds what the child has
-  /// earned, clamped to [max].
-  int scaled(List<int> byBand, {required int max}) {
-    final base = byBand[band.step];
-    final value = base + boost;
-    return value > max ? max : value;
-  }
-}
-
-/// Label for the level chip.
-String levelLabel(int level) => switch (level) {
-      1 => '🟢 Kolay Seviye',
-      2 => '🟡 Orta Seviye',
-      _ => '🔴 Zor Seviye',
-    };
+/// Every game now climbs its own saved ladder, so the old in-game
+/// `DifficultyTracker` — level 1-3, three correct answers in a row, a
+/// "Kolay / Orta / Zor" chip — is gone. It could not survive a session,
+/// which is exactly what a child needs it to do, and its last two users
+/// (the word and letter games) were rewritten onto ladders.
 
 /// One rung of a game's level ladder.
 class GameLevel {
@@ -280,6 +230,28 @@ const List<GameLevel> logicLadder = [
 ///
 /// `cards` is unused here; the board is the word's letters.
 const List<GameLevel> wordLadder = [
+  GameLevel(cards: 4, roundsToAdvance: 2),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+];
+
+/// The letter game's ladder.
+///
+/// The game was a second spelling game: show a picture, build its name out
+/// of letters — sixteen of its seventeen words were also in the word game's
+/// pool. Two of seven games asked for exactly the same thing. It also ran a
+/// two and a half minute countdown, took a life for every miss, and the only
+/// way to place a letter was to press and hold it and drag it onto a 58 px
+/// target, which is a demanding piece of motor control at four.
+///
+/// Building words now belongs to the word game alone. This one teaches the
+/// letter itself — the same letter in another form, the sound a picture
+/// starts with, where a letter sits in the alphabet — which is the step
+/// before spelling and was missing from the app entirely.
+const List<GameLevel> letterLadder = [
   GameLevel(cards: 4, roundsToAdvance: 2),
   GameLevel(cards: 4, roundsToAdvance: 3),
   GameLevel(cards: 4, roundsToAdvance: 3),
