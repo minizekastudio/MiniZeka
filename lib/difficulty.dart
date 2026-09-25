@@ -226,6 +226,24 @@ const List<GameLevel> attentionLadder = [
   GameLevel(cards: 16, roundsToAdvance: 3),
 ];
 
+/// The math game's ladder.
+///
+/// It only ever asked "4 + 1 = ?" in digits. Most of the target age is still
+/// learning what the digit means; early number sense is built by counting
+/// things and seeing quantities, and symbols come after that. So the rungs
+/// start from objects a child can count and take the objects away later,
+/// and the ladder also brings in taking away, not just adding.
+///
+/// `cards` is the number of answer choices, four on every rung.
+const List<GameLevel> mathLadder = [
+  GameLevel(cards: 4, roundsToAdvance: 2),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+];
+
 /// Questions in one round, for every game that climbs a ladder.
 const int questionsPerRound = 5;
 

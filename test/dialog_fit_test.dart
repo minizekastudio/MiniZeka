@@ -67,16 +67,14 @@ void main() {
         });
       }
 
-      // Dikkat artık soru arası diyalog kullanmıyor.
-      for (final game in [GameId.math, GameId.logic]) {
+      // Yalnızca Mantık'ta soru arası diyalog kaldı.
+      for (final game in [GameId.logic]) {
         testWidgets('${game.shortTitle}: cevap diyaloğu taşmıyor',
             (tester) async {
           await _open(tester, game, phone.value);
 
           final state = _state(tester, game);
           switch (game) {
-            case GameId.math:
-              state.answer(state.options.first as int);
             case GameId.logic:
               state.answer(state.currentOptions.first as String);
             default:
@@ -98,8 +96,6 @@ void main() {
           state.question = 5;
 
           switch (game) {
-            case GameId.math:
-              state.answer(state.options.first as int);
             case GameId.logic:
               state.answer(state.currentOptions.first as String);
             default:

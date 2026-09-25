@@ -4,11 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mini_zeka/game_id.dart';
 import 'package:mini_zeka/games/logic_game.dart';
-import 'package:mini_zeka/games/math_game.dart';
 import 'package:mini_zeka/sound_manager.dart';
 import 'package:mini_zeka/storage_keys.dart';
 
 /// A question-and-answer game, and how a test answers one of its questions.
+///
+/// Only Mantık is left here: the other games no longer put a dialog between
+/// questions.
 class _Quiz {
   const _Quiz({
     required this.name,
@@ -29,13 +31,6 @@ class _Quiz {
 }
 
 final _quizzes = [
-  _Quiz(
-    name: 'Matematik',
-    game: GameId.math,
-    build: () => const MathGame(),
-    answer: (state) => state.answer(state.options.first as int),
-    lastQuestion: 5,
-  ),
   _Quiz(
     name: 'Mantık',
     game: GameId.logic,

@@ -158,7 +158,7 @@ Oyun bazında:
 | Hafıza | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Eşleştirme | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Dikkat | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Matematik | Sayı aralığı: 5/10/15/20 | Evet |
+| Matematik | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Kelime Avı | Kelime zorluğu: 1/1/2/3 | Evet |
 | Harfler | Kelime zorluğu: 1/1/2/3 | Evet |
 | Mantık | Soru havuzu 0/1/2/3 | Evet — üst havuza kayar |
@@ -349,6 +349,41 @@ düz listeden rastgele eşleşiyordu: bir tahta 🍎 arasında 🚗 (bedava), so
 altı bölümü üç telefonda (yarım sıra yok, kutu ≥ 64 px), `attention_flow_test`
 akışı doğruluyor.
 
+### Matematik oyununun bölüm merdiveni
+
+Oyun her yaşta yalnızca rakamla soruyordu: "4 + 1 = ?", 42 punto, hiçbir
+görsel destek yok. Hedef kitlenin çoğu rakamı yeni tanıyor; erken sayı
+becerisi nesne sayarak ve miktar görerek kuruluyor, sembol sonra geliyor.
+Ayrıca oyunda yalnızca toplama vardı.
+
+`mathLadder` (`lib/difficulty.dart`) + `mathRules`
+(`lib/games/math_round.dart`):
+
+| Bölüm | Görev | Sayılar | Nesne |
+|---|---|---|---|
+| 1 | Sayma ("kaç tane?") | 5'e kadar | var |
+| 2 | Toplama | 5'e kadar | var |
+| 3 | Toplama | 10'a kadar | var |
+| 4 | Çıkarma | 10'a kadar | var |
+| 5 | Toplama | 20'ye kadar | yok |
+| 6 | Çıkarma | 20'ye kadar | yok |
+
+- **Rakam her bölümde var, nesne üst bölümlerde kalkar.** Somuttan soyuta
+  köprü: alt bölümlerde çocuk sayarak doğrulayabiliyor.
+- **İki yanlıştan sonra nesneler geri gelir**, üst bölümlerde bile: takılan
+  çocuk tahmin etmek yerine sayabilsin.
+- Çıkarmada giden nesnelerin üstü çizilir; sonuç asla eksiye düşmez ve
+  hepsi birden gitmez.
+- **Şıklar artık hep aynı kalıpta değil.** Eskiden her soruda doğru cevabın
+  +1, −1 ve +2'siydi; tahtanın şekli ipucu oluyordu. Artık ±3 aralığından
+  rastgele, eksi değer olmadan seçiliyor.
+- Soru arası diyalog yok; tur 5 soru, sonunda ortak tur sonu ekranı.
+  İlerleme kalıcı, rastgelelik enjekte edilir.
+
+`test/math_round_test.dart` her bölümü 300 tohumla, `math_fit_test` altı
+bölümü üç telefonda, `math_flow_test` akışı ve nesnelerin ne zaman
+göründüğünü doğruluyor.
+
 ### Öncesinde ne yanlıştı
 
 - "Zorluk" adı altında üç ilgisiz şey vardı: oyunlara kopyalanmış `childAge`
@@ -501,6 +536,7 @@ lib/games/shape_figure.dart  şekil türleri, bir örneğin görünümü, çizim
 lib/games/shape_round.dart   eşleştirme bölüm kuralları ve soru üretici
 lib/games/memory_symbols.dart  benzeşme kümeleri (hafıza + dikkat ortak)
 lib/games/attention_round.dart dikkat bölüm kuralları ve tahta üretici
+lib/games/math_round.dart    matematik bölüm kuralları ve soru üretici
 lib/word_game.dart        Kelime Avı — henüz lib/games/ altına taşınmadı
 lib/letter_game.dart      Harfleri Yerleştir — aynı şekilde
 lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
@@ -508,7 +544,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     256 test: oyun duman testleri, süre sayacı,
+test/                     304 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu
