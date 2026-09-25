@@ -554,6 +554,23 @@ soru sorulmaz.
 - **PIN ekranında `\n` düz yazı olarak görünüyordu** (`parent_login.dart`):
   kaçış karakteri iki kez kaçırılmıştı.
 
+### Küçük borçların temizliği
+
+- **`game_explorer` rozeti artık bütün oyunları istiyor.** Eşik elle yazılmış
+  `5`'ti ve açıklaması da "5 farklı oyun" diyordu; uygulama yediye çıkınca
+  ikisi de olduğu yerde kaldı. Eşik `GameId.values.length`, açıklama da aynı
+  sayıdan üretiliyor — yeni oyun eklemek çıtayı kendiliğinden yükseltiyor.
+- **Kelime Avı ve Harfler ekranları `lib/games/` altına taşındı.** Yedi oyunun
+  yedisi de artık aynı klasörde; `lib/` kökünde oyun ekranı kalmadı.
+- **`game_kit.dart`'ın Türkçe yorumları İngilizce'ye çevrildi** (16 blok).
+  Kural "dokunulan dosyada çevir" diyor, bu oturumda dokunuldu.
+- **Ham renk borcu bu dosyalarda yok:** yedi oyun ekranı ve altı üretici
+  dosyasında `Color(0xFF...)` sayısı sıfır; hepsi `Brand` ve `GamePalette`
+  üzerinden geçiyor. `game_kit.dart`'taki 42 değişmez, yedi oyunun renk
+  tablosunun kendisi — tanımın olması gereken yer orası. Kalan ~600 ham renk
+  eski ekranlarda (ana sayfa, ebeveyn paneli, başarılar, karşılama) ve
+  onların birleştirilmesi ayrı bir tasarım işi olarak duruyor.
+
 ### Öncesinde ne yanlıştı
 
 - "Zorluk" adı altında üç ilgisiz şey vardı: oyunlara kopyalanmış `childAge`
@@ -705,7 +722,7 @@ lib/game_id.dart          TEK DOĞRU KAYNAK: yedi oyunun kimliği, başlığı,
 lib/storage_keys.dart     TEK DOĞRU KAYNAK: bütün SharedPreferences anahtarları
 lib/storage_migration.dart  açılışta çalışan sürümlü veri taşıma
 lib/game_timer.dart       günlük süre sayacı (saat enjekte edilebilir)
-lib/games/                oyun ekranları ve soru üreticileri
+lib/games/                yedi oyunun ekranı ve soru üreticileri
 lib/games/shape_figure.dart  şekil türleri, bir örneğin görünümü, çizimi
 lib/games/shape_round.dart   eşleştirme bölüm kuralları ve soru üretici
 lib/games/memory_symbols.dart  benzeşme kümeleri (hafıza + dikkat ortak)
@@ -714,8 +731,6 @@ lib/games/math_round.dart    matematik bölüm kuralları ve soru üretici
 lib/games/logic_round.dart   mantık örüntü kuralları ve soru üretici
 lib/games/word_round.dart    kelime havuzu, bölüm kuralları ve soru üretici
 lib/games/letter_round.dart  alfabe, küçük harf eşlemesi, benzeşme kümeleri
-lib/word_game.dart        Kelime Avı — ekranı henüz lib/games/ altına taşınmadı
-lib/letter_game.dart      Harfleri Tanı — aynı şekilde
 lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
                           GamePalette, GameResultBox, InfoBox, levelForAge
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
@@ -745,9 +760,6 @@ Logo.png             kullanıcının ürettiği ana logo (kapak görseli için)
   bilinçli olarak yapılmadı. Doğru yol: dokunulan dosyada `Brand`'a geçmek ve
   zamanla token setini büyütmek. Palet birleştirme ayrı bir tasarım işi olarak
   ele alınmalı.
-- `game_explorer` başarısı 5 oyunda açılıyor, artık 7 oyun var. Açıklaması da
-  "5 farklı oyun" dediği için kendi içinde tutarlı; eşiğin 7'ye çıkarılıp
-  çıkarılmayacağı ürün kararı.
 - 17pt altında kalan 86 kullanım bilerek bırakıldı: ebeveyn paneli ve PIN
   ekranı yetişkin okuyor, büyük sayıların yanındaki etiketler ve dekoratif
   alt yazılar kuralın hedefi değil.

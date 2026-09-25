@@ -3,12 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mini_zeka/games/attention_game.dart';
+import 'package:mini_zeka/games/letter_game.dart';
 import 'package:mini_zeka/games/logic_game.dart';
 import 'package:mini_zeka/games/math_game.dart';
 import 'package:mini_zeka/games/memory_game.dart';
 import 'package:mini_zeka/games/shape_game.dart';
-import 'package:mini_zeka/letter_game.dart';
-import 'package:mini_zeka/word_game.dart';
+import 'package:mini_zeka/games/word_game.dart';
 
 /// Yedi oyunun da acilip cizilebildigini dogrular.
 ///

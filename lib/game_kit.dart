@@ -7,25 +7,27 @@ import 'difficulty.dart';
 import 'game_id.dart';
 import 'game_timer.dart';
 
-/// Her oyunun kendi color seti. Oyunlarda kopyalanan sabit renkler
-/// buraya toplandi; gorunum aynen korunur.
+/// One colour set per game.
+///
+/// These literals used to be copied into each game screen. This is where a
+/// colour is defined; screens ask for a role, not a hex value.
 class GamePalette {
-  /// Sonuc kutusu / istatistik kutusu arka plani.
+  /// Behind a result or stat box.
   final Color softBackground;
 
-  /// "Suren doldu" diyalogundaki puan seridi arka plani.
+  /// Behind the score chip in the "time is up" dialog.
   final Color dialogChip;
 
-  /// Kucuk baslik yazisi.
+  /// Small caption text.
   final Color label;
 
-  /// Vurgulu deger yazisi.
+  /// The value the caption labels.
   final Color value;
 
-  /// Diyalog basligi.
+  /// Dialog heading.
   final Color heading;
 
-  /// Diyalog butonu.
+  /// Dialog button.
   final Color button;
 
   const GamePalette({
@@ -82,7 +84,7 @@ class GamePalette {
     button: Color(0xFF587047),
   );
 
-  /// Kelime Avi — Brand.gameWord (turkuaz).
+  /// Built around Brand.gameWord (teal).
   static const word = GamePalette(
     softBackground: Color(0xFFDFF6F3),
     dialogChip: Color(0xFFDFF6F3),
@@ -92,7 +94,7 @@ class GamePalette {
     button: Brand.gameWord,
   );
 
-  /// Harfleri Yerlestir — Brand.gameLetter (pembe).
+  /// Built around Brand.gameLetter (pink).
   static const letter = GamePalette(
     softBackground: Color(0xFFFFE4EE),
     dialogChip: Color(0xFFFFE4EE),
@@ -275,9 +277,9 @@ Future<void> showGameHelpDialog({
   );
 }
 
-/// Oyunlarin alt kismindaki kucuk istatistik kutusu.
+/// One result figure at the end of a round.
 ///
-/// Bes oyunda birebir ayni sekilde kopyalanmisti; tek fark renklerdi.
+/// Five games carried an identical copy of this; only the colours differed.
 class GameResultBox extends StatelessWidget {
   final String emoji;
   final String title;
@@ -359,9 +361,10 @@ void _leaveGameScreen(
   navigator.pop();
 }
 
-/// Gunluk sure dolunca gosterilen ortak diyalog.
+/// Shown when the child has used up the day's allowance.
 ///
-/// Kapatildiginda hem diyalogu hem oyun ekranini kapatir.
+/// Dismissing it leaves the game, not just the dialog: there is nothing
+/// left to do on the board behind it.
 Future<void> showTimeUpDialog({
   required BuildContext context,
   required GamePalette palette,
@@ -481,14 +484,15 @@ Future<void> showTimeUpDialog({
   );
 }
 
-/// Butun oyunlarin paylastigi oturum mantigi:
-/// gunluk sure sayaci, cocugun yasi ve sure bitince gosterilen uyari.
+/// What every game screen shares: the daily clock, the child's age and the
+/// warning shown when the allowance runs out.
 ///
-/// Kullanimi: `with GameSessionMixin`, initState icinde `startGameSession()`.
+/// Used as `with GameSessionMixin`, with `startGameSession()` in initState.
+/// The whole contract is one line: `GameId get game`.
 mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
   late final GameTimerController gameTimer;
 
-  /// `child_age` okunana kadarki varsayilan; load'daki geri dusus ile ayni.
+  /// The default until `child_age` is read; the same fallback the load uses.
   int childAge = 9;
 
   /// Which rung of a game's ladder the child starts on. Rebuilt when the
@@ -506,16 +510,17 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
 
   GamePalette get palette => game.palette;
 
-  /// "Suren doldu" diyalogunda gosterilecek metin.
+  /// What the "time is up" dialog says for this game.
   String get timeUpMessage;
 
-  /// Diyalogda gosterilecek guncel puan.
+  /// The score to show in that dialog.
   int get currentScore;
 
-  /// Oyun zaten bittiyse sure uyarisi gosterilmesin diye oyuna ozel kosul.
+  /// False while the game is already showing its own end-of-round screen,
+  /// so the two never stack.
   bool get canShowTimeUpDialog => true;
 
-  /// `child_age` okunduktan sonra cagrilir (setState icinde).
+  /// Called inside setState once `child_age` has been read.
   void onChildAgeLoaded() {}
 
   /// The daily clock counts only play. These are the two ways a child can be
@@ -789,7 +794,7 @@ class GameTimeBar extends StatelessWidget {
   }
 }
 
-/// Oyun ekranlarinin ustundeki kucuk bilgi rozeti.
+/// One reading at the top of a game screen: score, question, time left.
 class InfoBox extends StatelessWidget {
   final String emoji;
   final String title;
@@ -818,10 +823,9 @@ class InfoBox extends StatelessWidget {
             ),
           ],
         ),
-        // Kelime yerine ikon + deger yan yana: hedef kitle okuma bilmiyor.
-        // Kelime Avi ve Harf oyunundaki rozetlerle de ayni dizilim.
-        // [title] gorsel olarak cizilmiyor ama Semantics etiketinde kaliyor,
-        // boylece ekran okuyucu neyin ne oldugunu soyleyebiliyor.
+        // An icon beside the value rather than a word: the target age
+        // cannot read. [title] is not drawn but stays in the Semantics
+        // label, so a screen reader can still say what the number is.
         child: Semantics(
           label: '$title: $value',
           // Without this the drawn emoji and value were read out again

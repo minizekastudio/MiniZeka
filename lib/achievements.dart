@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'achievement_manager.dart';
+import 'game_id.dart';
 
 class AchievementsPage extends StatefulWidget {
   const AchievementsPage({super.key});
@@ -70,7 +71,7 @@ class _AchievementsPageState extends State<AchievementsPage> {
       'key': 'game_explorer',
       'emoji': '🎮',
       'title': 'Oyun Kaşifi',
-      'description': '5 farklı oyunu oynadın!',
+      'description': '${GameId.values.length} oyunun hepsini oynadın!',
       'color': const Color(0xFFFFDFF0),
     },
   ];

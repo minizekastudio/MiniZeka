@@ -4,14 +4,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'achievement_manager.dart';
-import 'app_theme.dart';
-import 'difficulty.dart';
-import 'game_id.dart';
-import 'game_kit.dart';
-import 'games/word_round.dart';
-import 'sound_manager.dart';
-import 'storage_keys.dart';
+import '../achievement_manager.dart';
+import '../app_theme.dart';
+import '../difficulty.dart';
+import '../game_id.dart';
+import '../game_kit.dart';
+import '../sound_manager.dart';
+import '../storage_keys.dart';
+import 'word_round.dart';
 
 /// Build the word for the picture out of letter tiles.
 ///

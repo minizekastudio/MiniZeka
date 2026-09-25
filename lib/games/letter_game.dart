@@ -4,14 +4,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'achievement_manager.dart';
-import 'app_theme.dart';
-import 'difficulty.dart';
-import 'game_id.dart';
-import 'game_kit.dart';
-import 'games/letter_round.dart';
-import 'sound_manager.dart';
-import 'storage_keys.dart';
+import '../achievement_manager.dart';
+import '../app_theme.dart';
+import '../difficulty.dart';
+import '../game_id.dart';
+import '../game_kit.dart';
+import '../sound_manager.dart';
+import '../storage_keys.dart';
+import 'letter_round.dart';
 
 /// Know the letter: the same one again, its small form, the sound a picture
 /// starts with, where it sits in the alphabet.

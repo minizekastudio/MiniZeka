@@ -52,7 +52,9 @@ class AchievementManager {
       );
     }
 
-    if (playedGames.length >= 5) {
+    // Every game, not a fixed five: the app had five games when this was
+    // written and quietly kept the old bar after two more were added.
+    if (playedGames.length >= GameId.values.length) {
       await unlock('game_explorer');
     }
   }

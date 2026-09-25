@@ -7,10 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mini_zeka/app_theme.dart';
 import 'package:mini_zeka/difficulty.dart';
 import 'package:mini_zeka/game_id.dart';
+import 'package:mini_zeka/games/word_game.dart';
 import 'package:mini_zeka/games/word_round.dart';
 import 'package:mini_zeka/sound_manager.dart';
 import 'package:mini_zeka/storage_keys.dart';
-import 'package:mini_zeka/word_game.dart';
 
 const _seed = 7;
 

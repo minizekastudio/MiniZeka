@@ -4,14 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mini_zeka/game_id.dart';
 import 'package:mini_zeka/games/attention_game.dart';
+import 'package:mini_zeka/games/letter_game.dart';
 import 'package:mini_zeka/games/logic_game.dart';
 import 'package:mini_zeka/games/math_game.dart';
 import 'package:mini_zeka/games/memory_game.dart';
 import 'package:mini_zeka/games/shape_game.dart';
-import 'package:mini_zeka/letter_game.dart';
+import 'package:mini_zeka/games/word_game.dart';
 import 'package:mini_zeka/sound_manager.dart';
 import 'package:mini_zeka/storage_keys.dart';
-import 'package:mini_zeka/word_game.dart';
 
 /// Screens open dialogs a child has to reach the buttons of. On the
 /// narrowest phone the app supports they must not overflow.

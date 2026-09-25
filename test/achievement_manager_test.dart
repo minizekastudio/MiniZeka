@@ -36,16 +36,18 @@ void main() {
     }
   });
 
-  test('kaşif rozeti beşinci farklı oyunda açılır, dördüncüde açılmaz',
+  test('kaşif rozeti bütün oyunlar oynanınca açılır, biri eksikken açılmaz',
       () async {
-    final games = GameId.values.take(5).toList();
+    // The bar is GameId.values.length, so adding a game raises it instead of
+    // leaving the badge unlockable with a stale five.
+    final games = GameId.values;
 
-    for (final game in games.take(4)) {
+    for (final game in games.take(games.length - 1)) {
       await AchievementManager.markGamePlayed(game);
     }
     expect(await AchievementManager.isUnlocked('game_explorer'), isFalse);
 
-    await AchievementManager.markGamePlayed(games[4]);
+    await AchievementManager.markGamePlayed(games.last);
     expect(await AchievementManager.isUnlocked('game_explorer'), isTrue);
   });
 }

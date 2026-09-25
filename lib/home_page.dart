@@ -9,8 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'settings_page.dart';
 import 'avatar_manager.dart';
 import 'avatar_selection_page.dart';
-import 'word_game.dart';
-import 'letter_game.dart';
+import 'games/word_game.dart';
+import 'games/letter_game.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback onAchievementsTap;
