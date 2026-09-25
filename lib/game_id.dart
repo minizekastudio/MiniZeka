@@ -63,8 +63,8 @@ enum GameId {
     emoji: '🔎',
     difficulty: 2,
     defaultLimitMinutes: 15,
-    helpTitle: 'Kelimeyi bul!',
-    helpBody: 'Harfleri seçerek gizli kelimeyi oluştur.',
+    helpTitle: 'Resmin adını yaz!',
+    helpBody: 'Resimdeki şeyin adını harflere dokunarak kur.',
   ),
 
   math(

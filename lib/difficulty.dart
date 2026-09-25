@@ -267,6 +267,27 @@ const List<GameLevel> logicLadder = [
   GameLevel(cards: 4, roundsToAdvance: 3),
 ];
 
+/// The word game's ladder.
+///
+/// The game held eighteen words in three tiers, and a round was ten
+/// questions: the youngest band drew from six words, so words came round
+/// again inside a single sitting. It also ran a two minute countdown and
+/// took a life for every wrong answer — a stopwatch and a way to lose, in a
+/// game for four year olds, in an app that has neither anywhere else.
+///
+/// The rungs now go from "which letter does it start with" to spelling
+/// longer and longer words, with spare letters mixed in higher up.
+///
+/// `cards` is unused here; the board is the word's letters.
+const List<GameLevel> wordLadder = [
+  GameLevel(cards: 4, roundsToAdvance: 2),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+  GameLevel(cards: 4, roundsToAdvance: 3),
+];
+
 /// Questions in one round, for every game that climbs a ladder.
 const int questionsPerRound = 5;
 

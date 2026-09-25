@@ -2,2121 +2,619 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'achievement_manager.dart';
 import 'app_theme.dart';
+import 'difficulty.dart';
 import 'game_id.dart';
 import 'game_kit.dart';
+import 'games/word_round.dart';
 import 'sound_manager.dart';
+import 'storage_keys.dart';
 
+/// Build the word for the picture out of letter tiles.
+///
+/// The word list used to be stored without Turkish letters (KEDI, CICEK) and
+/// upper-cased in code, which turns "i" into "I"; a spelling game cannot
+/// teach the spelling wrong. The game also ran a two minute countdown and
+/// took a life for every miss — a stopwatch and a way to lose, for four year
+/// olds, in an app that has neither anywhere else.
 class WordGame extends StatefulWidget {
-  const WordGame({
-    super.key,
-  });
+  const WordGame({super.key, this.random});
+
+  /// Injected by tests so a round can be reproduced.
+  final Random? random;
 
   @override
   State<WordGame> createState() => _WordGameState();
 }
 
-// =============================================================
-// KELİME MODELİ
-// =============================================================
-
-class WordItem {
-  final String word;
-  final String emoji;
-  final String hint;
-  final int difficulty;
-
-  const WordItem({
-    required this.word,
-    required this.emoji,
-    required this.hint,
-    required this.difficulty,
-  });
-}
-
-// =============================================================
-// OYUN
-// =============================================================
-
 class _WordGameState extends State<WordGame>
-    with SingleTickerProviderStateMixin, GameSessionMixin {
-  final Random _random = Random();
-
-  // -------------------------------------------------------------
-  // KELİME HAVUZU
-  // -------------------------------------------------------------
-
-  final List<WordItem> _wordPool = const [
-    // KOLAY
-    WordItem(
-      word: 'KEDI',
-      emoji: '🐱',
-      hint: 'Evde yaşayan sevimli bir hayvan.',
-      difficulty: 1,
-    ),
-    WordItem(
-      word: 'ELMA',
-      emoji: '🍎',
-      hint: 'Kırmızı veya yeşil bir meyve.',
-      difficulty: 1,
-    ),
-    WordItem(
-      word: 'MASA',
-      emoji: '🪑',
-      hint: 'Üzerinde yemek veya ders çalışılır.',
-      difficulty: 1,
-    ),
-    WordItem(
-      word: 'KUS',
-      emoji: '🐦',
-      hint: 'Uçabilen küçük bir hayvan.',
-      difficulty: 1,
-    ),
-    WordItem(
-      word: 'EV',
-      emoji: '🏠',
-      hint: 'İçinde yaşadığımız yer.',
-      difficulty: 1,
-    ),
-    WordItem(
-      word: 'AYI',
-      emoji: '🐻',
-      hint: 'Ormanda yaşayan büyük bir hayvan.',
-      difficulty: 1,
-    ),
-
-    // ORTA
-    WordItem(
-      word: 'KALEM',
-      emoji: '✏️',
-      hint: 'Yazı yazmak için kullanılır.',
-      difficulty: 2,
-    ),
-    WordItem(
-      word: 'KITAP',
-      emoji: '📚',
-      hint: 'Okumak için kullanılan bir şey.',
-      difficulty: 2,
-    ),
-    WordItem(
-      word: 'BALIK',
-      emoji: '🐟',
-      hint: 'Suda yaşayan bir hayvan.',
-      difficulty: 2,
-    ),
-    WordItem(
-      word: 'CICEK',
-      emoji: '🌸',
-      hint: 'Bahçelerde ve doğada yetişir.',
-      difficulty: 2,
-    ),
-    WordItem(
-      word: 'ARABA',
-      emoji: '🚗',
-      hint: 'Yollarda kullanılan bir taşıt.',
-      difficulty: 2,
-    ),
-    WordItem(
-      word: 'GUNES',
-      emoji: '☀️',
-      hint: 'Dünyamıza ışık ve sıcaklık verir.',
-      difficulty: 2,
-    ),
-
-    // ZOR
-    WordItem(
-      word: 'KELEBEK',
-      emoji: '🦋',
-      hint: 'Kanatları olan renkli bir canlı.',
-      difficulty: 3,
-    ),
-    WordItem(
-      word: 'FIL',
-      emoji: '🐘',
-      hint: 'Çok büyük ve hortumlu bir hayvan.',
-      difficulty: 3,
-    ),
-    WordItem(
-      word: 'KAPLUMBAĞA',
-      emoji: '🐢',
-      hint: 'Sırtında sert bir kabuk taşır.',
-      difficulty: 3,
-    ),
-    WordItem(
-      word: 'GOKKUSAGI',
-      emoji: '🌈',
-      hint: 'Yağmurdan sonra gökyüzünde görülebilir.',
-      difficulty: 3,
-    ),
-    WordItem(
-      word: 'DONDURMA',
-      emoji: '🍦',
-      hint: 'Soğuk ve tatlı bir yiyecek.',
-      difficulty: 3,
-    ),
-    WordItem(
-      word: 'YILDIZ',
-      emoji: '⭐',
-      hint: 'Gece gökyüzünde parlar.',
-      difficulty: 3,
-    ),
-  ];
-
-  // -------------------------------------------------------------
-  // OYUN DEĞİŞKENLERİ
-  // -------------------------------------------------------------
-
-  static const int _totalQuestions = 10;
-  static const int _maxLives = 3;
-
-  int _questionIndex = 0;
-  int _score = 0;
-  int _lives = _maxLives;
-  int _secondsLeft = 120;
-
-  int _correctAnswers = 0;
-
-  WordItem? _currentWord;
-
-  List<String> _letters = [];
-  final List<int> _selectedIndexes = [];
-
-  Timer? _timer;
-
-  bool _isAnswering = false;
-  bool _showCorrectAnimation = false;
-  bool _showWrongAnimation = false;
-  bool _gameFinished = false;
-
-  // -------------------------------------------------------------
-  // GÜNLÜK SÜRE OTURUMU
-  // -------------------------------------------------------------
-
+    with TickerProviderStateMixin, GameSessionMixin {
   @override
   GameId get game => GameId.word;
 
   @override
   String get timeUpMessage =>
-      'Kelime avı için belirlenen günlük süreyi kullandın. 🌙';
+      'Kelime Avı için belirlenen günlük süreyi kullandın. 🌙';
 
   @override
-  int get currentScore => _score;
+  int get currentScore => score;
 
   @override
-  bool get canShowTimeUpDialog => !_gameFinished;
+  bool get canShowTimeUpDialog => !_isRoundOver;
 
-  // -------------------------------------------------------------
-  // ANİMASYON
-  // -------------------------------------------------------------
+  static const double _tileGap = 8;
 
-  late AnimationController _animationController;
+  static const double _slotGap = 4;
 
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
+  static const Duration _foundHold = Duration(milliseconds: 900);
 
-  // -------------------------------------------------------------
-  // INIT
-  // -------------------------------------------------------------
+  /// After this many wrong tries the next letter is pointed out.
+  static const int _hintAfterWrongTries = 2;
+
+  late final Random _random = widget.random ?? Random();
+
+  // ---- ladder -------------------------------------------------------------
+
+  int levelIndex = 0;
+  int roundsCleared = 0;
+
+  GameLevel get level => wordLadder[levelIndex];
+
+  @override
+  void onChildAgeLoaded() {
+    levelIndex = startingLevelFor(ageBand);
+    _loadProgress();
+  }
+
+  Future<void> _loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final resumed = resumeLadder(
+      ladder: wordLadder,
+      startingLevel: levelIndex,
+      savedLevel: prefs.getInt(StorageKeys.gameLevel(game)),
+      savedRounds: prefs.getInt(StorageKeys.gameRoundsCleared(game)) ?? 0,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      levelIndex = resumed.levelIndex;
+      roundsCleared = resumed.roundsCleared;
+      _startRound();
+    });
+  }
+
+  Future<void> _saveProgress(int level, int rounds) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(StorageKeys.gameLevel(game), level);
+    await prefs.setInt(StorageKeys.gameRoundsCleared(game), rounds);
+  }
+
+  // ---- round state --------------------------------------------------------
+
+  List<WordQuestion> _round = const [];
+  int _questionIndex = 0;
+  int score = 0;
+
+  int _firstTryMistakes = 0;
+  int _wrongTriesThisWord = 0;
+
+  /// Tiles put into the slots, in order.
+  final List<int> _placed = [];
+
+  bool _isSolved = false;
+  bool _isResolving = false;
+  bool _isRoundOver = false;
+  int _roundGeneration = 0;
+
+  WordQuestion? get _question => _round.isEmpty ? null : _round[_questionIndex];
+
+  bool get _showsHint => _wrongTriesThisWord >= _hintAfterWrongTries;
+
+  // ---- animation ----------------------------------------------------------
+
+  late final AnimationController _shake = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 350),
+  );
+
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+  );
+
+  Timer? _holdTimer;
 
   @override
   void initState() {
     super.initState();
-
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-
-    _scaleAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutBack,
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    );
-
     startGameSession();
-
-    _startGame();
   }
 
-  // -------------------------------------------------------------
-  // OYUNU BAŞLAT
-  // -------------------------------------------------------------
+  @override
+  void dispose() {
+    _holdTimer?.cancel();
+    _shake.dispose();
+    _pulse.dispose();
+    super.dispose();
+  }
 
-  void _startGame() {
-    _timer?.cancel();
+  // ---- flow ---------------------------------------------------------------
 
+  void _startRound() {
+    _roundGeneration++;
+
+    _round = buildWordRound(rung: levelIndex, random: _random);
     _questionIndex = 0;
-    _score = 0;
-    _lives = _maxLives;
-    _secondsLeft = 120;
-    _correctAnswers = 0;
-    _gameFinished = false;
+    score = 0;
+    _firstTryMistakes = 0;
+    _isRoundOver = false;
 
-    _loadQuestion();
-
-    _startTimer();
+    _beginQuestion();
   }
 
-  // -------------------------------------------------------------
-  // SORU YÜKLE
-  // -------------------------------------------------------------
+  void _beginQuestion() {
+    _wrongTriesThisWord = 0;
+    _placed.clear();
+    _isSolved = false;
+    _isResolving = false;
 
-  void _loadQuestion() {
-    if (_questionIndex >= _totalQuestions) {
-      _finishGame();
-      return;
-    }
-
-    // Zorluk yas bandindan baslar, oyun icinde kazanildikca acilir.
-    // Bu iki oyun daha once childAge'i hic kullanmiyordu: 4 yasindaki cocuk
-    // 12 yasindakiyle birebir ayni kelimeleri aliyordu.
-    final allowed = difficulty.scaled(const [1, 1, 2, 3], max: 3);
-
-    final byLevel =
-        _wordPool.where((item) => item.difficulty <= allowed).toList();
-
-    final availableWords = byLevel
-        .where((item) => !_usedWords.contains(item.word))
-        .toList();
-
-    if (availableWords.isEmpty) {
-      _usedWords.clear();
-    }
-
-    final pool = availableWords.isEmpty ? byLevel : availableWords;
-
-    final word = pool[
-    _random.nextInt(pool.length)];
-
-    _usedWords.add(word.word);
-
-    final letters = word.word
-        .split('')
-        .map((e) => e.toUpperCase())
-        .toList();
-
-    // Harfleri karıştır.
-    do {
-      letters.shuffle(_random);
-    } while (
-    letters.join() == word.word &&
-        letters.length > 1);
-
-    // Uzun kelimelerde birkaç ekstra harf ekle.
-    if (word.difficulty >= 2) {
-      final extraLetters = [
-        'A',
-        'E',
-        'I',
-        'K',
-        'L',
-        'M',
-        'N',
-        'R',
-        'S',
-        'T',
-      ];
-
-      final extra =
-      extraLetters[_random.nextInt(
-        extraLetters.length,
-      )];
-
-      letters.add(extra);
-      letters.shuffle(_random);
-    }
-
-    setState(() {
-      _currentWord = word;
-      _letters = letters;
-      _selectedIndexes.clear();
-      _isAnswering = false;
-      _showCorrectAnimation = false;
-      _showWrongAnimation = false;
-    });
-
-    _animationController.forward(
-      from: 0,
-    );
+    _pulse
+      ..stop()
+      ..value = 0;
   }
 
-  final Set<String> _usedWords = {};
+  /// How many letters the answer needs.
+  int get _slotCount {
+    final question = _question;
+    if (question == null) return 0;
 
-  // -------------------------------------------------------------
-  // ZAMANLAYICI
-  // -------------------------------------------------------------
-
-  void _startTimer() {
-    _timer = Timer.periodic(
-      const Duration(seconds: 1),
-          (timer) {
-        if (!mounted || _gameFinished) {
-          timer.cancel();
-          return;
-        }
-
-        if (_secondsLeft <= 0) {
-          timer.cancel();
-          _finishGame();
-          return;
-        }
-
-        setState(() {
-          _secondsLeft--;
-        });
-      },
-    );
+    return question.task == WordTask.firstLetter ? 1 : question.word.length;
   }
 
-  // -------------------------------------------------------------
-  // HARFE BAS
-  // -------------------------------------------------------------
+  /// The tile a child should reach for next, for the hint.
+  int? get _nextCorrectTile {
+    final question = _question;
+    if (question == null) return null;
 
-  void _selectLetter(int index) {
-    if (_isAnswering ||
-        _gameFinished ||
-        _selectedIndexes.contains(index)) {
-      return;
+    final wanted = question.task == WordTask.firstLetter
+        ? question.spelling.first
+        : question.spelling[_placed.length.clamp(0, _slotCount - 1)];
+
+    for (var i = 0; i < question.letters.length; i++) {
+      if (question.letters[i] == wanted && !_placed.contains(i)) return i;
     }
 
-    final targetLength =
-        _currentWord?.word.length ?? 0;
-
-    if (_selectedIndexes.length >= targetLength) {
-      return;
-    }
-
-    setState(() {
-      _selectedIndexes.add(index);
-    });
+    return null;
   }
 
-  // -------------------------------------------------------------
-  // SEÇİLİ HARFİ GERİ AL
-  // -------------------------------------------------------------
+  void _handleTileTap(int index) {
+    if (!ensurePlayTimeLeft()) return;
 
-  void _removeSelectedLetter(int position) {
-    if (_isAnswering ||
-        _selectedIndexes.isEmpty) {
-      return;
-    }
+    final question = _question;
+    if (question == null || _isResolving || _isRoundOver) return;
+    if (_placed.contains(index) || _placed.length >= _slotCount) return;
 
-    setState(() {
-      _selectedIndexes.removeAt(position);
-    });
+    setState(() => _placed.add(index));
+
+    if (_placed.length == _slotCount) _checkAnswer(question);
   }
 
-  // -------------------------------------------------------------
-  // CEVABI KONTROL ET
-  // -------------------------------------------------------------
+  /// Taking a letter back out of the slots.
+  void _handleSlotTap(int slot) {
+    if (_isResolving || _isRoundOver) return;
+    if (slot >= _placed.length) return;
 
-  Future<void> _checkAnswer() async {
-    if (_currentWord == null ||
-        _isAnswering) {
-      return;
-    }
+    setState(() => _placed.removeRange(slot, _placed.length));
+  }
 
-    _isAnswering = true;
+  void _checkAnswer(WordQuestion question) {
+    final attempt = _placed.map((i) => question.letters[i]).join();
 
-    final answer = _selectedIndexes
-        .map(
-          (index) => _letters[index],
-    )
-        .join();
-
-    final correct =
-        answer.toUpperCase() ==
-            _currentWord!.word
-                .toUpperCase();
-
-    if (correct) {
-      await _correctAnswer();
+    if (attempt == question.answer) {
+      _resolveCorrect();
     } else {
-      await _wrongAnswer();
+      _handleWrong();
     }
   }
 
-  // -------------------------------------------------------------
-  // DOĞRU CEVAP
-  // -------------------------------------------------------------
+  void _handleWrong() {
+    SoundManager.playWrong();
 
-  Future<void> _correctAnswer() async {
-    if (!mounted) return;
+    if (_wrongTriesThisWord == 0) _firstTryMistakes++;
+    _wrongTriesThisWord++;
 
-    difficulty.correct();
+    _shake.forward(from: 0);
 
-    setState(() {
-      _correctAnswers++;
-      _score += _calculateQuestionScore();
-      _showCorrectAnimation = true;
-    });
+    // Wrong letters simply come back: no lives, nothing ends. After a couple
+    // of tries the next letter starts to pulse.
+    setState(_placed.clear);
 
-    await SoundManager.playCorrect();
-
-    await Future.delayed(
-      const Duration(milliseconds: 900),
-    );
-
-    if (!mounted) return;
-
-    _questionIndex++;
-
-    _loadQuestion();
+    if (_wrongTriesThisWord >= _hintAfterWrongTries) {
+      _pulse.repeat(reverse: true);
+    }
   }
 
-  // -------------------------------------------------------------
-  // YANLIŞ CEVAP
-  // -------------------------------------------------------------
+  void _resolveCorrect() {
+    final generation = _roundGeneration;
+    final isFirstTry = _wrongTriesThisWord == 0;
 
-  Future<void> _wrongAnswer() async {
-    if (!mounted) return;
-
-    difficulty.wrong();
+    SoundManager.playCorrect();
+    _pulse
+      ..stop()
+      ..value = 0;
 
     setState(() {
-      _lives--;
-      _showWrongAnimation = true;
+      _isSolved = true;
+      _isResolving = true;
+
+      if (isFirstTry) score += (levelIndex + 1) * 10;
     });
 
-    await SoundManager.playWrong();
+    final isLastQuestion = _questionIndex + 1 >= _round.length;
+    final settled = isLastQuestion ? _settleRound() : null;
 
-    await Future.delayed(
-      const Duration(milliseconds: 750),
-    );
+    _holdTimer?.cancel();
+    _holdTimer = Timer(_foundHold, () {
+      if (!mounted || generation != _roundGeneration) return;
 
-    if (!mounted) return;
-
-    if (_lives <= 0) {
-      _finishGame();
-      return;
-    }
-
-    setState(() {
-      _selectedIndexes.clear();
-      _showWrongAnimation = false;
-      _isAnswering = false;
+      if (settled == null) {
+        setState(() {
+          _questionIndex++;
+          _beginQuestion();
+        });
+      } else {
+        _finishRound(settled);
+      }
     });
   }
 
-  // -------------------------------------------------------------
-  // PUAN
-  // -------------------------------------------------------------
+  _SettledRound _settleRound() {
+    AchievementManager.unlock('word_master');
+    AchievementManager.unlock('first_step');
+    AchievementManager.markGamePlayed(game);
 
-  int _calculateQuestionScore() {
-    int baseScore = 10;
+    if (isCleanRound(_firstTryMistakes)) {
+      final next = advanceLadder(
+        ladder: wordLadder,
+        levelIndex: levelIndex,
+        roundsCleared: roundsCleared,
+      );
 
-    if (_currentWord?.difficulty == 2) {
-      baseScore = 15;
+      _saveProgress(next.levelIndex, next.roundsCleared);
+
+      return next;
     }
 
-    if (_currentWord?.difficulty == 3) {
-      baseScore = 20;
-    }
-
-    final timeBonus =
-    min(_secondsLeft, 20);
-
-    return baseScore + timeBonus;
-  }
-
-  // -------------------------------------------------------------
-  // OYUNU BİTİR
-  // -------------------------------------------------------------
-
-  Future<void> _finishGame() async {
-    if (_gameFinished) return;
-
-    _timer?.cancel();
-
-    _gameFinished = true;
-
-    await AchievementManager.unlock('first_step');
-    await AchievementManager.unlock('word_master');
-    await AchievementManager.markGamePlayed(game);
-
-    await SoundManager.playGameOver();
-
-    if (!mounted) return;
-
-    setState(() {});
-
-    await Future.delayed(
-      const Duration(milliseconds: 350),
+    return (
+      levelIndex: levelIndex,
+      roundsCleared: roundsCleared,
+      outcome: RoundOutcome.retry,
     );
-
-    if (!mounted) return;
-
-    _showResultDialog();
   }
 
-  // -------------------------------------------------------------
-  // SONUÇ EKRANI
-  // -------------------------------------------------------------
+  void _finishRound(_SettledRound settled) {
+    setState(() {
+      levelIndex = settled.levelIndex;
+      roundsCleared = settled.roundsCleared;
+      _isRoundOver = true;
+    });
 
-  void _showResultDialog() {
-    final accuracy =
-    _questionIndex == 0
-        ? 0
-        : ((_correctAnswers /
-        _questionIndex) *
-        100)
-        .round();
+    if (timeUpDialogShown) return;
 
-    showGeneralDialog(
+    final firstTryRight = _round.length - _firstTryMistakes;
+
+    showLadderRoundDialog(
       context: context,
-      barrierDismissible: false,
-      barrierLabel: 'Oyun Sonucu',
-      barrierColor:
-      Colors.black.withValues(alpha: 0.55),
-      transitionDuration:
-      const Duration(milliseconds: 400),
-      pageBuilder:
-          (
-          context,
-          animation,
-          secondaryAnimation,
-          ) {
-        return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: ScaleTransition(
-              scale: CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutBack,
-              ),
-              child: Container(
-                margin:
-                const EdgeInsets.all(22),
-                padding:
-                const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color:
-                  const Color(0xFFE0FFE3),
-                  borderRadius:
-                  BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                      Colors.black.withValues(
-                        alpha: 0.16,
-                      ),
-                      blurRadius: 30,
-                      offset:
-                      const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize:
-                  MainAxisSize.min,
-                  children: [
-                    const Text(
-                      '🎉',
-                      style: TextStyle(
-                        fontSize: 54,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 8,
-                    ),
-
-                    const Text(
-                      'Harika Oynadın!',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight:
-                        FontWeight.w900,
-                        color:
-                        Color(0xFF259242),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 7,
-                    ),
-
-                    const Text(
-                      'Kelime Avı tamamlandı!',
-                      style: TextStyle(
-                        fontSize: 17,
-                        color:
-                        Color(0xFF23D63E),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 22,
-                    ),
-
-                    Row(
-                      children: [
-                        _resultCard(
-                          '⭐',
-                          'Skor',
-                          '$_score',
-                        ),
-                        const SizedBox(
-                          width: 9,
-                        ),
-                        _resultCard(
-                          '🎯',
-                          'Doğru',
-                          '$_correctAnswers',
-                        ),
-                        const SizedBox(
-                          width: 9,
-                        ),
-                        _resultCard(
-                          '💯',
-                          'Başarı',
-                          '%$accuracy',
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(
-                      height: 22,
-                    ),
-
-                    Container(
-                      width:
-                      double.infinity,
-                      padding:
-                      const EdgeInsets
-                          .symmetric(
-                        vertical: 13,
-                        horizontal: 15,
-                      ),
-                      decoration:
-                      BoxDecoration(
-                        gradient:
-                        const LinearGradient(
-                          colors: [
-                            Color(0xFFE0FFE3),
-                            Color(0xFFE9F8FF),
-                          ],
-                        ),
-                        borderRadius:
-                        BorderRadius
-                            .circular(
-                          17,
-                        ),
-                      ),
-                      child: Text(
-                        _getResultMessage(
-                          accuracy,
-                        ),
-                        textAlign:
-                        TextAlign.center,
-                        style:
-                        const TextStyle(
-                          fontSize: 17,
-                          fontWeight:
-                          FontWeight.w700,
-                          color:
-                          Color(0xFF279A45),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 20,
-                    ),
-
-                    SizedBox(
-                      width:
-                      double.infinity,
-                      height: Brand.buttonHeight,
-                      child:
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(
-                            context,
-                          );
-
-                          _startGame();
-                        },
-                        style:
-                        ElevatedButton
-                            .styleFrom(
-                          backgroundColor:
-                          const Color(
-                            0xFF23D83E,
-                          ),
-                          foregroundColor:
-                          Colors.white,
-                          elevation: 4,
-                          shape:
-                          RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius
-                                .circular(
-                              17,
-                            ),
-                          ),
-                        ),
-                        child:
-                        const Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment
-                              .center,
-                          children: [
-                            Text(
-                              'Tekrar Oyna',
-                              style:
-                              TextStyle(
-                                fontSize:
-                                14,
-                                fontWeight:
-                                FontWeight
-                                    .w900,
-                              ),
-                            ),
-                            SizedBox(
-                              width: 8,
-                            ),
-                            Text(
-                              '🔄',
-                              style:
-                              TextStyle(
-                                fontSize:
-                                18,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 9,
-                    ),
-
-                    SizedBox(
-                      width:
-                      double.infinity,
-                      height: 48,
-                      child:
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(
-                            context,
-                          );
-
-                          Navigator.pop(
-                            context,
-                          );
-                        },
-                        style:
-                        OutlinedButton
-                            .styleFrom(
-                          foregroundColor:
-                          const Color(
-                            0xFF23D83E,
-                          ),
-                          side:
-                          const BorderSide(
-                            color: Color(
-                              0xFFC9F9CE,
-                            ),
-                          ),
-                          shape:
-                          RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius
-                                .circular(
-                              17,
-                            ),
-                          ),
-                        ),
-                        child:
-                        const Text(
-                          'Ana Sayfaya Dön',
-                          style:
-                          TextStyle(
-                            fontSize: 17,
-                            fontWeight:
-                            FontWeight
-                                .w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // -------------------------------------------------------------
-  // SONUÇ MESAJI
-  // -------------------------------------------------------------
-
-  String _getResultMessage(
-      int accuracy,
-      ) {
-    if (accuracy >= 90) {
-      return '🌟 Muhteşem! Kelimeler konusunda harikasın!';
-    }
-
-    if (accuracy >= 70) {
-      return '👏 Çok güzel! Biraz daha çalışırsan daha da iyi olacaksın!';
-    }
-
-    if (accuracy >= 50) {
-      return '💪 Güzel deneme! Birkaç oyun daha oynayarak gelişebilirsin!';
-    }
-
-    return '🌱 Pes etme! Tekrar dene ve kelimeleri keşfet!';
-  }
-
-  // -------------------------------------------------------------
-  // SONUÇ KARTI
-  // -------------------------------------------------------------
-
-  Widget _resultCard(
-      String emoji,
-      String title,
-      String value,
-      ) {
-    return Expanded(
-      child: Container(
-        padding:
-        const EdgeInsets.symmetric(
-          vertical: 13,
-          horizontal: 5,
+      palette: palette,
+      outcome: settled.outcome,
+      ladder: wordLadder,
+      levelIndex: levelIndex,
+      roundsCleared: roundsCleared,
+      levelUpMessage: _newRungMessage(levelIndex),
+      masteredMessage: 'En uzun kelimeleri bile yazıyorsun! ✨',
+      flair: '🔎',
+      results: [
+        GameResultBox(
+          palette: palette,
+          emoji: '⭐',
+          title: 'Puan',
+          value: '$score',
         ),
-        decoration: BoxDecoration(
-          color: const Color(0xFFE7F8E9),
-          borderRadius:
-          BorderRadius.circular(16),
+        GameResultBox(
+          palette: palette,
+          emoji: '✅',
+          title: 'İlk seferde',
+          value: '$firstTryRight/${_round.length}',
         ),
-        child: Column(
-          children: [
-            Text(
-              emoji,
-              style: const TextStyle(
-                fontSize: 21,
-              ),
-            ),
-            const SizedBox(
-              height: 5,
-            ),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF259242),
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 2,
-            ),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 9,
-                color:
-                Color(0xFF2CDD47),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------
-  // OYUN KARTI
-  // -------------------------------------------------------------
-
-  Widget _letterButton(
-      String letter,
-      int index,
-      ) {
-    final selected =
-    _selectedIndexes.contains(index);
-
-    final disabled =
-        _isAnswering ||
-            selected ||
-            _gameFinished;
-
-    return GestureDetector(
-      onTap: disabled
-          ? null
-          : () {
-        _selectLetter(index);
-      },
-      child: AnimatedScale(
-        scale: selected ? 0.92 : 1.0,
-        duration:
-        const Duration(milliseconds: 160),
-        child: AnimatedContainer(
-          duration:
-          const Duration(milliseconds: 180),
-          width: 62,
-          height: 62,
-          decoration: BoxDecoration(
-            gradient: selected
-                ? const LinearGradient(
-              colors: [
-                Color(0xFFD4F3D7),
-                Color(0xFFE2F7E4),
-              ],
-            )
-                : const LinearGradient(
-              begin:
-              Alignment.topLeft,
-              end:
-              Alignment.bottomRight,
-              colors: [
-                Colors.white,
-                Color(0xFFE6F9E8),
-              ],
-            ),
-            borderRadius:
-            BorderRadius.circular(18),
-            border: Border.all(
-              color: selected
-                  ? const Color(0xFFB8EEBD)
-                  : Colors.white,
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color:
-                Colors.black.withValues(
-                  alpha: selected ? 0.02 : 0.07,
-                ),
-                blurRadius:
-                selected ? 4 : 10,
-                offset:
-                const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              letter,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight:
-                FontWeight.w900,
-                color: selected
-                    ? const Color(
-                  0xFF64E675,
-                )
-                    : const Color(
-                  0xFF259242,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------
-  // SEÇİLEN HARFLER
-  // -------------------------------------------------------------
-
-  Widget _selectedLetters() {
-    final selectedLetters = _selectedIndexes
-        .map(
-          (index) => _letters[index],
-    )
-        .toList();
-
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(
-            minHeight: 74,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 10,
-          ),
-          decoration: BoxDecoration(
-            color: Theme.of(context)
-                .colorScheme
-                .surface
-                .withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white,
-              width: 1.5,
-            ),
-          ),
-          child: selectedLetters.isEmpty
-              ? const Center(
-            child: Text(
-              'Harfleri seçerek kelimeyi oluştur',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF4AE261),
-              ),
-            ),
-          )
-              : Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 6,
-            runSpacing: 6,
-            children: List.generate(
-              selectedLetters.length,
-                  (position) {
-                return GestureDetector(
-                  onTap: () => _removeSelectedLetter(position),
-                  child: Container(
-                    width: 42,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD8FFDC),
-                      borderRadius:
-                      BorderRadius.circular(13),
-                      border: Border.all(
-                        color: const Color(0xFFC6F2CB),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        selectedLetters[position],
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF2AA84C),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 10),
-
-        Row(
-          children: [
-            // GERİ AL
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed:
-                _selectedIndexes.isEmpty || _isAnswering
-                    ? null
-                    : () {
-                  setState(() {
-                    _selectedIndexes.removeLast();
-                  });
-                },
-                icon: const Icon(
-                  Icons.backspace_outlined,
-                  size: 17,
-                ),
-                label: const Text(
-                  'Geri Al',
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor:
-                  const Color(0xFF23D83E),
-                  disabledForegroundColor:
-                  const Color(0xFF91E599),
-                  side: const BorderSide(
-                    color: Color(0xFFC4F1C8),
-                  ),
-                  minimumSize:
-                  const Size(double.infinity, 46),
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(15),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 9),
-
-            // KONTROL ET
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed:
-                _selectedIndexes.isEmpty ||
-                    _isAnswering
-                    ? null
-                    : _checkAnswer,
-                icon: const Icon(
-                  Icons.check_rounded,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Kontrol Et',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  const Color(0xFF23D83E),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor:
-                  const Color(0xFFD3F2D6),
-                  disabledForegroundColor:
-                  const Color(0xFF69E77C),
-                  elevation: 3,
-                  minimumSize:
-                  const Size(double.infinity, 46),
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(15),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        GameResultBox(
+          palette: palette,
+          emoji: '⏱️',
+          title: 'Süre',
+          value: formatSeconds(gameTimer.usedSeconds),
         ),
       ],
+      onNextRound: () {
+        if (!ensurePlayTimeLeft()) return;
+
+        setState(_startRound);
+      },
     );
   }
 
-  // -------------------------------------------------------------
-  // BUILD
-  // -------------------------------------------------------------
+  static String _newRungMessage(int rung) {
+    if (wordRuleFor(rung).task == WordTask.firstLetter) {
+      return 'Hadi başlayalım! ✨';
+    }
+    if (wordRuleFor(rung - 1).task == WordTask.firstLetter) {
+      return 'Artık harfleri sen diziyorsun! 🔤';
+    }
+    return 'Artık kelimeler uzuyor! 🔤';
+  }
+
+  // ---- build --------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
-    final word = _currentWord;
+    final question = _question;
 
     return Scaffold(
-      backgroundColor:
-      Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: GameAppBarTitle(game: game),
+        centerTitle: true,
+        actions: [GameHelpButton(game: game)],
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
+      ),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            // -----------------------------------------------------
-            // ARKA PLAN
-            // -----------------------------------------------------
-
-            Positioned(
-              top: -80,
-              left: -60,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration:
-                BoxDecoration(
-                  color:
-                  const Color(
-                    0xFFD5FFD9,
-                  ).withValues(alpha: 0.65),
-                  shape:
-                  BoxShape.circle,
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
+                children: [
+                  InfoBox(emoji: '⭐', title: 'Puan', value: '$score'),
+                  const SizedBox(width: 8),
+                  InfoBox(
+                    emoji: '🎯',
+                    title: 'Soru',
+                    value: '${_questionIndex + 1} / $questionsPerRound',
+                  ),
+                  const SizedBox(width: 8),
+                  InfoBox(
+                    emoji: '⏱️',
+                    title: 'Kalan',
+                    value: gameTimer.formattedRemaining,
+                  ),
+                ],
               ),
             ),
-
-            Positioned(
-              top: -55,
-              right: -45,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration:
-                BoxDecoration(
-                  color:
-                  const Color(
-                    0xFFDDF1FF,
-                  ).withValues(alpha: 0.70),
-                  shape:
-                  BoxShape.circle,
-                ),
-              ),
+            const SizedBox(height: 10),
+            LadderStrip(
+              palette: palette,
+              levelIndex: levelIndex,
+              roundsCleared: roundsCleared,
+              roundsToAdvance: level.roundsToAdvance,
             ),
-
-            Positioned(
-              bottom: -80,
-              right: -60,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration:
-                BoxDecoration(
-                  color:
-                  const Color(
-                    0xFFDFFFE2,
-                  ).withValues(alpha: 0.65),
-                  shape:
-                  BoxShape.circle,
-                ),
-              ),
+            const SizedBox(height: 8),
+            GameTimeBar(
+              palette: palette,
+              progress: timeProgress,
+              remaining: gameTimer.formattedRemaining,
             ),
-
-            // -----------------------------------------------------
-            // ANA İÇERİK
-            // -----------------------------------------------------
-
-            if (word != null)
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Column(
-                    children: [
-                      // =============================================
-                      // ÜST BAR
-                      // =============================================
-
-                      Padding(
-                        padding:
-                        const EdgeInsets
-                            .fromLTRB(
-                          18,
-                          12,
-                          18,
-                          0,
-                        ),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                _timer?.cancel();
-                                Navigator.pop(
-                                  context,
-                                );
-                              },
-                              child:
-                              Container(
-                                width: 42,
-                                height: 42,
-                                decoration:
-                                BoxDecoration(
-                                  color: Colors
-                                      .white
-                                      .withValues(
-                                    alpha: 0.90,
-                                  ),
-                                  shape:
-                                  BoxShape
-                                      .circle,
-                                ),
-                                child:
-                                const Icon(
-                                  Icons
-                                      .arrow_back_ios_new_rounded,
-                                  size: 17,
-                                  color: Color(
-                                    0xFF21823B,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(
-                              width: 13,
-                            ),
-
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start,
-                                children: [
-                                  Text(
-                                    'Kelime Avı',
-                                    style:
-                                    TextStyle(
-                                      fontSize:
-                                      21,
-                                      fontWeight:
-                                      FontWeight
-                                          .w900,
-                                      color: Color(
-                                        0xFF259242,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // CAN
-                            Row(
-                              children:
-                              List.generate(
-                                _maxLives,
-                                    (index) {
-                                  return Padding(
-                                    padding:
-                                    const EdgeInsets
-                                        .only(
-                                      left: 3,
-                                    ),
-                                    child:
-                                    AnimatedOpacity(
-                                      duration:
-                                      const Duration(
-                                        milliseconds:
-                                        200,
-                                      ),
-                                      opacity:
-                                      index <
-                                          _lives
-                                          ? 1
-                                          : 0.20,
-                                      child:
-                                      const Text(
-                                        '❤️',
-                                        style:
-                                        TextStyle(
-                                          fontSize:
-                                          18,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-
-                            // Oyun nasil oynanir: talimat bu dugmenin arkasinda.
-                            GameHelpButton(game: game),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 15,
-                      ),
-
-                      // =============================================
-                      // İLERLEME + SKOR + SÜRE
-                      // =============================================
-
-                      Padding(
-                        padding:
-                        const EdgeInsets
-                            .symmetric(
-                          horizontal: 18,
-                        ),
-                        child: Row(
-                          children: [
-                            _statChip(
-                              '⭐',
-                              '$_score',
-                            ),
-                            const SizedBox(
-                              width: 7,
-                            ),
-                            _statChip(
-                              '⏱️',
-                              _formatTime(
-                                _secondsLeft,
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 7,
-                            ),
-                            Expanded(
-                              child:
-                              Container(
-                                height: 42,
-                                padding:
-                                const EdgeInsets
-                                    .symmetric(
-                                  horizontal: 13,
-                                ),
-                                decoration:
-                                BoxDecoration(
-                                  color: Colors
-                                      .white
-                                      .withValues(
-                                    alpha: 0.82,
-                                  ),
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                    15,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Flexible(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          '🎯',
-                                          style:
-                                          TextStyle(
-                                            fontSize:
-                                            16,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      width: 6,
-                                    ),
-                                    Expanded(
-                                      child:
-                                      ClipRRect(
-                                        borderRadius:
-                                        BorderRadius
-                                            .circular(
-                                          10,
-                                        ),
-                                        child:
-                                        LinearProgressIndicator(
-                                          value:
-                                          (_questionIndex /
-                                              _totalQuestions)
-                                              .clamp(
-                                            0.0,
-                                            1.0,
-                                          ),
-                                          minHeight:
-                                          8,
-                                          backgroundColor:
-                                          const Color(
-                                            0xFFDDFBE0,
-                                          ),
-                                          valueColor:
-                                          const AlwaysStoppedAnimation<
-                                              Color>(
-                                            Color(
-                                              0xFF53E366,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      width: 7,
-                                    ),
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        '${_questionIndex + 1}/$_totalQuestions',
-                                        style:
-                                        const TextStyle(
-                                          fontSize:
-                                          10,
-                                          fontWeight:
-                                          FontWeight
-                                              .w900,
-                                          color:
-                                          Color(
-                                            0xFF23D83E,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 15,
-                      ),
-
-                      // =============================================
-                      // OYUN ALANI
-                      // =============================================
-
-                      Expanded(
-                        child: SingleChildScrollView(
-                          physics:
-                          const BouncingScrollPhysics(),
-                          padding:
-                          const EdgeInsets
-                              .fromLTRB(
-                            18,
-                            0,
-                            18,
-                            18,
-                          ),
-                          child: Column(
-                            children: [
-                              // =======================================
-                              // İPUCU KARTI
-                              // =======================================
-
-                              Container(
-                                width:
-                                double.infinity,
-                                padding:
-                                const EdgeInsets
-                                    .fromLTRB(
-                                  20,
-                                  20,
-                                  20,
-                                  19,
-                                ),
-                                decoration:
-                                BoxDecoration(
-                                  gradient:
-                                  const LinearGradient(
-                                    begin:
-                                    Alignment
-                                        .topLeft,
-                                    end:
-                                    Alignment
-                                        .bottomRight,
-                                    colors: [
-                                      Color(
-                                        0xFFD8FFDC,
-                                      ),
-                                      Color(
-                                        0xFFDDF5FF,
-                                      ),
-                                    ],
-                                  ),
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                    27,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                      const Color(
-                                        0xFF3EE053,
-                                      ).withValues(
-                                        alpha: 0.10,
-                                      ),
-                                      blurRadius:
-                                      15,
-                                      offset:
-                                      const Offset(
-                                        0,
-                                        7,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      width: 92,
-                                      height: 92,
-                                      decoration:
-                                      BoxDecoration(
-                                        color: Colors
-                                            .white
-                                            .withValues(
-                                          alpha: 0.75,
-                                        ),
-                                        shape:
-                                        BoxShape
-                                            .circle,
-                                      ),
-                                      child:
-                                      Center(
-                                        child:
-                                        Text(
-                                          word
-                                              .emoji,
-                                          style:
-                                          const TextStyle(
-                                            fontSize:
-                                            52,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    const SizedBox(
-                                      height: 12,
-                                    ),
-
-                                    const Text(
-                                      'Kelimeyi oluştur!',
-                                      style:
-                                      TextStyle(
-                                        fontSize:
-                                        19,
-                                        fontWeight:
-                                        FontWeight
-                                            .w900,
-                                        color:
-                                        Color(
-                                          0xFF20813A,
-                                        ),
-                                      ),
-                                    ),
-
-                                    const SizedBox(
-                                      height: 5,
-                                    ),
-
-                                    Text(
-                                      word.hint,
-                                      textAlign:
-                                      TextAlign
-                                          .center,
-                                      style:
-                                      const TextStyle(
-                                        fontSize:
-                                        11.5,
-                                        height:
-                                        1.35,
-                                        color:
-                                        Color(
-                                          0xFF716277,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(
-                                height: 14,
-                              ),
-
-                              // =======================================
-                              // SEÇİLEN HARFLER
-                              // =======================================
-
-                              _selectedLetters(),
-
-                              const SizedBox(
-                                height: 14,
-                              ),
-
-                              // =======================================
-                              // HARFLER
-                              // =======================================
-
-                              Container(
-                                width:
-                                double.infinity,
-                                padding:
-                                const EdgeInsets
-                                    .all(
-                                  15,
-                                ),
-                                decoration:
-                                BoxDecoration(
-                                  color: Colors
-                                      .white
-                                      .withValues(
-                                    alpha: 0.68,
-                                  ),
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                    25,
-                                  ),
-                                  border:
-                                  Border.all(
-                                    color:
-                                    Colors.white,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child:
-                                Wrap(
-                                  alignment:
-                                  WrapAlignment
-                                      .center,
-                                  spacing: 9,
-                                  runSpacing: 10,
-                                  children:
-                                  List.generate(
-                                    _letters.length,
-                                        (index) {
-                                      return _letterButton(
-                                        _letters[
-                                        index],
-                                        index,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(
-                                height: 14,
-                              ),
-
-                              // =======================================
-                              // YARDIM
-                              // =======================================
-
-                              Container(
-                                padding:
-                                const EdgeInsets
-                                    .symmetric(
-                                  horizontal: 15,
-                                  vertical: 12,
-                                ),
-                                decoration:
-                                BoxDecoration(
-                                  color:
-                                  Colors.white
-                                      .withValues(
-                                    alpha: 0.55,
-                                  ),
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                    17,
-                                  ),
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment
-                                      .center,
-                                  children: [
-                                    Text(
-                                      '💡',
-                                      style:
-                                      TextStyle(
-                                        fontSize:
-                                        17,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 7,
-                                    ),
-                                    Flexible(
-                                      child: Text(
-                                        'Seçtiğin harfe tekrar dokunarak geri alabilirsin.',
-                                        textAlign:
-                                        TextAlign
-                                            .center,
-                                        style:
-                                        TextStyle(
-                                          fontSize:
-                                          10.5,
-                                          fontWeight:
-                                          FontWeight
-                                              .w600,
-                                          color:
-                                          Color(
-                                            0xFF807486,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            // =============================================
-            // DOĞRU CEVAP ANİMASYONU
-            // =============================================
-
-            if (_showCorrectAnimation)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Container(
-                    color: Colors.white
-                        .withValues(alpha: 0.25),
-                    child: Center(
-                      child: TweenAnimationBuilder<
-                          double>(
-                        tween:
-                        Tween<double>(
-                          begin: 0.5,
-                          end: 1.0,
-                        ),
-                        duration:
-                        const Duration(
-                          milliseconds: 500,
-                        ),
-                        curve:
-                        Curves.elasticOut,
-                        builder:
-                            (
-                            context,
-                            value,
-                            child,
-                            ) {
-                          return Transform.scale(
-                            scale: value,
-                            child: child,
-                          );
-                        },
-                        child: Container(
-                          width: 150,
-                          height: 150,
-                          decoration:
-                          BoxDecoration(
-                            color: Colors.white,
-                            shape:
-                            BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                const Color(
-                                  0xFF8CCF9A,
-                                ).withValues(
-                                  alpha: 0.30,
-                                ),
-                                blurRadius: 30,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: const Column(
-                            mainAxisAlignment:
-                            MainAxisAlignment
-                                .center,
-                            children: [
-                              Text(
-                                '🎉',
-                                style:
-                                TextStyle(
-                                  fontSize: 48,
-                                ),
-                              ),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              Text(
-                                'Harika!',
-                                style:
-                                TextStyle(
-                                  fontSize: 19,
-                                  fontWeight:
-                                  FontWeight
-                                      .w900,
-                                  color:
-                                  Color(
-                                    0xFF4B8B5B,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-            // =============================================
-            // YANLIŞ CEVAP ANİMASYONU
-            // =============================================
-
-            if (_showWrongAnimation)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: TweenAnimationBuilder<
-                      double>(
-                    tween:
-                    Tween<double>(
-                      begin: 0,
-                      end: 1,
-                    ),
-                    duration:
-                    const Duration(
-                      milliseconds: 350,
-                    ),
-                    builder:
-                        (
-                        context,
-                        value,
-                        child,
-                        ) {
-                      return Container(
-                        color:
-                        const Color(
-                          0xFFFFDADA,
-                        ).withValues(
-                          alpha: 0.20 * value,
-                        ),
-                        child: Center(
-                          child:
-                          Transform.scale(
-                            scale:
-                            0.85 +
-                                (0.15 *
-                                    value),
-                            child:
-                            Container(
-                              padding:
-                              const EdgeInsets
-                                  .symmetric(
-                                horizontal: 28,
-                                vertical: 18,
-                              ),
-                              decoration:
-                              BoxDecoration(
-                                color:
-                                Colors.white,
-                                borderRadius:
-                                BorderRadius
-                                    .circular(
-                                  22,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color:
-                                    const Color(
-                                      0xFFE38C8C,
-                                    ).withValues(
-                                      alpha: 0.20,
-                                    ),
-                                    blurRadius:
-                                    20,
-                                    offset:
-                                    const Offset(
-                                      0,
-                                      7,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              child:
-                              const Column(
-                                mainAxisSize:
-                                MainAxisSize
-                                    .min,
-                                children: [
-                                  Text(
-                                    '🤔',
-                                    style:
-                                    TextStyle(
-                                      fontSize:
-                                      38,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 5,
-                                  ),
-                                  Text(
-                                    'Tekrar dene!',
-                                    style:
-                                    TextStyle(
-                                      fontSize:
-                                      16,
-                                      fontWeight:
-                                      FontWeight
-                                          .w900,
-                                      color:
-                                      Color(
-                                        0xFF9B5555,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+            const SizedBox(height: 12),
+            Expanded(flex: 5, child: _buildPictureCard(question)),
+            const SizedBox(height: 10),
+            Expanded(flex: 5, child: _buildTiles(question)),
           ],
         ),
       ),
     );
   }
 
-  // -------------------------------------------------------------
-  // İSTATİSTİK KARTI
-  // -------------------------------------------------------------
-
-  Widget _statChip(
-      String emoji,
-      String value,
-      ) {
+  Widget _buildPictureCard(WordQuestion? question) {
     return Container(
-      height: 42,
-      padding:
-      const EdgeInsets.symmetric(
-        horizontal: 11,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      padding: const EdgeInsets.all(12),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color:
-        Colors.white.withValues(alpha: 0.82),
-        borderRadius:
-        BorderRadius.circular(15),
+        color: Brand.cardLight,
+        borderRadius: BorderRadius.circular(Brand.cardRadius),
+        border: Border.all(
+          color: _isSolved ? Brand.leaf : Colors.transparent,
+          width: 4,
+        ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 7, offset: Offset(0, 3)),
+        ],
       ),
-      child: Row(
+      child: question == null
+          ? const SizedBox.shrink()
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final box = constraints.biggest;
+
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Semantics(
+                          label: 'Resimdeki: ${question.word}',
+                          child: Text(
+                            question.item.emoji,
+                            style: TextStyle(fontSize: box.height * 0.45),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _buildSlots(question, box),
+                  ],
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildSlots(WordQuestion question, Size box) {
+    // Long words break into two rows rather than shrinking to a sliver.
+    final rowCount = _slotCount > 6 ? 2 : 1;
+    final perRow = (_slotCount / rowCount).ceil();
+
+    final double largestSlot = max(
+      22.0,
+      box.height * (rowCount == 1 ? 0.3 : 0.18),
+    );
+    final slotSize = ((box.width - _slotGap * (perRow - 1)) / perRow).clamp(
+      22.0,
+      largestSlot,
+    );
+
+    return AnimatedBuilder(
+      animation: _shake,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(sin(_shake.value * pi * 6) * 10 * (1 - _shake.value), 0),
+        child: child,
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: _slotGap,
+        runSpacing: _slotGap,
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(
-              fontSize: 16,
+          for (var slot = 0; slot < _slotCount; slot++)
+            GestureDetector(
+              onTap: () => _handleSlotTap(slot),
+              child: Container(
+                width: slotSize,
+                height: slotSize * 1.15,
+                decoration: BoxDecoration(
+                  color: slot < _placed.length
+                      ? palette.softBackground
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(slotSize * 0.25),
+                  border: Border.all(color: palette.button, width: 2),
+                ),
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      slot < _placed.length
+                          ? question.letters[_placed[slot]]
+                          : '',
+                      style: TextStyle(
+                        fontSize: slotSize * 0.6,
+                        fontWeight: FontWeight.w900,
+                        color: palette.value,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(
-            width: 5,
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight:
-              FontWeight.w900,
-              color:
-              Color(0xFF23D83E),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  // -------------------------------------------------------------
-  // SÜRE FORMAT
-  // -------------------------------------------------------------
+  Widget _buildTiles(WordQuestion? question) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+      child: question == null
+          ? const SizedBox.shrink()
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final grid = fitGrid(
+                  question.letters.length,
+                  constraints.biggest,
+                  _tileGap,
+                );
 
-  String _formatTime(
-      int seconds,
-      ) {
-    final minutes =
-        seconds ~/ 60;
-    final remainingSeconds =
-        seconds % 60;
-
-    return '${minutes.toString().padLeft(2, '0')}:'
-        '${remainingSeconds.toString().padLeft(2, '0')}';
+                return AnimatedBuilder(
+                  animation: _pulse,
+                  builder: (context, _) => GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    itemCount: question.letters.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: grid.columns,
+                      crossAxisSpacing: _tileGap,
+                      mainAxisSpacing: _tileGap,
+                      childAspectRatio: grid.aspectRatio,
+                    ),
+                    itemBuilder: (context, index) =>
+                        _buildTile(question, index),
+                  ),
+                );
+              },
+            ),
+    );
   }
 
-  // -------------------------------------------------------------
-  // DISPOSE
-  // -------------------------------------------------------------
+  Widget _buildTile(WordQuestion question, int index) {
+    final isUsed = _placed.contains(index);
+    final isHinted = _showsHint && index == _nextCorrectTile;
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _animationController.dispose();
-    // gameTimer'i GameSessionMixin kapatir.
-    super.dispose();
+    // The hint grows the tile itself, so it is visible without reading.
+    return Transform.scale(
+      scale: isHinted ? 1 + 0.08 * _pulse.value : 1,
+      child: Semantics(
+        button: true,
+        enabled: !isUsed,
+        label: question.letters[index],
+        excludeSemantics: true,
+        onTap: isUsed ? null : () => _handleTileTap(index),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _handleTileTap(index),
+          child: AnimatedOpacity(
+            opacity: isUsed ? 0.3 : 1,
+            duration: const Duration(milliseconds: 150),
+            child: LayoutBuilder(
+              builder: (context, constraints) => Container(
+                decoration: BoxDecoration(
+                  color: palette.button,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Text(
+                        question.letters[index],
+                        style: TextStyle(
+                          fontSize: constraints.biggest.shortestSide * 0.5,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
+
+typedef _SettledRound = ({
+  int levelIndex,
+  int roundsCleared,
+  RoundOutcome outcome,
+});

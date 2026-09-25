@@ -159,7 +159,7 @@ Oyun bazında:
 | Eşleştirme | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Dikkat | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Matematik | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
-| Kelime Avı | Kelime zorluğu: 1/1/2/3 | Evet |
+| Kelime Avı | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 | Harfler | Kelime zorluğu: 1/1/2/3 | Evet |
 | Mantık | **Bölüm merdiveni** (aşağıya bak) | Bölüm atlayarak |
 
@@ -421,6 +421,51 @@ bul" türü sorular bilerek alınmadı; o zaten Dikkat oyunu.
 `test/logic_round_test.dart` her bölümü 300 tohumla, `logic_flow_test` akışı
 ve altı bölümün üç telefonda sığmasını doğruluyor.
 
+### Kelime Avı'nın bölüm merdiveni
+
+Üç şey birden yanlıştı:
+
+- **Kelime havuzu Türkçe değildi.** Kelimeler ASCII'ye indirilmiş (`KEDI`,
+  `CICEK`, `GUNES`, `KITAP`, `KUS`, `GOKKUSAGI`) ve `toUpperCase()` ile büyük
+  harfe çevriliyordu — Dart'ta bu "i"yi "İ" değil "I" yapar. Yazım öğreten
+  bir oyun yazımı yanlış öğretemez. Havuz elden geçirildi ve 48'e çıkarıldı.
+- **120 saniyelik geri sayım vardı** (`_secondsLeft = 120`), üstelik bitince
+  oyunu bitiriyordu. Kuralımız açık: bu yaşa kronometre gösterilmiyor.
+- **3 can vardı**; üçüncü yanlışta oyun bitiyordu. Diğer altı oyunda ceza
+  yok, burada vardı.
+
+Ayrıca havuz 3 kademede 18 kelimeydi ve bir tur 10 soruydu: en küçük bant
+(6 kelime) aynı turda aynı kelimeyi tekrar tekrar soruyordu.
+
+`wordLadder` (`lib/difficulty.dart`) + `wordRules`
+(`lib/games/word_round.dart`):
+
+| Bölüm | Soru | Kelime | Taş |
+|---|---|---|---|
+| 1 | ilk harf hangisi | havuzun tamamı | 4 şık |
+| 2 | harfleri diz | 2-3 harf | 4 |
+| 3 | harfleri diz | 4 harf | 4 |
+| 4 | harfleri diz | 5 harf | 6 |
+| 5 | harfleri diz | 6-7 harf | 8 |
+| 6 | harfleri diz | 8 harf | 8 (fazladan harf yok) |
+
+- **Taş sayısı sabittir, kelime uzunluğu değil.** Eksiği yedek harfler
+  doldurur; böylece taşların sayısı cevabı ele vermez ve tahta hep aynı
+  ızgaraya oturur. Sayılar keyfi değil: 320 px telefonda taş alanı ~178 px,
+  yani 64 px'lik iki satır. Yalnızca 4, 6 ve 8 taş hem satırı tam doldurur
+  hem 64 px'in üstünde kalır — 10 taş beş sütunlu 50 px, 12 taş üçüncü
+  satırda 54 px olurdu.
+- İlk bölüm yalnızca ilk harfi sorar ve havuzun tamamını kullanır: resim
+  soruyu taşıdığı için uzun kelime (🌈 → G) sorun değil.
+- Yanlış dizilim **hiçbir şey bitirmez**: taşlar yerine döner, tahta sallanır.
+  İki yanlış denemeden sonra sıradaki taş büyüyüp küçülerek işaret edilir.
+- Dolu yuvaya dokunmak harfi geri alır; yanlış koyulan harf için tek çıkış
+  yolu bilerek yanlış yapmak değildir.
+- Kelime ekranda **yazmaz**, yalnızca resmi vardır.
+
+`test/word_round_test.dart` havuzun yazımını ve üreteci 200 tohumla,
+`word_flow_test` akışı ve altı bölümün üç telefonda sığmasını doğruluyor.
+
 ### Öncesinde ne yanlıştı
 
 - "Zorluk" adı altında üç ilgisiz şey vardı: oyunlara kopyalanmış `childAge`
@@ -582,7 +627,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     355 test: oyun duman testleri, süre sayacı,
+test/                     402 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu
