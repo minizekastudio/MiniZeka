@@ -107,6 +107,17 @@ class _CollectGameState extends State<CollectGame>
   Duration _lastTick = Duration.zero;
   Timer? _holdTimer;
 
+  /// Seconds since this board opened. Every idle wiggle reads from it, so
+  /// the running loop drives them all rather than a controller each.
+  double _elapsed = 0;
+
+  /// Faces caught in the act of being gathered, fading upward.
+  final List<_Pop> _pops = [];
+
+  /// Which way the squirrel last ran. Kept rather than read from the current
+  /// velocity, or it would snap back to facing left every time it stopped.
+  bool _isFacingRight = false;
+
   late final AnimationController _bannerPulse = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 600),
@@ -156,13 +167,16 @@ class _CollectGameState extends State<CollectGame>
     _world = buildCollectBoard(rung: levelIndex, random: _random);
     score = 0;
     _isRoundOver = false;
+    _elapsed = 0;
+    _pops.clear();
+    _isFacingRight = false;
 
     _resumeTicker();
   }
 
   void _onTick(Duration elapsed) {
     final world = _world;
-    if (world == null || _isRoundOver) return;
+    if (world == null) return;
 
     final dt = _lastTick == Duration.zero
         ? 0.0
@@ -171,37 +185,56 @@ class _CollectGameState extends State<CollectGame>
 
     if (dt <= 0) return;
 
-    final collectedBefore = world.collected;
+    final step = min(dt, _longestStep);
+    _elapsed += step;
 
-    world.step(min(dt, _longestStep));
+    // Pops outlive the board: the last face is gathered and the round is
+    // over on the same frame, and its pop still has to play.
+    _pops.removeWhere((pop) => _elapsed - pop.startedAt > _Pop.seconds);
 
-    if (world.collected > collectedBefore) {
-      SoundManager.playCorrect();
-      score += (levelIndex + 1) * 10;
+    if (!_isRoundOver) {
+      final collectedBefore = world.collected;
+
+      world.step(step);
+
+      for (final item in world.justCollected) {
+        _pops.add(
+          _Pop(face: item.face, at: item.position, startedAt: _elapsed),
+        );
+      }
+
+      if (world.collected > collectedBefore) {
+        SoundManager.playCorrect();
+        score += (levelIndex + 1) * 10;
+      }
+
+      if (world.wasRefused) SoundManager.playWrong();
+
+      if (world.targetJustChanged) _bannerPulse.forward(from: 0);
+
+      if (world.velocity.x.abs() > 0.05) {
+        _isFacingRight = world.velocity.x > 0;
+      }
+
+      if (world.isFinished) _finishBoard();
     }
 
-    if (world.wasRefused) SoundManager.playWrong();
-
-    if (world.targetJustChanged) _bannerPulse.forward(from: 0);
-
-    if (world.isFinished) {
-      _finishBoard();
-    } else {
-      setState(() {});
-    }
+    setState(() {});
   }
 
   void _finishBoard() {
     final generation = _roundGeneration;
     final settled = _settleRound();
 
+    // The ticker keeps running through the hold so the last pop plays out;
+    // _isRoundOver is what freezes the board itself.
     setState(() => _isRoundOver = true);
-    _ticker?.stop();
 
     _holdTimer?.cancel();
     _holdTimer = Timer(_wonHold, () {
       if (!mounted || generation != _roundGeneration) return;
 
+      _ticker?.stop();
       _showRoundDialog(settled);
     });
   }
@@ -427,40 +460,195 @@ class _CollectGameState extends State<CollectGame>
 
   List<Widget> _pieces(CollectWorld world, double side) {
     return [
-      for (final item in world.items)
-        if (!item.isCollected)
+      for (var i = 0; i < world.items.length; i++)
+        if (!world.items[i].isCollected)
           _piece(
-            key: ValueKey(item),
-            at: item.position,
+            key: ValueKey(world.items[i]),
+            at: world.items[i].position,
             side: side,
             radius: CollectWorld.itemRadius,
-            child: Opacity(
-              opacity: item.refusedFor > 0 ? 0.35 : 1,
-              child: FittedBox(fit: BoxFit.contain, child: Text(item.face)),
-            ),
+            child: _buildItem(world.items[i], i),
           ),
-      for (final chaser in world.chasers)
+      for (final pop in _pops)
         _piece(
-          at: chaser.position,
+          key: ValueKey(pop),
+          at: pop.at,
+          side: side,
+          radius: CollectWorld.itemRadius,
+          child: _buildPop(pop),
+        ),
+      for (var i = 0; i < world.chasers.length; i++)
+        _piece(
+          at: world.chasers[i].position,
           side: side,
           radius: CollectWorld.chaserRadius,
-          // A sleeping owl stays an owl, faded: a 😴 face read as one more
-          // thing lying on the board.
-          child: Opacity(
-            opacity: chaser.isAsleep ? 0.35 : 1,
-            child: const FittedBox(fit: BoxFit.contain, child: Text('🦉')),
-          ),
+          child: _buildChaser(world.chasers[i], i),
         ),
       _piece(
         at: world.player,
         side: side,
         radius: CollectWorld.playerRadius,
-        child: Opacity(
-          opacity: world.isSafe ? 0.55 : 1,
-          child: const FittedBox(fit: BoxFit.contain, child: Text('🐿️')),
-        ),
+        child: _buildSquirrel(world),
       ),
     ];
+  }
+
+  /// A soft patch of ground under a moving piece.
+  ///
+  /// The board is a blank square, so a hop had nothing to be measured
+  /// against: the squirrel read as sliding. The shadow stays put and shrinks
+  /// as the piece rises, which is what makes the hop a hop.
+  Widget _shadow({double lift = 0}) {
+    final closeness = (1 - lift).clamp(0.35, 1.0);
+
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: FractionallySizedBox(
+        widthFactor: 0.52 * closeness,
+        heightFactor: 0.12 * closeness,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.10 * closeness),
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Waiting faces breathe, each on its own beat, and a refused one shakes
+  /// its head instead of merely dimming.
+  Widget _buildItem(CollectItem item, int index) {
+    final isRefused = item.refusedFor > 0;
+
+    final shake = isRefused
+        ? sin(item.refusedFor * pi * 10) * 0.16 * item.refusedFor
+        : 0.0;
+
+    final breath = 1 + 0.05 * sin(_elapsed * 2.1 + index * 1.7);
+
+    return Transform.rotate(
+      angle: shake,
+      child: Transform.scale(
+        scale: isRefused ? 0.86 : breath,
+        child: Opacity(
+          opacity: isRefused ? 0.45 : 1,
+          child: FittedBox(fit: BoxFit.contain, child: Text(item.face)),
+        ),
+      ),
+    );
+  }
+
+  /// A gathered face swells and lifts away rather than blinking out, so the
+  /// child sees where the point came from.
+  Widget _buildPop(_Pop pop) {
+    final progress = ((_elapsed - pop.startedAt) / _Pop.seconds).clamp(
+      0.0,
+      1.0,
+    );
+
+    return Transform.translate(
+      offset: Offset(0, -progress * 34),
+      child: Transform.scale(
+        scale: 1 + progress * 0.7,
+        child: Opacity(
+          opacity: 1 - progress,
+          child: FittedBox(fit: BoxFit.contain, child: Text(pop.face)),
+        ),
+      ),
+    );
+  }
+
+  /// Awake owls rock as they come; a sleeping one slumps with a 💤.
+  Widget _buildChaser(Chaser chaser, int index) {
+    if (chaser.isAsleep) {
+      return Opacity(
+        opacity: 0.45,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [_shadow(), _buildSleepingOwl()],
+        ),
+      );
+    }
+
+    final bob = sin(_elapsed * 11 + index * 2) * 2;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _shadow(lift: bob.abs() / 10),
+        Transform.rotate(
+          angle: sin(_elapsed * 5.5 + index * 2) * 0.13,
+          child: Transform.translate(
+            offset: Offset(0, bob),
+            child: const FittedBox(fit: BoxFit.contain, child: Text('🦉')),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSleepingOwl() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Transform.rotate(
+          angle: 0.25,
+          child: const FittedBox(fit: BoxFit.contain, child: Text('🦉')),
+        ),
+        Align(
+          alignment: Alignment.topRight,
+          child: FractionallySizedBox(
+            widthFactor: 0.5,
+            heightFactor: 0.5,
+            child: Transform.translate(
+              offset: Offset(0, sin(_elapsed * 2.4) * 3),
+              child: const FittedBox(fit: BoxFit.contain, child: Text('💤')),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The squirrel faces where it is going and hops while it runs.
+  ///
+  /// Without this it slid sideways and backwards like a game piece being
+  /// pushed across a board, which is what the whole game looked like.
+  Widget _buildSquirrel(CollectWorld world) {
+    final speed = world.velocity.magnitude;
+    final isRunning = speed > 0.02;
+
+    final pace = isRunning ? (speed / CollectWorld.playerSpeed) : 0.0;
+    final hop = isRunning ? -(sin(_elapsed * 17).abs()) * 6 * pace : 0.0;
+    final lean = isRunning ? sin(_elapsed * 17) * 0.09 * pace : 0.0;
+    final idle = isRunning ? 1.0 : 1 + 0.04 * sin(_elapsed * 3);
+
+    // Flashing rather than merely faded, so "cannot be caught again" reads
+    // as a state and not as a dimmed sprite.
+    final opacity = world.isSafe ? 0.35 + 0.35 * (sin(_elapsed * 16) + 1) : 1.0;
+
+    return Opacity(
+      opacity: opacity.clamp(0.0, 1.0),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _shadow(lift: hop.abs() / 6),
+          Transform.translate(
+            offset: Offset(0, hop),
+            child: Transform.rotate(
+              angle: lean,
+              child: Transform.scale(
+                // The emoji faces left, so one heading right is mirrored.
+                scaleX: _isFacingRight ? -idle : idle,
+                scaleY: idle,
+                child: const FittedBox(fit: BoxFit.contain, child: Text('🐿️')),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _piece({
@@ -481,6 +669,17 @@ class _CollectGameState extends State<CollectGame>
       child: child,
     );
   }
+}
+
+/// A face in the act of being gathered.
+class _Pop {
+  _Pop({required this.face, required this.at, required this.startedAt});
+
+  static const double seconds = 0.45;
+
+  final String face;
+  final BoardPoint at;
+  final double startedAt;
 }
 
 typedef _SettledRound = ({

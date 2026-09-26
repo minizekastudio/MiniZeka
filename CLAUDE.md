@@ -621,6 +621,26 @@ gitmektir.
   çok daha fazla şeyin yanından geçiyor. Aynı oran korundu — her 5 taşa 1
   hata — yoksa aynı dikkatsizlik burada çok daha pahalıya gelirdi.
 
+**Ekran canlandırması ayrı bir iş oldu.** İlk hâlinde her şey yerinden
+yerine ışınlanan sabit emojiydi: oyun hareketliydi ama canlı değildi.
+Şimdi tek bir oyun döngüsü (ayrı `AnimationController` değil, `_elapsed`)
+şunları sürüyor:
+
+- **Sincap gittiği yöne döner** (emoji sola bakar, sağa giden aynalanır) ve
+  hızıyla orantılı zıplar, hafifçe yana yatar. Durunca son baktığı yönü
+  korur — yoksa her duruşta sola snap ediyordu.
+- **Altlarında gölge var.** Tahta boş beyaz bir kare olduğu için zıplamanın
+  ölçüleceği bir şey yoktu; sincap kayıyor gibi duruyordu. Gölge yerinde
+  kalıp yükseldikçe küçülüyor, zıplamayı zıplama yapan bu.
+- **Toplanan yüz patlayıp yukarı süzülür** (`CollectWorld.justCollected`),
+  öylece yok olmaz: çocuk puanın nereden geldiğini görüyor.
+- **Yanlış yüz başını sallar**, sadece solmaz. Bekleyen yüzler kendi
+  temposunda nefes alır.
+- **Baykuş uyanıkken sallanarak gelir**, uyurken yana devrilip üstünde 💤
+  süzülür.
+- **Dokunulmaz sincap yanıp söner**, sabit soluk durmaz: bu bir durum,
+  soluklaştırılmış bir çizim değil.
+
 Oyun mantığı Flutter'dan bağımsız: `CollectWorld.step(dt)` saf Dart, test
 bütün bir turu widget ağacı olmadan kare kare oynatıyor
 (`test/collect_round_test.dart`). `collect_flow_test` ekranı, altı bölümün

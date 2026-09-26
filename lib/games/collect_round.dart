@@ -186,6 +186,15 @@ class CollectWorld {
   /// Set for one frame when the target changes.
   bool targetJustChanged = false;
 
+  /// Faces gathered on this frame, so the screen can pop them.
+  ///
+  /// Cleared at the start of every step: a reader that skips a frame misses
+  /// the pop, which is the right trade for never replaying an old one.
+  final List<CollectItem> justCollected = [];
+
+  /// Board units per second, for whichever way the squirrel is facing.
+  BoardPoint velocity = const BoardPoint(0, 0);
+
   BoardPoint get player => _player;
 
   bool get isSafe => _safeFor > 0;
@@ -214,6 +223,7 @@ class CollectWorld {
     wasCaught = false;
     wasRefused = false;
     targetJustChanged = false;
+    justCollected.clear();
 
     final faceBefore = targetFace;
 
@@ -234,9 +244,13 @@ class CollectWorld {
     final toSteer = _steer - _player;
     final distance = toSteer.magnitude;
 
-    if (distance < 1e-4) return;
+    if (distance < 1e-4) {
+      velocity = const BoardPoint(0, 0);
+      return;
+    }
 
     final step = min(distance, playerSpeed * dt);
+    final before = _player;
 
     _player = _clampToBoard(
       BoardPoint(
@@ -244,6 +258,10 @@ class CollectWorld {
         _player.y + toSteer.y / distance * step,
       ),
     );
+
+    velocity = dt <= 0
+        ? const BoardPoint(0, 0)
+        : BoardPoint((_player.x - before.x) / dt, (_player.y - before.y) / dt);
   }
 
   void _collide() {
@@ -262,6 +280,7 @@ class CollectWorld {
           // here when this face became the target.
           item.isCollected = true;
           collected++;
+          justCollected.add(item);
         } else if (!item.isTouching) {
           // Wrong face: it refuses to be picked up and nothing else happens.
           // No life is lost, the round does not end, the board stays put.

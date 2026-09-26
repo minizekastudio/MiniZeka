@@ -337,6 +337,54 @@ void main() {
     });
   });
 
+  group('ekranın okuduğu şeyler', () {
+    test('toplanan taş yalnızca o karede bildirilir', () {
+      // The screen turns this into a pop; replaying an old one would show a
+      // face lifting off an empty patch of board.
+      final world = buildCollectBoard(rung: 0, random: Random(1));
+      final target = world.items.firstWhere(
+        (item) => item.face == world.targetFace,
+      );
+
+      expect(world.justCollected, isEmpty);
+
+      world.steerTo(target.position);
+
+      while (!target.isCollected) {
+        world.step(1 / 60);
+      }
+
+      expect(world.justCollected, contains(target));
+
+      world.step(1 / 60);
+      expect(world.justCollected, isEmpty);
+    });
+
+    test('hız gidilen yönü gösterir, durunca sıfırlanır', () {
+      // The squirrel is mirrored and hops from this; without it the sprite
+      // slid backwards across the board.
+      final world = buildCollectBoard(rung: 0, random: Random(2));
+
+      expect(world.velocity.magnitude, 0);
+
+      world.steerTo(const BoardPoint(1, 0.5));
+      world.step(1 / 60);
+
+      expect(world.velocity.x, greaterThan(0));
+      expect(world.velocity.magnitude,
+          closeTo(CollectWorld.playerSpeed, 0.001));
+
+      world.steerTo(const BoardPoint(0, 0.5));
+      world.step(1 / 60);
+      expect(world.velocity.x, lessThan(0));
+
+      // Arrived: nothing left to walk towards.
+      world.steerTo(world.player);
+      world.step(1 / 60);
+      expect(world.velocity.magnitude, 0);
+    });
+  });
+
   test('temiz tur payı tahtadaki şey sayısına göre', () {
     // One mistake in five decisions, the same ratio the tap games use — not
     // a flat one, which would punish a long crossing far more.
