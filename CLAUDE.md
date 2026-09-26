@@ -146,7 +146,7 @@ Tanım `lib/difficulty.dart`'ta, başka hiçbir yerde yaş eşiği yazılmaz.
 - Gerisini çocuk kazanır: temiz turlar bölüm açar, ilerleme kaydedilir ve
   seviye asla geri gitmez.
 
-**Yedi oyunun yedisi de merdiven kullanıyor.** Eski `DifficultyTracker`
+**Sekiz oyunun sekizi de merdiven kullanıyor.** Eski `DifficultyTracker`
 (seviye 1-3, üst üste 3 doğru, "🟢 Kolay / 🟡 Orta / 🔴 Zor" rozeti)
 silindi: bir oturumdan öbürüne yaşamıyordu — oysa çocuğun ihtiyacı tam
 olarak buydu — ve son iki kullanıcısı (Kelime Avı ile Harfler) merdivene
@@ -159,6 +159,7 @@ Oyun bazında:
 | Hafıza | `memoryLadder` | Kart sayısı |
 | Eşleştirme | `shapeLadder` | Değişen özellik |
 | Dikkat | `attentionLadder` | Benzerlik, sonra kutu sayısı |
+| Sincap | `collectLadder` | Benzerlik, baykuş, kural değişimi |
 | Matematik | `mathLadder` | İşlem ve sayı aralığı |
 | Kelime Avı | `wordLadder` | Kelime uzunluğu |
 | Harfler | `letterLadder` | Harf biçimi ve benzerlik |
@@ -519,12 +520,12 @@ ve altı bölümün üç telefonda sığmasını doğruluyor.
 
 ### Ebeveyn panelinde bölüm ilerlemesi
 
-Yedi oyun da kalıcı ilerleme yazıyordu ama hiç kimse onu görüp
+Her oyun kalıcı ilerleme yazıyordu ama hiç kimse onu görüp
 değiştiremiyordu. Bu bir eksiklik değil **tuzaktı**:
 
 > `resumeLadder` yaşı yalnızca **taban** kabul eder — kayıt tabandan
 > yüksekse kayıt kazanır. Kurulumda yaş yanlış girilirse (diyelim 10) çocuk
-> yedi oyunda da 4. bölümden başlar ve ilk temiz turda bu diske yazılır. O
+> bütün oyunlarda 4. bölümden başlar ve ilk temiz turda bu diske yazılır. O
 > noktadan sonra ebeveyn yaşı 4'e düzeltse bile `saved >= floor` olduğu için
 > hiçbir şey değişmez. Uygulamada geri dönüş yolu yoktu.
 
@@ -560,16 +561,92 @@ soru sorulmaz.
   `5`'ti ve açıklaması da "5 farklı oyun" diyordu; uygulama yediye çıkınca
   ikisi de olduğu yerde kaldı. Eşik `GameId.values.length`, açıklama da aynı
   sayıdan üretiliyor — yeni oyun eklemek çıtayı kendiliğinden yükseltiyor.
-- **Kelime Avı ve Harfler ekranları `lib/games/` altına taşındı.** Yedi oyunun
-  yedisi de artık aynı klasörde; `lib/` kökünde oyun ekranı kalmadı.
+- **Kelime Avı ve Harfler ekranları `lib/games/` altına taşındı.** Bütün oyun
+  ekranları artık aynı klasörde; `lib/` kökünde oyun ekranı kalmadı.
 - **`game_kit.dart`'ın Türkçe yorumları İngilizce'ye çevrildi** (16 blok).
   Kural "dokunulan dosyada çevir" diyor, bu oturumda dokunuldu.
-- **Ham renk borcu bu dosyalarda yok:** yedi oyun ekranı ve altı üretici
-  dosyasında `Color(0xFF...)` sayısı sıfır; hepsi `Brand` ve `GamePalette`
-  üzerinden geçiyor. `game_kit.dart`'taki 42 değişmez, yedi oyunun renk
+- **Ham renk borcu bu dosyalarda yok:** oyun ekranlarında ve üreteç
+  dosyalarında `Color(0xFF...)` sayısı sıfır; hepsi `Brand` ve `GamePalette`
+  üzerinden geçiyor. `game_kit.dart`'taki renk değişmezleri oyunların renk
   tablosunun kendisi — tanımın olması gereken yer orası. Kalan ~600 ham renk
   eski ekranlarda (ana sayfa, ebeveyn paneli, başarılar, karşılama) ve
   onların birleştirilmesi ayrı bir tasarım işi olarak duruyor.
+
+### Sincap Koşusu'nun bölüm merdiveni
+
+Yedi oyunun yedisi de **duran bir tahtaya dokunmak** üzerineydi;
+uygulamada hiç hareket yoktu. Sekizincisi hareketli: çocuk parmağıyla
+sincabı gezdirir, yukarıdaki yüzü toplar, uykulu bir baykuş peşinden gelir.
+
+Pac-Man istendi ama birebiri uygulamanın kendi kurallarıyla çatışıyordu —
+hayalet ölüm demek (can yok kuralı), kovalamaca zaman baskısı demek
+(kronometre yok kuralı), labirentte yön tuşu 4 yaşında sürükle-bırak'tan
+zor bir motor beceri. Bunlar çıkarılınca geriye kalan iyi oyun: açık
+tahtada topla, kimse ölmesin.
+
+**Hiçbir şey kaybedilmez.** Baykuş yetişirse toplanmış bir yüz düşer ve
+tahtaya geri döner, baykuş 3 saniye uyur, sincap 1,5 saniye dokunulmazdır.
+Yakalanmak hata sayılmaz — temiz turu belirleyen tek şey yanlış yüze
+gitmektir.
+
+`collectLadder` (`lib/difficulty.dart`) + `collectRules`
+(`lib/games/collect_round.dart`):
+
+| Bölüm | Toplanacak | Çeldirici | Baykuş |
+|---|---|---|---|
+| 1 | 5, tek yüz | 3, başka kümeden | yok |
+| 2 | 6 | 4, başka kümeden | 1, çok yavaş |
+| 3 | 6 | 5, **aynı kümeden** (🎈 arasında 🍎 değil, 🍎 arasında 🍓) | 1 |
+| 4 | 7 | 6, karışık | 1 |
+| 5 | 8 | 7, karışık | 2 |
+| 6 | 8, **hedef tur ortasında değişir** | 7, karışık | 2 |
+
+- Benzeşme kümeleri Hafıza ve Dikkat'le **ortak** (`memory_symbols.dart`).
+- **6. bölüm Eşleştirme'de kaynak verilen DCCS'in hareketli hâli:** ilk yüz
+  bitince üstteki şerit ikinciye döner, çocuğun uyduğu kural kural olmaktan
+  çıkar (Zelazo 2006).
+- **Baykuş her zaman sincaptan en az iki kat yavaş.** Koşan sincabın arasını
+  açamaz; bunu test kareyi kare doğruluyor. Köşede durursan yetişir — o da
+  bir yüze mal olur, fazlasına değil.
+- **Hata temasın başında sayılır, her karede değil.** Önce zamanlayıcıyla
+  yapılmıştı ve yanlış yüzün yanında 2 saniye beklemek ikinci bir hata
+  yazıyordu: hiçbir şey yapmayan çocuk turu kaybediyordu.
+- **Başlangıç noktaları boş bırakılır.** Sincabın altına düşen bir yüz, daha
+  çocuk ekrana dokunmadan toplanıyordu; tahta 1/5 ile açılıyordu. Artık
+  keep-out bölgesi garantili (rastgelelik yetmezse taş dışarı itilir).
+- Tahta **kare**: dikdörtgene esnetmek sincabı yana dikeyden hızlı yapar ve
+  çarpışmaları oval hâle getirirdi.
+- **Temiz tur payı buraya özel** (`CollectRule.allowedMistakes`): diğer
+  oyunlar 5 soruda 1 hata kabul ediyor, burada çocuk tahtayı geçerken 5'ten
+  çok daha fazla şeyin yanından geçiyor. Aynı oran korundu — her 5 taşa 1
+  hata — yoksa aynı dikkatsizlik burada çok daha pahalıya gelirdi.
+
+Oyun mantığı Flutter'dan bağımsız: `CollectWorld.step(dt)` saf Dart, test
+bütün bir turu widget ağacı olmadan kare kare oynatıyor
+(`test/collect_round_test.dart`). `collect_flow_test` ekranı, altı bölümün
+üç telefonda sığmasını ve turun kaydedilmesini doğruluyor.
+
+### Sekizinci oyunu eklerken çıkanlar
+
+Yeni oyun eklemenin maliyeti tek yerde kalmalıydı; üç yerde kalmamış:
+
+- **Ana sayfa kırmızı ekranla çöktü.** Kart giriş animasyonları yedi adet
+  elle yazılmış alandı (`_game1Animation` … `_game7Animation`) ve kart
+  sırasına göre indeksleniyordu; sekizinci oyun `entrance[7]` ile
+  `RangeError` attı. Artık `GameId.values.length`'ten üretiliyor.
+  `test/home_page_test.dart` bunu bir daha sessizce kaçırmıyor.
+- **Paylaşılan test tabloları elle tutuluyordu.** `dialog_fit_test`'teki
+  oyun listesi artık `GameId.values`'ı kapsadığını iddia ediyor; kapsamazsa
+  test düşüyor.
+- **Veri taşıma yeni oyunda tökezliyordu:** `_legacyTitles[game]` null
+  dönünce anahtar `duration_null` oluyordu. v1'den sonra eklenen oyun artık
+  atlanıyor.
+
+**Yeni kural: döngüsü olan oyun, üstü kapanınca durur.** `GameSessionMixin`
+artık `onPlayableChanged(bool)` çağırıyor — günlük saatin durduğu her
+durumda (diyalog açık, uygulama arka planda, süre bitti) simülasyon da
+duruyor. Olmasaydı çocuk yardım metnini okurken baykuş kovalamaya devam
+ederdi; testlerde de `pumpAndSettle` hiç dönmezdi.
 
 ### Öncesinde ne yanlıştı
 
@@ -621,7 +698,7 @@ PIN ekranı muaf: onları yetişkin kullanıyor.
 **Diyaloglar en dar telefonda (320×568) sığmak zorunda.** Butonlar büyüyünce
 sonuç diyalogları ~100 px taşıyor ve düğmeleri ekran dışında kalıyordu;
 hepsi `SingleChildScrollView` içinde, yalnızca sığmadığında kayıyor.
-`test/dialog_fit_test.dart` yedi oyunun "?" modalını, üç oyunun cevap ve
+`test/dialog_fit_test.dart` her oyunun "?" modalını, üç oyunun cevap ve
 sonuç diyaloglarını ve süre uyarısını iki telefon boyutunda çiziyor.
 
 **Günlük süre çubuğu ortak:** `GameTimeBar` (`game_kit.dart`). Yazı taşımaz —
@@ -717,12 +794,12 @@ hedefleniyor. Tespit edilen sorunlar ve planlanan çözümler:
 
 ```
 lib/                      uygulama kodu
-lib/game_id.dart          TEK DOĞRU KAYNAK: yedi oyunun kimliği, başlığı,
+lib/game_id.dart          TEK DOĞRU KAYNAK: sekiz oyunun kimliği, başlığı,
                           emojisi, zorluğu, varsayılan süresi
 lib/storage_keys.dart     TEK DOĞRU KAYNAK: bütün SharedPreferences anahtarları
 lib/storage_migration.dart  açılışta çalışan sürümlü veri taşıma
 lib/game_timer.dart       günlük süre sayacı (saat enjekte edilebilir)
-lib/games/                yedi oyunun ekranı ve soru üreticileri
+lib/games/                sekiz oyunun ekranı ve soru üreticileri
 lib/games/shape_figure.dart  şekil türleri, bir örneğin görünümü, çizimi
 lib/games/shape_round.dart   eşleştirme bölüm kuralları ve soru üretici
 lib/games/memory_symbols.dart  benzeşme kümeleri (hafıza + dikkat ortak)
@@ -731,12 +808,13 @@ lib/games/math_round.dart    matematik bölüm kuralları ve soru üretici
 lib/games/logic_round.dart   mantık örüntü kuralları ve soru üretici
 lib/games/word_round.dart    kelime havuzu, bölüm kuralları ve soru üretici
 lib/games/letter_round.dart  alfabe, küçük harf eşlemesi, benzeşme kümeleri
+lib/games/collect_round.dart sincap oyununun dünyası (saf Dart, step(dt))
 lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
                           GamePalette, GameResultBox, InfoBox, levelForAge
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     459 test: oyun duman testleri, süre sayacı,
+test/                     529 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu

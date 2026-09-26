@@ -10,6 +10,7 @@ import 'settings_page.dart';
 import 'avatar_manager.dart';
 import 'avatar_selection_page.dart';
 import 'games/word_game.dart';
+import 'games/collect_game.dart';
 import 'games/letter_game.dart';
 
 class HomePage extends StatefulWidget {
@@ -52,13 +53,11 @@ class _HomePageState extends State<HomePage>
 
   late Animation<double> _titleAnimation;
 
-  late Animation<double> _game1Animation;
-  late Animation<double> _game2Animation;
-  late Animation<double> _game3Animation;
-  late Animation<double> _game4Animation;
-  late Animation<double> _game5Animation;
-  late Animation<double> _game6Animation;
-  late Animation<double> _game7Animation;
+  /// One staggered entrance per game card.
+  ///
+  /// These used to be seven hand-written fields indexed by card position,
+  /// so the eighth game crashed the home screen the moment it was added.
+  late final List<Animation<double>> _cardEntrances;
 
   @override
   void initState() {
@@ -80,67 +79,28 @@ class _HomePageState extends State<HomePage>
 
 
 
-    _game1Animation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.35,
-        0.57,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    // Cards fan in one after another, the last finishing just before the
+    // controller does. Derived from the game count so a new game joins the
+    // sequence instead of falling off the end of it.
+    const firstStart = 0.35;
+    const lastStart = 0.76;
+    const cardLength = 0.22;
 
-    _game2Animation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.42,
-        0.64,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    final steps = GameId.values.length - 1;
 
-    _game3Animation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.49,
-        0.71,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
-    _game4Animation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.56,
-        0.78,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
-    _game5Animation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.63,
-        0.85,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-    _game6Animation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.70,
-        0.92,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-
-    _game7Animation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(
-        0.76,
-        0.98,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    _cardEntrances = [
+      for (var i = 0; i < GameId.values.length; i++)
+        CurvedAnimation(
+          parent: _controller,
+          curve: Interval(
+            firstStart + (lastStart - firstStart) * (steps == 0 ? 0 : i / steps),
+            firstStart +
+                (lastStart - firstStart) * (steps == 0 ? 0 : i / steps) +
+                cardLength,
+            curve: Curves.easeOutCubic,
+          ),
+        ),
+    ];
 
     _idle = AnimationController(
       vsync: this,
@@ -228,21 +188,17 @@ class _HomePageState extends State<HomePage>
               context,
               MaterialPageRoute(builder: (_) => const LetterGame()),
             );
+      case GameId.collect:
+        return () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CollectGame()),
+            );
     }
   }
 
   /// Iki sutunlu izgara; son satir tek kalirsa sag hucre bos birakilir.
   List<Widget> _gameRows() {
-    final entrance = <Animation<double>>[
-      _game1Animation,
-      _game2Animation,
-      _game3Animation,
-      _game4Animation,
-      _game5Animation,
-      _game6Animation,
-      _game7Animation,
-    ];
-
+    final entrance = _cardEntrances;
     final games = _visibleGames;
 
     // Ebeveyn hepsini kapattiysa cocuk bos ekranla karsilasmasin.

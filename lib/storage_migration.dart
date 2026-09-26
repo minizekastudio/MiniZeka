@@ -61,7 +61,11 @@ class StorageMigration {
     var moved = 0;
 
     for (final game in GameId.values) {
-      final legacyKey = 'duration_${_legacyTitles[game]}';
+      // A game added after v1 has no legacy name to rescue.
+      final legacyTitle = _legacyTitles[game];
+      if (legacyTitle == null) continue;
+
+      final legacyKey = 'duration_$legacyTitle';
       final minutes = prefs.getInt(legacyKey);
 
       if (minutes != null) {

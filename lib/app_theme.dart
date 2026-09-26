@@ -49,11 +49,12 @@ class Brand {
   static const gameLogic = Color(0xFFE24B3F);      // ugur bocegi
   static const gameWord = Color(0xFF17C3B2);   // turkuaz
   static const gameLetter = Color(0xFFF2679F);        // pembe
+  static const gameCollect = Color(0xFF8A5A2B);       // findik kabugu
 
   /// Oyun renkleri sirayla — kart listelerinde dolasmak icin.
   static const gameColors = <Color>[
     gameMemory, gameAttention, gameMath, gameShape,
-    gameLogic, gameWord, gameLetter,
+    gameLogic, gameWord, gameLetter, gameCollect,
   ];
 
   // --- olculer -----------------------------------------

@@ -45,6 +45,17 @@ enum GameId {
     helpBody: 'Diğerlerinden farklı olanı seç.',
   ),
 
+  collect(
+    storageId: 'collect',
+    title: 'Sincap Koşusu',
+    shortTitle: 'Sincap',
+    emoji: '🐿️',
+    difficulty: 2,
+    defaultLimitMinutes: 15,
+    helpTitle: 'Topla ve kaç!',
+    helpBody: 'Sincabı parmağınla gezdir, yukarıdaki yüzü topla.',
+  ),
+
   letter(
     storageId: 'letter',
     title: 'Harfleri Tanı',

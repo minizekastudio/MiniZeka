@@ -68,6 +68,13 @@ class _AchievementsPageState extends State<AchievementsPage> {
       'color': const Color(0xFFFFEAF2),
     },
     {
+      'key': 'collector',
+      'emoji': '🐿️',
+      'title': 'Hızlı Sincap',
+      'description': 'Sincap koşusunu tamamladın!',
+      'color': const Color(0xFFF5EADF),
+    },
+    {
       'key': 'game_explorer',
       'emoji': '🎮',
       'title': 'Oyun Kaşifi',

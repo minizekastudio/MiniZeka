@@ -94,6 +94,16 @@ class GamePalette {
     button: Brand.gameWord,
   );
 
+  /// Built around Brand.gameCollect (nutshell brown).
+  static const collect = GamePalette(
+    softBackground: Color(0xFFF5EADF),
+    dialogChip: Color(0xFFF5EADF),
+    label: Color(0xFF8C7A66),
+    value: Color(0xFF7A5327),
+    heading: Color(0xFF5E3F1D),
+    button: Brand.gameCollect,
+  );
+
   /// Built around Brand.gameLetter (pink).
   static const letter = GamePalette(
     softBackground: Color(0xFFFFE4EE),
@@ -122,6 +132,7 @@ extension GameIdPalette on GameId {
         GameId.word => Icons.search_rounded,
         GameId.math => Icons.calculate_rounded,
         GameId.logic => Icons.extension_rounded,
+        GameId.collect => Icons.directions_run_rounded,
       };
 
   /// Vivid brand colour for the home screen card. Distinct per game so a
@@ -134,6 +145,7 @@ extension GameIdPalette on GameId {
         GameId.logic => Brand.gameLogic,
         GameId.word => Brand.gameWord,
         GameId.letter => Brand.gameLetter,
+        GameId.collect => Brand.gameCollect,
       };
 
   /// Muted palette used inside the game screen and its dialogs.
@@ -145,6 +157,7 @@ extension GameIdPalette on GameId {
         GameId.logic => GamePalette.logic,
         GameId.word => GamePalette.word,
         GameId.letter => GamePalette.letter,
+        GameId.collect => GamePalette.collect,
       };
 }
 
@@ -565,6 +578,16 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
     _syncClock();
   }
 
+  /// Called when the child's ability to play changes: a dialog opened over
+  /// the screen, the app went to the background, or the allowance ran out.
+  ///
+  /// Games that only wait for taps need nothing here. A game with a running
+  /// simulation pauses it, or the board keeps moving while a child reads the
+  /// help text — and `pumpAndSettle` never returns in its tests.
+  void onPlayableChanged(bool isPlayable) {}
+
+  bool? _wasPlayable;
+
   /// Starts or stops the clock to match whether the child can play right now.
   void _syncClock() {
     if (!_hasSession || !mounted || gameTimer.isLoading) return;
@@ -577,6 +600,11 @@ mixin GameSessionMixin<T extends StatefulWidget> on State<T> {
       gameTimer.start();
     } else if (!shouldRun && gameTimer.isRunning) {
       gameTimer.stop();
+    }
+
+    if (_wasPlayable != shouldRun) {
+      _wasPlayable = shouldRun;
+      onPlayableChanged(shouldRun);
     }
   }
 

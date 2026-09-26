@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mini_zeka/game_id.dart';
 import 'package:mini_zeka/games/attention_game.dart';
+import 'package:mini_zeka/games/collect_game.dart';
 import 'package:mini_zeka/games/letter_game.dart';
 import 'package:mini_zeka/games/logic_game.dart';
 import 'package:mini_zeka/games/math_game.dart';
@@ -32,6 +33,7 @@ final _games = <GameId, Widget Function()>{
   GameId.logic: () => const LogicGame(),
   GameId.word: () => const WordGame(),
   GameId.letter: () => const LetterGame(),
+  GameId.collect: () => const CollectGame(),
 };
 
 Future<void> _open(WidgetTester tester, GameId game, Size phone) async {
@@ -52,6 +54,12 @@ Future<void> _open(WidgetTester tester, GameId game, Size phone) async {
 }
 
 void main() {
+  test('tablo bütün oyunları kapsıyor', () {
+    // Hand-kept tables drift: this one is why a new game is dialog-checked
+    // without anyone remembering to add it.
+    expect(_games.keys, containsAll(GameId.values));
+  });
+
   for (final phone in _phones.entries) {
     group(phone.key, () {
       for (final game in _games.keys) {

@@ -155,8 +155,9 @@ class _ParentPanelState extends State<ParentPanel> {
         ),
         content: Text(
           game == null
-              ? 'Yedi oyunun da kazanılmış bölümleri silinir ve hepsi '
-                  'yaşa uygun bölümden başlar. Geri alınamaz.'
+              ? '${GameId.values.length} oyunun da kazanılmış bölümleri '
+                  'silinir ve hepsi yaşa uygun bölümden başlar. '
+                  'Geri alınamaz.'
               : 'Kazanılmış bölümler silinir ve oyun yaşa uygun bölümden '
                   'başlar. Geri alınamaz.',
           textAlign: TextAlign.center,
@@ -502,7 +503,7 @@ class _ParentPanelState extends State<ParentPanel> {
   }
   /// Yaşı düşürmek tek başına çocuğu aşağı indirmez; sıfırlama gerekir.
   ///
-  /// Kurulumda yaş yanlış girildiyse çocuk yedi oyunda da üst bölümden
+  /// Kurulumda yaş yanlış girildiyse çocuk bütün oyunlarda üst bölümden
   /// başlar ve ilk temiz turda bu diske yazılır. O noktadan sonra yaşı
   /// düzeltmek hiçbir şey yapmaz — uygulamada geri dönüş yolu yoktu.
   Future<void> offerResetAfterAgeDrop(int previousFloor) async {

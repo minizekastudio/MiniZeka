@@ -262,6 +262,26 @@ const List<GameLevel> letterLadder = [
   GameLevel(cards: 4, roundsToAdvance: 3),
 ];
 
+/// The collecting game's ladder.
+///
+/// The seven games before it all ask a child to tap a board that is standing
+/// still. This one moves: the squirrel follows a finger and an owl drifts
+/// after it. What it teaches is the attention game's skill in motion —
+/// keeping to a rule while something else is going on — and the top rung
+/// changes the rule halfway through, which is the shape game's dimensional
+/// switch (Zelazo 2006) with the board in motion.
+///
+/// Nothing here can be lost. The owl costs one gathered face, which lands
+/// back on the board, and then falls asleep.
+const List<GameLevel> collectLadder = [
+  GameLevel(cards: 8, roundsToAdvance: 2),
+  GameLevel(cards: 10, roundsToAdvance: 3),
+  GameLevel(cards: 11, roundsToAdvance: 3),
+  GameLevel(cards: 13, roundsToAdvance: 3),
+  GameLevel(cards: 15, roundsToAdvance: 3),
+  GameLevel(cards: 15, roundsToAdvance: 3),
+];
+
 /// The ladder a game climbs.
 ///
 /// Every game has one, so the switch is exhaustive: adding a game to
@@ -276,6 +296,7 @@ List<GameLevel> ladderFor(GameId game) => switch (game) {
   GameId.word => wordLadder,
   GameId.math => mathLadder,
   GameId.logic => logicLadder,
+  GameId.collect => collectLadder,
 };
 
 /// Questions in one round, for every game that climbs a ladder.

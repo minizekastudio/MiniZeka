@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mini_zeka/games/attention_game.dart';
+import 'package:mini_zeka/games/collect_game.dart';
 import 'package:mini_zeka/games/letter_game.dart';
 import 'package:mini_zeka/games/logic_game.dart';
 import 'package:mini_zeka/games/math_game.dart';
@@ -53,5 +54,9 @@ void main() {
 
   testWidgets('harf oyunu açılır', (tester) async {
     await pumpGame(tester, const LetterGame());
+  });
+
+  testWidgets('sincap koşusu açılır', (tester) async {
+    await pumpGame(tester, const CollectGame());
   });
 }
