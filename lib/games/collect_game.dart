@@ -448,9 +448,14 @@ class _CollectGameState extends State<CollectGame>
                 border: Border.all(color: palette.softBackground, width: 3),
               ),
               clipBehavior: Clip.antiAlias,
-              child: world == null
-                  ? const SizedBox.shrink()
-                  : Stack(children: _pieces(world, side)),
+              child: Stack(
+                children: [
+                  const Positioned.fill(
+                    child: CustomPaint(painter: _GroundPainter()),
+                  ),
+                  if (world != null) ..._pieces(world, side),
+                ],
+              ),
             ),
           ),
         );
@@ -669,6 +674,95 @@ class _CollectGameState extends State<CollectGame>
       child: child,
     );
   }
+}
+
+/// The garden floor the squirrel runs on.
+///
+/// The board was a plain white square, which gave the eye nothing to measure
+/// movement against — with shadows added the pieces sat on something, but
+/// the something was blank. These marks are deliberately faint: they are a
+/// floor, not decoration competing with the faces lying on it.
+///
+/// Laid out once from a fixed seed. A floor that reshuffled itself every
+/// frame would be the most distracting thing on screen.
+class _GroundPainter extends CustomPainter {
+  const _GroundPainter();
+
+  static final List<_Tuft> _tufts = _sow();
+  static final List<BoardPoint> _grit = _scatter();
+
+  static List<_Tuft> _sow() {
+    final random = Random(7);
+
+    // Rooted away from the edge: the board is clipped, and a tuft growing
+    // out of the border read as a cut-off sprite rather than as grass.
+    double inset() => 0.05 + random.nextDouble() * 0.90;
+
+    return [
+      for (var i = 0; i < 16; i++)
+        _Tuft(
+          at: BoardPoint(inset(), inset()),
+          height: 0.030 + random.nextDouble() * 0.022,
+          lean: (random.nextDouble() - 0.5) * 0.5,
+        ),
+    ];
+  }
+
+  static List<BoardPoint> _scatter() {
+    final random = Random(11);
+
+    return [
+      for (var i = 0; i < 34; i++)
+        BoardPoint(random.nextDouble(), random.nextDouble()),
+    ];
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final soil = Paint()..color = Brand.gameCollect.withValues(alpha: 0.05);
+
+    for (final speck in _grit) {
+      canvas.drawCircle(
+        Offset(speck.x * size.width, speck.y * size.height),
+        size.shortestSide * 0.004,
+        soil,
+      );
+    }
+
+    final blade = Paint()
+      ..color = Brand.leaf.withValues(alpha: 0.13)
+      ..strokeWidth = size.shortestSide * 0.008
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    for (final tuft in _tufts) {
+      final root = Offset(tuft.at.x * size.width, tuft.at.y * size.height);
+      final height = tuft.height * size.height;
+
+      for (final spread in const [-0.55, 0.0, 0.55]) {
+        canvas.drawLine(
+          root,
+          root +
+              Offset(
+                (tuft.lean + spread) * height * 0.6,
+                -height * (spread == 0 ? 1 : 0.78),
+              ),
+          blade,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GroundPainter oldDelegate) => false;
+}
+
+class _Tuft {
+  const _Tuft({required this.at, required this.height, required this.lean});
+
+  final BoardPoint at;
+  final double height;
+  final double lean;
 }
 
 /// A face in the act of being gathered.

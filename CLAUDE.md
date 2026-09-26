@@ -640,6 +640,13 @@ yerine ışınlanan sabit emojiydi: oyun hareketliydi ama canlı değildi.
   süzülür.
 - **Dokunulmaz sincap yanıp söner**, sabit soluk durmaz: bu bir durum,
   soluklaştırılmış bir çizim değil.
+- **Zemin bir bahçe tabanı** (`_GroundPainter`): seyrek ot tutamları ve
+  toprak zerreleri. Gölgeler eklendikten sonra taşlar bir şeyin üstünde
+  duruyordu ama o şey bomboştu. Bilerek çok soluk — yerde duran yüzlerle
+  yarışan bir süs değil, zemin. **Sabit tohumla bir kez** hesaplanır; her
+  karede yeniden dağılan bir zemin ekrandaki en dikkat dağıtıcı şey olurdu.
+  Kökler kenardan içeride: tahta kırpıldığı için kenarda biten ot, ot değil
+  yarım kalmış çizim gibi duruyordu.
 
 Oyun mantığı Flutter'dan bağımsız: `CollectWorld.step(dt)` saf Dart, test
 bütün bir turu widget ağacı olmadan kare kare oynatıyor
