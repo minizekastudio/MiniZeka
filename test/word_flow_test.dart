@@ -247,7 +247,7 @@ void main() {
     for (final question in round) {
       await _answerRight(tester, question);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('🎉'), findsOneWidget);
     expect(
@@ -269,7 +269,7 @@ void main() {
       if (i < 2) await _wrongAttempt(tester, round[i]);
       await _answerRight(tester, round[i]);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('💪'), findsOneWidget);
     expect(

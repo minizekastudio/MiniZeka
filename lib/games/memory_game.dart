@@ -326,9 +326,8 @@ class _MemoryGameState extends State<MemoryGame>
 
     finishDialogShown = true;
 
-    final usedTime = gameTimer.usedSeconds;
 
-    showLadderRoundDialog(
+    showRoundCelebration(
       context: context,
       palette: palette,
       outcome: outcome,
@@ -336,28 +335,8 @@ class _MemoryGameState extends State<MemoryGame>
       levelIndex: levelIndex,
       roundsCleared: roundsCleared,
       levelUpMessage: 'Artık ${level.cards} kartla oynuyorsun! ✨',
+      random: _random,
       masteredMessage: 'Son bölümdesin, hafızan çok güçlü 🧠',
-      flair: '🧠✨',
-      results: [
-        GameResultBox(
-          palette: palette,
-          emoji: '⭐',
-          title: 'Puan',
-          value: '$score',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '🎯',
-          title: 'Hamle',
-          value: '$moves',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '⏱️',
-          title: 'Süre',
-          value: formatSeconds(usedTime),
-        ),
-      ],
       onNextRound: () {
         // The clock resumes by itself once the dialog is gone. If the day
         // is already used up, say so instead of dealing a board that

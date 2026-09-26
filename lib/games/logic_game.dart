@@ -268,9 +268,8 @@ class _LogicGameState extends State<LogicGame>
 
     if (timeUpDialogShown) return;
 
-    final firstTryRight = _round.length - _firstTryMistakes;
 
-    showLadderRoundDialog(
+    showRoundCelebration(
       context: context,
       palette: palette,
       outcome: settled.outcome,
@@ -278,28 +277,8 @@ class _LogicGameState extends State<LogicGame>
       levelIndex: levelIndex,
       roundsCleared: roundsCleared,
       levelUpMessage: _newRungMessage(logicRuleFor(levelIndex)),
+      random: _random,
       masteredMessage: 'Örüntüleri çözüyorsun! ✨',
-      flair: '🧩',
-      results: [
-        GameResultBox(
-          palette: palette,
-          emoji: '⭐',
-          title: 'Puan',
-          value: '$score',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '✅',
-          title: 'İlk seferde',
-          value: '$firstTryRight/${_round.length}',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '⏱️',
-          title: 'Süre',
-          value: formatSeconds(gameTimer.usedSeconds),
-        ),
-      ],
       onNextRound: () {
         if (!ensurePlayTimeLeft()) return;
 

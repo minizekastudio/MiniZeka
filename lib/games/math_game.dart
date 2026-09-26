@@ -273,9 +273,8 @@ class _MathGameState extends State<MathGame>
 
     if (timeUpDialogShown) return;
 
-    final firstTryRight = _round.length - _firstTryMistakes;
 
-    showLadderRoundDialog(
+    showRoundCelebration(
       context: context,
       palette: palette,
       outcome: settled.outcome,
@@ -283,28 +282,8 @@ class _MathGameState extends State<MathGame>
       levelIndex: levelIndex,
       roundsCleared: roundsCleared,
       levelUpMessage: _newRungMessage(mathRuleFor(levelIndex)),
+      random: _random,
       masteredMessage: 'Toplama da çıkarma da sende! ✨',
-      flair: '🔢',
-      results: [
-        GameResultBox(
-          palette: palette,
-          emoji: '⭐',
-          title: 'Puan',
-          value: '$score',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '✅',
-          title: 'İlk seferde',
-          value: '$firstTryRight/${_round.length}',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '⏱️',
-          title: 'Süre',
-          value: formatSeconds(gameTimer.usedSeconds),
-        ),
-      ],
       onNextRound: () {
         if (!ensurePlayTimeLeft()) return;
 

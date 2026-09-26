@@ -144,7 +144,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await _answerRight(tester);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('🎉'), findsOneWidget);
     expect(
@@ -166,7 +166,7 @@ void main() {
       }
       await _answerRight(tester);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('💪'), findsOneWidget);
     expect(find.text('🎉'), findsNothing);
@@ -185,16 +185,13 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await _answerRight(tester);
     }
+    // The celebration hands over to the next round with no tap.
     await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Yeni Tur'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
 
     for (var i = 0; i < 5; i++) {
       await _answerRight(tester);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('🚀'), findsOneWidget);
     expect((await _prefs()).getInt(StorageKeys.gameLevel(GameId.attention)), 1);

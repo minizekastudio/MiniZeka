@@ -238,27 +238,40 @@ geçiyor, tek turda bir basamak daha atlıyordu. Yaştan gelen basamak bilerek
 diske yazılmaz: ebeveyn yanlış girilmiş yaşı aşağı düzeltirse çocuk doğru
 tahtaya dönebilmeli.
 
-**Tur bitişi ne olduğunu söylemek zorunda.** Çocuk aynı tahtayı tekrar
-oynamıyorsa ekranda "Tekrar Oyna" yazamaz:
+**Tur bitişi onay sormaz.** Eskiden her biten tur bir diyalogla duruyor ve
+4 yaşındaki çocuğa "oynamaya devam etmek istiyor musun?" diye soruyordu;
+altında da okuyamadığı üç istatistik kutusu vardı. Şimdi tur doğrudan
+sıradakine devrediliyor ve **devir işleminin kendisi ödül**:
 
-| Sonuç | Görsel | Buton |
-|---|---|---|
-| `progress` | 🎉 + dolan yıldızlar, "yeni bölüme N tur kaldı" | Yeni Tur |
-| `levelUp` | 🚀 + "2. Bölüm → 3. Bölüm" rozetleri, yeni kart sayısı | Sonraki Bölüm |
-| `mastered` | 🏆 + dolu yıldızlar | Yeni Tur |
-| `retry` | 💪 "Bir tur daha!", yıldızlar aynı kalır | Yeni Tur |
+| Sonuç | Görsel |
+|---|---|
+| `progress` | 🎉 + havai fişek + rastgele övgü + dolan yıldızlar |
+| `levelUp` | 🚀 + havai fişek + "2. Bölüm → 3. Bölüm" + neyin değiştiği |
+| `mastered` | 🏆 + havai fişek + dolu yıldızlar |
+| `retry` | 💪 + **havai fişek yok** + cesaretlendirme |
 
-`retry` yalnızca turu notlayan oyunlarda (Eşleştirme) çıkar: temiz olmayan
-tur kutlanmaz, yoksa rastgele dokunmak dikkatli oynamakla aynı 🎉'yi alır.
-Hiçbir şey de düşmez.
+- **Övgü rastgele** ("Harika!", "Tebrikler!", "Süpersin!", "Aferin!", "Çok
+  iyi!", "Muhteşem!", "Bravo!"): yüzüncü tur birincisiyle aynı olmasın.
+  Rastgelelik enjekte edilir, test tohumla sabitliyor.
+- **Temiz olmayan tur kutlanmaz** ama yine de devam eder: azarlama değil,
+  cesaretlendirme ("Hadi bir daha!"). Havai fişek olsaydı rastgele dokunmak
+  dikkatli oynamakla aynı şeyi alırdı.
+- Sıra önemli: okuma bilmeyen çocuk için önce emoji ve renk, sonra yıldız
+  rozetleri, en sonda metin.
+- **Düğme yok, dolayısıyla "Oyundan Çık" da yok.** Çıkış `AppBar`'daki geri
+  oku; kutlama sürerken geri tuşu da oyundan çıkarır.
+- Süre kutlama boyunca işlemez (`GameSessionMixin` üstteki route'u görüyor)
+  ve kutlamadan sonra `ensurePlayTimeLeft()` yeni turu başlatmadan önce
+  hakkı kontrol eder.
 
-Sıra önemli: okuma bilmeyen çocuk için önce emoji ve renk, sonra yıldız
-rozetleri, en sonda metin gelir.
+Kutlama `showRoundCelebration` (`game_kit.dart`), ızgara `fitGrid` ortak;
+merdivenli her oyun bunları kullanır.
 
-Diyalog `showLadderRoundDialog` (`game_kit.dart`), ızgara `fitGrid` ortak;
-merdivenli her oyun bunları kullanır. **Geri tuşu bu diyalogda oyundan
-çıkarır** ("Oyundan Çık" ile aynı): yalnızca diyaloğu kapatmak çocuğu
-dokunacak hiçbir şeyi olmayan bitmiş tahtada bırakıyordu.
+**Kendi route'u olan her şeyin üstünde `Material` olmalı.** Kutlama
+`showGeneralDialog` ile açılıyor ve oyun ekranının `Material`'ını
+devralmıyor; ilk hâlinde yazılar yedek fontla ve **sarı çift altçizgiyle**
+çıktı. Testler bunu görmedi, emülatör gördü — şimdi bir test de şart
+koşuyor.
 
 ### Eşleştirme oyununun bölüm merdiveni
 
@@ -841,7 +854,7 @@ lib/game_kit.dart         oyunların ortak altyapısı: GameSessionMixin,
 lib/app_theme.dart        Brand (renk + ölçü token'ları) ve AppTheme
 lib/child_manager.dart    çocuğun adı + Türkçe iyelik eki üretimi
 lib/animated_logo.dart    giriş ekranındaki animasyonlu logo sahnesi
-test/                     529 test: oyun duman testleri, süre sayacı,
+test/                     543 test: oyun duman testleri, süre sayacı,
                           veri taşıma, iyelik eki, giriş ekranı, zorluk,
                           hafıza merdiveni ve ızgarası, günlük saat
                           (game_clock_test), ortak ızgara ve bölüm sonu

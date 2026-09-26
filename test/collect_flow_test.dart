@@ -64,8 +64,25 @@ Future<void> _walkTo(
   );
 
   for (var i = 0; i < frames; i++) {
+    // Stop as soon as the round is over: the board keeps ticking, and
+    // pumping on would sail past the celebration into the next round.
+    if (find.text('🎉').evaluate().isNotEmpty) return;
+
     await tester.pump(const Duration(milliseconds: 16));
   }
+}
+
+/// Pumps until the celebration shows up, or gives up.
+///
+/// The board keeps ticking, so a single long pump can sail straight past
+/// the celebration and into the next round.
+Future<bool> _waitForCelebration(WidgetTester tester) async {
+  for (var i = 0; i < 40; i++) {
+    if (find.text('🎉').evaluate().isNotEmpty) return true;
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+
+  return false;
 }
 
 String _infoValue(WidgetTester tester, String title) {
@@ -127,9 +144,7 @@ void main() {
       if (item.face != world.targetFace) continue;
       await _walkTo(tester, item.position);
     }
-    await tester.pumpAndSettle();
-
-    expect(find.text('🎉'), findsOneWidget);
+    expect(await _waitForCelebration(tester), isTrue);
     expect(
       (await _prefs()).getInt(StorageKeys.gameRoundsCleared(GameId.collect)),
       1,

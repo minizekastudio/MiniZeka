@@ -163,7 +163,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await _answerRight(tester);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('🎉'), findsOneWidget);
     expect((await _prefs()).getInt(StorageKeys.gameRoundsCleared(GameId.shape)),
@@ -185,7 +185,7 @@ void main() {
       }
       await _answerRight(tester);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('💪'), findsOneWidget);
     expect(find.text('🎉'), findsNothing,
@@ -208,18 +208,17 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await _answerRight(tester);
     }
+    // The celebration hands over to the next round with no tap.
     await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Yeni Tur'));
     await _settle(tester);
 
     for (var i = 0; i < 5; i++) {
       await _answerRight(tester);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('🚀'), findsOneWidget);
-    expect(find.text('Sonraki Bölüm'), findsOneWidget);
+    expect(find.text('2. Bölüm'), findsWidgets);
     expect((await _prefs()).getInt(StorageKeys.gameLevel(GameId.shape)), 1);
 
     semantics.dispose();
@@ -234,7 +233,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await _answerRight(tester);
     }
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 1200));
     expect(find.text('🎉'), findsOneWidget);
 
     await tester.binding.handlePopRoute();
@@ -290,7 +289,7 @@ void main() {
       state.gameTimer.usedSeconds = state.gameTimer.allowedSeconds;
       state.timeUpDialogShown = true;
       state.showGameTimeUpDialog();
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 1200));
 
       expect(find.text('Bugünkü Süren Doldu'), findsOneWidget);
       expect(find.text('🎉'), findsNothing);
@@ -314,11 +313,12 @@ void main() {
 
       await reachLastPause(tester);
       await tester.tap(find.byTooltip('Nasıl oynanır?'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 1200));
 
       expect(find.text('🎉'), findsOneWidget);
 
-      await tester.tap(find.text('Oyundan Çık'));
+      // No button any more: back is the way out of a finished round.
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
 
       expect(find.byType(ShapeGame), findsNothing);

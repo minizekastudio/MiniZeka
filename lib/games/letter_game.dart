@@ -270,9 +270,8 @@ class _LetterGameState extends State<LetterGame>
 
     if (timeUpDialogShown) return;
 
-    final firstTryRight = _round.length - _firstTryMistakes;
 
-    showLadderRoundDialog(
+    showRoundCelebration(
       context: context,
       palette: palette,
       outcome: settled.outcome,
@@ -280,28 +279,8 @@ class _LetterGameState extends State<LetterGame>
       levelIndex: levelIndex,
       roundsCleared: roundsCleared,
       levelUpMessage: _newRungMessage(letterRuleFor(levelIndex)),
+      random: _random,
       masteredMessage: 'Bütün harfleri tanıyorsun! ✨',
-      flair: '🔤',
-      results: [
-        GameResultBox(
-          palette: palette,
-          emoji: '⭐',
-          title: 'Puan',
-          value: '$score',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '✅',
-          title: 'İlk seferde',
-          value: '$firstTryRight/${_round.length}',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '⏱️',
-          title: 'Süre',
-          value: formatSeconds(gameTimer.usedSeconds),
-        ),
-      ],
       onNextRound: () {
         if (!ensurePlayTimeLeft()) return;
 

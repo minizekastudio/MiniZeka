@@ -301,9 +301,8 @@ class _AttentionGameState extends State<AttentionGame>
     // The allowance ran out during the pause and its warning is already up.
     if (timeUpDialogShown) return;
 
-    final firstTryRight = _round.length - _firstTryMistakes;
 
-    showLadderRoundDialog(
+    showRoundCelebration(
       context: context,
       palette: palette,
       outcome: settled.outcome,
@@ -311,28 +310,8 @@ class _AttentionGameState extends State<AttentionGame>
       levelIndex: levelIndex,
       roundsCleared: roundsCleared,
       levelUpMessage: _newRungMessage(attentionRuleFor(levelIndex)),
+      random: _random,
       masteredMessage: 'Gözünden hiçbir şey kaçmıyor! ✨',
-      flair: '👀',
-      results: [
-        GameResultBox(
-          palette: palette,
-          emoji: '⭐',
-          title: 'Puan',
-          value: '$score',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '✅',
-          title: 'İlk seferde',
-          value: '$firstTryRight/${_round.length}',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '⏱️',
-          title: 'Süre',
-          value: formatSeconds(gameTimer.usedSeconds),
-        ),
-      ],
       onNextRound: () {
         if (!ensurePlayTimeLeft()) return;
 

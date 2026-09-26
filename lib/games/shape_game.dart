@@ -339,9 +339,8 @@ class _ShapeGameState extends State<ShapeGame>
     if (timeUpDialogShown) return;
 
     final outcome = settled.outcome;
-    final firstTryRight = _round.length - _firstTryMistakes;
 
-    showLadderRoundDialog(
+    showRoundCelebration(
       context: context,
       palette: palette,
       outcome: outcome,
@@ -349,29 +348,8 @@ class _ShapeGameState extends State<ShapeGame>
       levelIndex: levelIndex,
       roundsCleared: roundsCleared,
       levelUpMessage: _newRungMessage(ShapeVariation.forRung(levelIndex)),
+      random: _random,
       masteredMessage: 'Şekilleri her kılıkta tanıyorsun! ✨',
-      flair: '✨',
-      results: [
-        GameResultBox(
-          palette: palette,
-          emoji: '⭐',
-          title: 'Puan',
-          value: '$score',
-        ),
-        GameResultBox(
-          palette: palette,
-          // 🎯 already means "question number" on the board above.
-          emoji: '✅',
-          title: 'İlk seferde',
-          value: '$firstTryRight/${_round.length}',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '⏱️',
-          title: 'Süre',
-          value: formatSeconds(gameTimer.usedSeconds),
-        ),
-      ],
       onNextRound: () {
         if (!ensurePlayTimeLeft()) return;
 

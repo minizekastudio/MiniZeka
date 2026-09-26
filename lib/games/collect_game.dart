@@ -278,8 +278,6 @@ class _CollectGameState extends State<CollectGame>
   }
 
   void _showRoundDialog(_SettledRound settled) {
-    final world = _world;
-
     setState(() {
       levelIndex = settled.levelIndex;
       roundsCleared = settled.roundsCleared;
@@ -287,7 +285,7 @@ class _CollectGameState extends State<CollectGame>
 
     if (timeUpDialogShown) return;
 
-    showLadderRoundDialog(
+    showRoundCelebration(
       context: context,
       palette: palette,
       outcome: settled.outcome,
@@ -295,28 +293,8 @@ class _CollectGameState extends State<CollectGame>
       levelIndex: levelIndex,
       roundsCleared: roundsCleared,
       levelUpMessage: _newRungMessage(collectRuleFor(levelIndex)),
+      random: _random,
       masteredMessage: 'Sincap senden hızlı değil! ✨',
-      flair: '🐿️',
-      results: [
-        GameResultBox(
-          palette: palette,
-          emoji: '⭐',
-          title: 'Puan',
-          value: '$score',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '🎯',
-          title: 'Yanlış',
-          value: '${world?.wrongGrabs ?? 0}',
-        ),
-        GameResultBox(
-          palette: palette,
-          emoji: '⏱️',
-          title: 'Süre',
-          value: formatSeconds(gameTimer.usedSeconds),
-        ),
-      ],
       onNextRound: () {
         if (!ensurePlayTimeLeft()) return;
 

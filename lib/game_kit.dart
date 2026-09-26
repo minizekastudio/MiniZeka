@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -288,68 +290,6 @@ Future<void> showGameHelpDialog({
       );
     },
   );
-}
-
-/// One result figure at the end of a round.
-///
-/// Five games carried an identical copy of this; only the colours differed.
-class GameResultBox extends StatelessWidget {
-  final String emoji;
-  final String title;
-  final String value;
-  final GamePalette palette;
-
-  const GameResultBox({
-    super.key,
-    required this.emoji,
-    required this.title,
-    required this.value,
-    required this.palette,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 12,
-          horizontal: 5,
-        ),
-        decoration: BoxDecoration(
-          color: palette.softBackground,
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Column(
-          children: [
-            Text(
-              emoji,
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 13,
-                color: palette.label,
-              ),
-            ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: palette.value,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 /// Closes everything stacked on the game screen — this dialog, and anything
@@ -940,11 +880,16 @@ class InfoBox extends StatelessWidget {
 
 /// The end of a round in a game that climbs a [GameLevel] ladder.
 ///
-/// A child who cannot read is told what happened by the emoji, its colour
-/// and the stars or level badges first; the text only backs that up. The
-/// primary button never says "play again" when the next board is a new
-/// level, because it is not the same game any more.
-Future<void> showLadderRoundDialog({
+/// It used to be a dialog with a button: every finished round stopped to ask
+/// a four year old to confirm that yes, they would like to keep playing, and
+/// listed three figures they cannot read. Now the round hands straight over
+/// to the next one and the handover *is* the reward — fireworks, a word of
+/// praise, and the ladder visibly moving.
+///
+/// Nothing here needs reading: the emoji and its colour come first, then the
+/// stars or the level badges. [random] picks the praise, and is injected so
+/// a test can pin it.
+Future<void> showRoundCelebration({
   required BuildContext context,
   required GamePalette palette,
   required RoundOutcome outcome,
@@ -953,174 +898,359 @@ Future<void> showLadderRoundDialog({
   required int roundsCleared,
   required String levelUpMessage,
   required String masteredMessage,
-  required String flair,
-  required List<Widget> results,
+  required Random random,
   required VoidCallback onNextRound,
-}) {
-  final level = ladder[levelIndex];
-
-  String roundsLeftMessage() {
-    final left = level.roundsToAdvance - roundsCleared;
-    if (left == 1) return 'Yeni bölüme bir tur kaldı! $flair';
-    return 'Yeni bölüme $left tur kaldı! $flair';
-  }
-
-  final (
-    String emoji,
-    Color ring,
-    String title,
-    String message,
-    String action,
-    IconData actionIcon,
-  )
-  shown = switch (outcome) {
-    RoundOutcome.levelUp => (
-      '🚀',
-      Brand.sunLight,
-      'Yeni Bölüm Açıldı!',
-      levelUpMessage,
-      'Sonraki Bölüm',
-      Icons.arrow_forward_rounded,
-    ),
-    RoundOutcome.mastered => (
-      '🏆',
-      Brand.sunLight,
-      'Tüm Bölümleri Bitirdin!',
-      masteredMessage,
-      'Yeni Tur',
-      Icons.refresh_rounded,
-    ),
-    RoundOutcome.progress => (
-      '🎉',
-      palette.softBackground,
-      'Harika İş Çıkardın!',
-      roundsLeftMessage(),
-      'Yeni Tur',
-      Icons.play_arrow_rounded,
-    ),
-    RoundOutcome.retry => (
-      '💪',
-      palette.softBackground,
-      'Bir tur daha!',
-      'Önce iyice bak, sonra dokun! 👀',
-      'Yeni Tur',
-      Icons.refresh_rounded,
-    ),
-  };
-
+}) async {
   final gameRoute = ModalRoute.of(context);
 
-  void leaveGame(BuildContext dialogContext) =>
-      _leaveGameScreen(context, dialogContext, gameRoute);
-
-  return showDialog(
+  final kept = await showGeneralDialog<bool>(
     context: context,
     barrierDismissible: false,
-    builder: (dialogContext) {
-      final dialog = Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        // Scrolls only when the screen is too short to hold it: on a
-        // 320×568 phone the full dialog is ~110 px taller than the space.
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 82,
-                height: 82,
-                decoration: BoxDecoration(
-                  color: shown.$2,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(shown.$1, style: const TextStyle(fontSize: 46)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                shown.$3,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: palette.heading,
-                ),
-              ),
-              const SizedBox(height: 14),
-              LadderProgressBadge(
-                palette: palette,
-                outcome: outcome,
-                level: level,
-                levelIndex: levelIndex,
-                roundsCleared: roundsCleared,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                shown.$4,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 17, color: palette.label),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  for (var i = 0; i < results.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 8),
-                    results[i],
-                  ],
-                ],
-              ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                height: Brand.buttonHeight,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    onNextRound();
-                  },
-                  icon: Icon(shown.$6),
-                  label: Text(
-                    shown.$5,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: palette.button,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(17),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => leaveGame(dialogContext),
-                child: Text(
-                  'Oyundan Çık',
-                  style: TextStyle(color: palette.label),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      // Back leaves the game, like "Oyundan Çık". Closing only the dialog
-      // left a finished board with nothing to tap.
+    barrierLabel: 'Tur sonu',
+    barrierColor: Colors.black.withValues(alpha: 0.38),
+    transitionDuration: const Duration(milliseconds: 200),
+    pageBuilder: (dialogContext, _, _) {
+      // Back leaves the game, as the old "Oyundan Çık" did. There is no
+      // button now, so this is the only way out mid-celebration.
       return PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) leaveGame(dialogContext);
+          if (!didPop) _leaveGameScreen(context, dialogContext, gameRoute);
         },
-        child: dialog,
+        // A route of its own has no Material above it, and text without one
+        // is drawn in a fallback font under a yellow double underline.
+        child: Material(
+          type: MaterialType.transparency,
+          child: _RoundCelebration(
+            palette: palette,
+            outcome: outcome,
+            level: ladder[levelIndex],
+            levelIndex: levelIndex,
+            roundsCleared: roundsCleared,
+            levelUpMessage: levelUpMessage,
+            masteredMessage: masteredMessage,
+            random: random,
+            onDone: () => Navigator.of(dialogContext).pop(true),
+          ),
+        ),
       );
     },
   );
+
+  // Null when the child pressed back: the game screen is already gone and
+  // starting a round on it would be a setState after dispose.
+  if (kept ?? false) onNextRound();
+}
+
+/// Praise for a round that went well. One word, so it lands before it is
+/// read; picked at random so the hundredth round is not the first again.
+const List<String> _praise = [
+  'Harika!',
+  'Tebrikler!',
+  'Süpersin!',
+  'Aferin!',
+  'Çok iyi!',
+  'Muhteşem!',
+  'Bravo!',
+];
+
+/// For a round that was not clean. Encouraging, never a scolding: the round
+/// still ends, the child still moves on.
+const List<String> _encouragement = [
+  'Hadi bir daha!',
+  'Az kaldı!',
+  'Tekrar bakalım!',
+  'Devam et!',
+];
+
+class _RoundCelebration extends StatefulWidget {
+  const _RoundCelebration({
+    required this.palette,
+    required this.outcome,
+    required this.level,
+    required this.levelIndex,
+    required this.roundsCleared,
+    required this.levelUpMessage,
+    required this.masteredMessage,
+    required this.random,
+    required this.onDone,
+  });
+
+  final GamePalette palette;
+  final RoundOutcome outcome;
+  final GameLevel level;
+  final int levelIndex;
+  final int roundsCleared;
+  final String levelUpMessage;
+  final String masteredMessage;
+  final Random random;
+  final VoidCallback onDone;
+
+  @override
+  State<_RoundCelebration> createState() => _RoundCelebrationState();
+}
+
+class _RoundCelebrationState extends State<_RoundCelebration>
+    with SingleTickerProviderStateMixin {
+  late final Duration _length = switch (widget.outcome) {
+    RoundOutcome.levelUp => const Duration(milliseconds: 2600),
+    RoundOutcome.mastered => const Duration(milliseconds: 2600),
+    RoundOutcome.progress => const Duration(milliseconds: 1900),
+    RoundOutcome.retry => const Duration(milliseconds: 1600),
+  };
+
+  late final AnimationController _run = AnimationController(
+    vsync: this,
+    duration: _length,
+  );
+
+  late final List<_Burst> _bursts = _light();
+
+  late final String _headline = switch (widget.outcome) {
+    RoundOutcome.retry =>
+      _encouragement[widget.random.nextInt(_encouragement.length)],
+    _ => _praise[widget.random.nextInt(_praise.length)],
+  };
+
+  String? get _note => switch (widget.outcome) {
+    RoundOutcome.levelUp => widget.levelUpMessage,
+    RoundOutcome.mastered => widget.masteredMessage,
+    _ => null,
+  };
+
+  String get _emoji => switch (widget.outcome) {
+    RoundOutcome.levelUp => '🚀',
+    RoundOutcome.mastered => '🏆',
+    RoundOutcome.progress => '🎉',
+    RoundOutcome.retry => '💪',
+  };
+
+  /// A round that was not clean gets no fireworks — warmth, not a party.
+  List<_Burst> _light() {
+    final count = switch (widget.outcome) {
+      RoundOutcome.levelUp || RoundOutcome.mastered => 6,
+      RoundOutcome.progress => 4,
+      RoundOutcome.retry => 0,
+    };
+
+    return [
+      for (var i = 0; i < count; i++)
+        _Burst(
+          at: Offset(
+            0.15 + widget.random.nextDouble() * 0.70,
+            0.14 + widget.random.nextDouble() * 0.46,
+          ),
+          startAt: 0.05 + (i / count) * 0.45,
+          colour:
+              Brand.gameColors[widget.random.nextInt(Brand.gameColors.length)],
+          sparks: 9 + widget.random.nextInt(4),
+          turn: widget.random.nextDouble() * pi,
+        ),
+    ];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _run.forward();
+    _run.addStatusListener((status) {
+      if (status == AnimationStatus.completed) widget.onDone();
+    });
+  }
+
+  @override
+  void dispose() {
+    _run.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _run,
+      builder: (context, _) {
+        final t = _run.value;
+
+        // Everything leaves together at the end, so the next board is not
+        // revealed behind a half-faded party.
+        final leaving = ((t - 0.88) / 0.12).clamp(0.0, 1.0);
+
+        return Opacity(
+          opacity: 1 - leaving,
+          child: Stack(
+            children: [
+              if (_bursts.isNotEmpty)
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _Fireworks(progress: t, bursts: _bursts),
+                  ),
+                ),
+              Center(child: _buildCard(t)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCard(double t) {
+    // Lands with a bounce rather than appearing: the arrival is the point.
+    final pop = Curves.elasticOut.transform((t / 0.45).clamp(0.0, 1.0));
+    final wordIn = Curves.easeOutBack.transform(
+      ((t - 0.22) / 0.3).clamp(0.0, 1.0),
+    );
+    final badgeIn = ((t - 0.38) / 0.3).clamp(0.0, 1.0);
+
+    final note = _note;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Transform.scale(
+            scale: pop,
+            child: Container(
+              width: 128,
+              height: 128,
+              decoration: BoxDecoration(
+                color: widget.outcome == RoundOutcome.retry
+                    ? widget.palette.softBackground
+                    : Brand.sunLight,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(_emoji, style: const TextStyle(fontSize: 70)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Opacity(
+            opacity: wordIn.clamp(0.0, 1.0),
+            child: Transform.scale(
+              scale: 0.7 + 0.3 * wordIn,
+              child: Text(
+                _headline,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 38,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black38,
+                      blurRadius: 12,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Opacity(
+            opacity: badgeIn,
+            child: LadderProgressBadge(
+              palette: widget.palette,
+              outcome: widget.outcome,
+              level: widget.level,
+              levelIndex: widget.levelIndex,
+              roundsCleared: widget.roundsCleared,
+            ),
+          ),
+          if (note != null) ...[
+            const SizedBox(height: 16),
+            Opacity(
+              opacity: badgeIn,
+              child: Text(
+                note,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  shadows: [Shadow(color: Colors.black38, blurRadius: 10)],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One burst of sparks.
+class _Burst {
+  const _Burst({
+    required this.at,
+    required this.startAt,
+    required this.colour,
+    required this.sparks,
+    required this.turn,
+  });
+
+  /// Where it goes off, in fractions of the screen.
+  final Offset at;
+
+  /// When it goes off, in fractions of the celebration.
+  final double startAt;
+
+  final Color colour;
+  final int sparks;
+
+  /// So every burst is not the same wheel of spokes.
+  final double turn;
+}
+
+class _Fireworks extends CustomPainter {
+  const _Fireworks({required this.progress, required this.bursts});
+
+  final double progress;
+  final List<_Burst> bursts;
+
+  /// How long one burst lives, in fractions of the celebration.
+  static const double _life = 0.5;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final reach = size.shortestSide * 0.34;
+
+    for (final burst in bursts) {
+      final t = ((progress - burst.startAt) / _life).clamp(0.0, 1.0);
+      if (t <= 0 || t >= 1) continue;
+
+      // Out fast, then slowing: a spark spends its speed at once.
+      final spread = reach * (1 - pow(1 - t, 2.6)).toDouble();
+      final centre = Offset(
+        burst.at.dx * size.width,
+        burst.at.dy * size.height,
+      );
+
+      final paint = Paint()
+        ..color = burst.colour.withValues(alpha: (1 - t) * 0.95)
+        ..style = PaintingStyle.fill;
+
+      for (var i = 0; i < burst.sparks; i++) {
+        final angle = burst.turn + i * 2 * pi / burst.sparks;
+
+        canvas.drawCircle(
+          centre +
+              Offset(
+                cos(angle) * spread,
+                sin(angle) * spread + reach * 0.5 * t * t,
+              ),
+          size.shortestSide * 0.012 * (1 - t * 0.6),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Fireworks oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 /// Where the child stands on the ladder, shown without needing to read:
