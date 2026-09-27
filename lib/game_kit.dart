@@ -706,7 +706,7 @@ class LadderStrip extends StatelessWidget {
               Text(
                 note,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: palette.label,
                 ),
@@ -1328,7 +1328,7 @@ class LadderProgressBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: FontWeight.w900,
           color: isPassed ? palette.heading : Colors.white,
         ),

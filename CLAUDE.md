@@ -873,16 +873,28 @@ Logo.png             kullanıcının ürettiği ana logo (kapak görseli için)
 
 ## Bilinen sorunlar
 
-- **`Brand` hâlâ az kullanılıyor.** Kural "renkler daima `Brand`'dan" diyor ama
-  `Brand` 3 dosyada geçiyor; kodda 608 ham `Color(0xFF...)` ve **268 farklı ton**
-  var, bunların 177'si yalnızca bir kez kullanılmış. 268 tonu `Brand`'ın ~20
-  semantik token'ına indirmek bir refactor değil görsel yeniden tasarım olur;
-  bilinçli olarak yapılmadı. Doğru yol: dokunulan dosyada `Brand`'a geçmek ve
-  zamanla token setini büyütmek. Palet birleştirme ayrı bir tasarım işi olarak
-  ele alınmalı.
-- 17pt altında kalan 86 kullanım bilerek bırakıldı: ebeveyn paneli ve PIN
-  ekranı yetişkin okuyor, büyük sayıların yanındaki etiketler ve dekoratif
-  alt yazılar kuralın hedefi değil.
+- **`Brand` hâlâ az kullanılıyor.** Kural "renkler daima `Brand`'dan" diyor
+  ama kodda **287 ham `Color(0xFF...)` ve 146 farklı ton** var (103'ü
+  yalnızca bir kez). Oyun ekranları yeniden yazılırken yarıya indi; kalanın
+  dağılımı: ebeveyn paneli 74, `game_kit` 47, yaş seçimi 35, karşılama 35,
+  PIN 24, avatar 22, başarılar 17, ana sayfa 15.
+  - `game_kit`'teki 47, sekiz oyunun `GamePalette` tablosunun kendisi —
+    değişmezlerin bulunması gereken yer orası, borç değil.
+  - **Mekanik bir dönüşüm yok:** 287 kullanımın yalnızca **3'ü** mevcut bir
+    `Brand` token'ına birebir eşit. Yani her ton kendine özgü; 146 tonu ~20
+    token'a indirmek bir refactor değil, her ekranın nasıl göründüğünü
+    değiştiren bir tasarım kararı.
+  - Doğru yol: dokunulan ekranda bilinçli olarak token'a geçmek ve sonucu
+    cihazda görmek. Yayından önce yapılacak bir iş değil — kullanıcının
+    göreceği hiçbir şey kazandırmaz, her ekranın yeniden doğrulanmasını
+    gerektirir.
+- **17pt altı kuralı fiilen tamamlandı.** Kalan 55 kullanımın 47'si yetişkin
+  ekranlarında (ebeveyn paneli 35, PIN 7, ayarlar 5) ve kuralın kendi
+  muafiyeti bunları zaten dışarıda tutuyor. Geri kalan 8'i karşılama/yaş/
+  avatar ekranlarındaki dekoratif alt yazılar ("Güvenli • Eğitici • Keyifli",
+  "Minik adımlarla büyük keşifler!") — çocuğun okuduğu metin değil.
+  Çocuğun oyun sırasında gerçekten gördüğü iki tanesi (merdiven şeridindeki
+  "N kart" notu ve bölüm rozetleri) 17'ye çıkarıldı.
 
 ## Çözülmüş olanlar
 
