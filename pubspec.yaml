@@ -61,7 +61,11 @@ flutter:
   uses-material-design: true
   assets:
     - assets/sounds/
-    - assets/splash/
+    # Only the two the app actually loads. The folder used to be declared
+    # whole, so splash_android12.png — which is nothing but an input for
+    # flutter_native_splash — shipped in every download for nothing.
+    - assets/splash/splash_full.png
+    - assets/splash/splash_logo.png
 
   fonts:
     - family: Baloo2

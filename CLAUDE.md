@@ -861,7 +861,9 @@ test/                     543 test: oyun duman testleri, süre sayacı,
                           diyaloğu, eşleştirme kuralları (300 tohum),
                           çizim, sığma ve akış testleri
 assets/icon/         app_icon.png (tam dolgu) + app_icon_foreground.png (adaptive)
-assets/splash/       splash_full.png (tam ekran), splash_logo.png, splash_android12.png
+assets/splash/       splash_full.png (tam ekran), splash_logo.png,
+                     splash_android12.png — yalnizca flutter_native_splash
+                     girdisi, pakete GIRMEZ (pubspec tek tek sayiyor)
 assets/fonts/        Baloo2 (Medium/Bold/ExtraBold, Türkçe'ye budanmış)
 magaza/              play_store_512.png, app_store_1024.png, önizlemeler
 araclar/             yardımcı .command dosyaları (bulut oturumundan kalma)
